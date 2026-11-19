@@ -34,7 +34,7 @@ function run(args, options = {}) {
 
 const server = spawn(process.execPath, ['server.mjs'], {
   cwd: root,
-  env: { ...process.env, PORT: '4399', LUMBRE_DATA_DIR: dataDir, LUMBRE_NO_OPEN: '1' },
+  env: { ...process.env, PORT: '4399', LUMBRE_DATA_DIR: dataDir, LUMBRE_NO_OPEN: '1', LUMBRE_META_APP_SECRET: 'test-app-secret' },
   stdio: 'inherit',
 });
 
