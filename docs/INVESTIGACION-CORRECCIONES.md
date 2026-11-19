@@ -296,3 +296,120 @@ Lo que sí estaba roto, y se corrigió:
 - **Instancia única**: tres servidores a la vez siguen siendo posibles porque
   el puerto se autoincrementa. Hoy la limpieza de misiones huérfanas evita el
   daño grave, pero conviene cerrar los demás procesos al abrir Lumbre.
+
+---
+
+# Ronda 4 — catálogo completo (2026-11-19, noche)
+
+Objetivo: que «cargar todos los artículos» no rompa la bandeja ni la reputación,
+y que el envío automático (opt-in) respete respuestas, bajas y espaciado.
+
+## Diseño aplicado (ronda 4)
+
+1. **Dedupe por enfriamiento** (`mission.contactCooldownDays`, 90 días por
+   defecto) en vez de bloqueo permanente: un catálogo no puede agotar la
+   bandeja en tres misiones. Siempre quedan fuera: hilos activos, `perdido`,
+   bajas y borradores pendientes.
+2. **Cola FIFO de misiones** con 2 concurrentes (`LUMBRE_MAX_MISSIONS`) y
+   reanudación automática de las `queued` al arrancar
+   (`resumeQueuedMissions`). `releaseInterruptedMissions` solo toca
+   `running`: una misión en cola nunca empezó y no se marca error.
+3. **Campaña de catálogo** (`POST /api/campaigns`, `rotate`/`all`): una misión
+   en cola por producto, con mercados rotados para no saturar un pool.
+4. **Piloto automático opt-in** (`email.autopilot`): solo Resend/webhook,
+   1 envío por tick + espaciado global (`autopilotSpacingMin`, 5 min por
+   defecto, registrado en `meta.lastOutboxSendAt`), reprogramación a la
+   mañana siguiente si se agota el cupo diario, cancelación persistente con
+   motivo cuando la conversación cambió.
+5. **Guardia de etapa en la cola** (`BLOCKED_STAGES`): no se encola ni se
+   envía a `respondio`/`interesado`/`negociando`/`ganado`/`perdido`; si la
+   etapa cambió entre encolar y enviar, el elemento se cancela explicando
+   por qué.
+6. **Seguimientos día 4/día 10** sin precio, máximo 2, idioma del hilo, en
+   piloto solo con `canAutopilot()`; sin piloto quedan `revisar`.
+7. **Caché de proveedores pagos** (`search.cacheHours`, 24 h; desactivable
+   con `LUMBRE_DISABLE_SEARCH_CACHE=1`) para no cobrar dos veces la misma
+   consulta por producto. En memoria: se pierde al reiniciar.
+8. **Footer de cumplimiento** en cada correo: baja + dirección física + sitio.
+
+## Verificación (ronda 4)
+
+- `npm run test:scale`: 37 comprobaciones (caché, agenda, supresión, etapa,
+  espaciado global, seguimientos, cumplimiento).
+- `npm run test:flow`: + prueba de que una misión `queued` vieja no se libera.
+- `npm test` completo: EXIT=0.
+
+## Hallazgos de capacidad (datos reales, ver `docs/ESTUDIO-CATALOGO-VENTA-MASIVA.md`)
+
+- 13 misiones reales, ~1.206.067 tokens (media 92.774/misión), 108 prospectos,
+  65 emails públicos, 18 hilos creados, 88 descartes por dedupe, 34 borradores
+  `listo` + 20 `revisar` esperando decisión humana, 9 mensajes salientes,
+  0 ventas cerradas.
+- Cuota Tavily observada: ~301/1000 créditos usados (~16–23 créditos/misión):
+  un catálogo de 20 productos cabe justo; conviene vigilar la cuota.
+- Cuello de botella real: la aprobación humana y el warmup/límite diario
+  (10→30/día), no el pipeline (~1–3 min de pasos por misión).
+
+---
+
+# Ronda 5 — postventa conectada y listo para funcionar (2026-11-19, noche)
+
+Objetivo declarado por el dueño: los agentes deben hacer TODO lo que signifique
+venta, promoción, contactos, fidelización, persuasión, advertencias y responder
+cualquier pregunta del negocio, y estar enfocados en vender la mayor cantidad
+de artículos posible.
+
+## Hallazgo: la fidelización era código muerto
+
+- `buildPostSale()` y `eligiblePostSaleThread()` existían en `outbox.mjs`
+  (toques día 3/30/90 para hilos `ganado`), pero nadie los llamaba: no había
+  método `maybePostSale`, ni `postSaleAt` se fijaba en ningún camino,
+  ni `tick()` los despachaba. La postventa jamás se generaría.
+- Además, enviar un borrador desde un hilo ganado caía en la rama
+  `else` de `sendThreadMessage` y agendaba un seguimiento frío sobre un
+  cliente que ya compró.
+
+## Diseño aplicado (ronda 5)
+
+1. **Ancla `postSaleAt`** fijada en toda transición a `ganado`: en
+   `analyzeThread` (Analista), en el endpoint PATCH de hilos (UI/Telegram) y
+   en la acción `actualizar_hilo` de Telegram. Hilo ganado antes de existir
+   el ancla: usa `updatedAt || createdAt` (referencia honesta, documentada).
+2. **`Outbox.maybePostSale(settings)`** (en `tick()`): prepara toque día 3
+   (agradecimiento), día 30 (feedback + pedido de reseña/referido) y día 90
+   (reorden/novedades), máximo 3, sin precio, idioma del hilo, solo hilos
+   `ganado` con email válido y no suprimidos. Sin piloto → «Por aprobar»;
+   con piloto → encola espaciado con `canAutopilot()`. Nunca a quien no compró.
+3. **Contabilidad de postventa** en `sendThreadMessage`: `postSaleCount += 1`,
+   ancla obligatoria, y ya NO agenda seguimiento frío (`nextFollowUp: null`).
+4. **`email.postSales`** (default true) con switch en Ajustes → Correo,
+   espejo de «Preparar seguimientos».
+5. **Caché de búsqueda persistente en disco** (`<datos>/search-cache.json`,
+   500 entradas, TTL ≤ 168 h): sobrevive reinicios y ahorra créditos Tavily
+   entre sesiones; los tests nunca tocan el directorio real
+   (`LUMBRE_DATA_DIR` temporal). Verificado en dos procesos consecutivos:
+   segunda sesión = 0 llamadas de red. Escape `LUMBRE_DISABLE_SEARCH_CACHE=1`.
+6. **"Listo para funcionar" al arrancar**: la consola imprime IA, datos,
+   búsqueda, correo/piloto, warmup/límite, Telegram, postventa, seguimientos,
+   borradores esperando decisión, conversaciones abiertas y misiones
+   retomadas. Sin secretos (solo booleanos y conteos).
+7. **Fix menor de UI**: el contador de tokens de «Preguntale al equipo» leía
+   `usage.total_tokens`; el shape real es `{ input, output, total }`.
+
+## Verificación (ronda 5)
+
+- `npm run test:scale`: 51 comprobaciones (§10 postventa: ancla, elegibilidad,
+  suprimidos, día 3/30/90, no duplica, contador al enviar, cierre en 3).
+- `npm test` completo: EXIT=0.
+- Arranque aislado (`LUMBRE_DATA_DIR` temporal, demo): imprime el panel
+  «Listo para funcionar» y `/api/health` responde `{"ok":true}`.
+- Pregunta real al equipo (Groq, datos reales en copia temporal, borrada
+  después): el Director Comercial respondió con el contexto real del negocio
+  (precios SIRI, compradores reales, IRAM/CE, costo de producción).
+
+## Verificado en vivo, no asumido
+
+- Telegram: `enabled && token && chatId` (digest 9:00) → los avisos y el chat
+  con el equipo llegan al celular. WhatsApp: apagado (sin claves) — correcto.
+- IA Groq `qwen/qwen3.8-27b`: responde con datos del negocio.
+- 0 ventas cerradas: el sistema prepara y empuja; el cierre es humano.

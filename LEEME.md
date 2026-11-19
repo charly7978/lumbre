@@ -7,7 +7,8 @@ No necesita Airtable ni Make. Funciona en **modo demo** sin ninguna clave de IA.
 
 1. Doble click en `INICIAR-LUMBRE.cmd` (o en la raíz del proyecto).
 2. Se abre el navegador en `http://localhost:PORT`.
-3. Si es la primera vez, aparece un asistente de bienvenida. Podés cargar datos de ejemplo con un click.
+3. La consola imprime **«Listo para funcionar»**: IA, búsqueda, correo y piloto, Telegram, seguimientos y postventa, cuántos borradores esperan tu decisión y qué conversaciones están abiertas. De un vistazo sabés qué falta antes de vender.
+4. Si es la primera vez, aparece un asistente de bienvenida. Podés cargar datos de ejemplo con un click.
 
 Requisito: Node.js 20 o superior (https://nodejs.org). No hace falta `npm install`.
 
@@ -74,7 +75,7 @@ Configurá en **Ajustes**:
 
 - Todo es local. No hay cuentas ni servidores externos obligatorios.
 - Las claves se guardan en `settings.json` en tu máquina.
-- El envío real siempre requiere confirmación explícita y respeta límites diarios y warm-up.
+- El envío real siempre requiere confirmación explícita y respeta límites diarios y warm-up, salvo que actives el piloto automático (opt-in), que solo envía lo que pasó las guardas, respetando los mismos límites y un espaciado fijo entre envíos.
 - En modo demo, los emails `example.com` no se envían.
 - **Búsqueda sin clave**: las consultas se envían a instancias públicas de SearXNG (o a la instancia que configures). No incluyas datos privados en las consultas. Para uso profesional conviene una instancia propia o un proveedor con clave.
 - **Verificación de compradores**: Lumbre abre los sitios públicos de los compradores para comprobar nombre y buscar emails publicados. No accede a áreas privadas ni usa credenciales.
@@ -105,6 +106,18 @@ Configurá en **Ajustes**:
 - Para recibir respuestas desde internet, configurá un token en **Ajustes → Correo** o en la variable `LUMBRE_WEBHOOK_TOKEN`.
 - Sin token, Lumbre solo acepta correos entrantes desde la misma computadora y sin cabeceras de proxy. Si usás ngrok, Cloudflare Tunnel o un proxy, configurá token: esas conexiones también parecen locales.
 
+## Qué hace el equipo por vos (todo el ciclo)
+
+- **Venta**: cada misión investiga, calcula precios y aduanas, busca compradores reales verificados y escribe los mensajes 1:1. La campaña de catálogo (`Campaña de catálogo`) encola una misión por producto, rotando mercados para no saturar a los mismos compradores.
+- **Promoción**: el paso de contenido de cada misión deja calendario, ganchos, guiones y captions en **Contenido**. Revisiones y publicaciones a tu ritmo.
+- **Contactos con clientes**: la **Bandeja** recibe las respuestas; el Analista lee la intención real y propone el siguiente paso. Las respuestas los bajan/suben/cierran etapa.
+- **Fidelización**: marcar una conversación como **ganado** arranca el reloj de postventa — día 3 agradecimiento, día 30 feedback (reseña/referido), día 90 reorden — siempre con tu aprobación salvo piloto.
+- **Persuasión**: secuencias del Redactor Comercial, manejo de objeciones y tono configurable por mercados (Ajustes → Misión).
+- **Advertencias para vos**: Telegram (o WhatsApp) te avisa de misiones con error, red team en contra, bajas, bloqueos de envío, y cada mañana un digest con lo pendiente. Vos decidís siempre.
+- **Preguntas**: en **Equipo → Preguntale al equipo** (o por Telegram), los once especialistas responden con tus datos reales: productos, precios, misiones, conversaciones y aprendizajes.
+- **Memoria**: el equipo guarda lo que cada misión enseña (`Aprendizajes`) para no repetir errores.
+- **Nada sale sin tu revisión** salvo que actives el **piloto automático** (opt-in, solo Resend/webhook, respeto total de límite diario y calentamiento).
+
 ## Misiones con avisos
 
 - Si un paso falla pero el plan final existe, la misión termina como **“con avisos”** (no como perfecta).
@@ -122,12 +135,15 @@ Configurá en **Ajustes**:
 - `npm run test:core` — prueba demo, ZIP, email y pasos.
 - `npm run test:guards` — prueba 1:1, revisión, correcciones, dedupe, opt-out (incluidos falsos positivos), supresiones, migración y reconciliación.
 - `npm run test:flow` — prueba la verificación de compradores, el directorio semilla, la migración de hilos inventados y los avisos de "sin compradores".
+- `npm run test:scale` — prueba la caché de proveedores, el piloto (agenda, espaciado, no duplica, no envía a supresiones ni a hilos respondidos), la postventa y el pie de cumplimiento.
 - `npm run test:api` — prueba la API completa contra un servidor temporal en el puerto 4399.
 - `npm test` — corre todo lo anterior en orden.
 
+Para saber si vale la pena cargar todo el catálogo y qué hace falta, leé `docs/ESTUDIO-CATALOGO-VENTA-MASIVA.md`.
+
 ## Envío
 
-- El envío nunca es automático. Siempre lo confirmás vos.
+- El envío por defecto es manual (no se va nada). Opcionalmente activás el **piloto automático** en Ajustes → Correo: solo envía borradores que pasaron las guardas, con límite diario, calentamiento y minutos de espacio entre envíos.
 - Los envíos manuales ("ya lo envié") no consumen el cupo de calentamiento.
 - Los emails de ejemplo (`example.com`) no se envían por Resend ni webhook; sí se pueden marcar como enviados manualmente para simular el flujo en demo.
 

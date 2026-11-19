@@ -885,8 +885,11 @@ function renderProducts() {
       <p class="page-sub">Foto, precio, código y notas. Cuanto mejor el punto de partida, mejor el plan que devuelve el equipo.</p>
     </div>
     <div class="page-actions">
+      <button class="btn btn-ghost" type="button" data-action="import-products">${icon('upload')} Importar CSV</button>
+      <button class="btn btn-ghost" type="button" data-action="campaign-catalog" ${products.length ? '' : 'disabled'}>${icon('spark')} Campaña de catálogo</button>
       <button class="btn btn-primary" type="button" data-action="new-product">${icon('plus')} Nueva lámpara</button>
     </div>
+    <input type="file" id="product-import-input" accept=".csv,text/csv" hidden>
   </div>
 
   ${products.length ? `
@@ -965,6 +968,88 @@ function bindProducts() {
       const count = $('#product-count');
       if (count) count.textContent = `${filteredProducts().length} ${filteredProducts().length === 1 ? 'producto' : 'productos'}`;
     });
+  }
+  const importInput = $('#product-import-input');
+  if (importInput) {
+    importInput.addEventListener('change', async () => {
+      const file = importInput.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const result = await api('/api/products/import', {
+          method: 'POST',
+          headers: { 'content-type': 'text/csv' },
+          body: text,
+        });
+        const extras = (result.skipped?.length || 0) + (result.errors?.length || 0);
+        toast(`Importados ${result.created} producto${result.created === 1 ? '' : 's'}${extras ? ` · ${extras} fila${extras === 1 ? '' : 's'} omitida${extras === 1 ? '' : 's'}` : ''}.`);
+        await loadState();
+      } catch (error) {
+        toast(error.message || 'No se pudo importar el CSV.', 'error');
+      } finally {
+        importInput.value = '';
+      }
+    });
+  }
+}
+
+function openCampaignModal() {
+  const products = arr(S.state.products).filter((product) => product.status !== 'archivado');
+  if (!products.length) {
+    toast('Cargá al menos un producto activo antes de lanzar una campaña.', 'error');
+    return;
+  }
+  const settings = S.state.settings || {};
+  const markets = arr(settings.mission?.markets).filter(Boolean);
+  const depth = settings.mission?.depth || 'rapida';
+  openModal({
+    title: 'Campaña de catálogo',
+    subtitle: `${products.length} producto${products.length === 1 ? '' : 's'} · una misión por producto, en cola`,
+    body: `<form id="campaign-form" autocomplete="off">
+      <div class="form-grid">
+        <div class="field full"><label for="campaign-strategy">Cómo repartir los mercados</label>
+          <select class="select" id="campaign-strategy" name="strategy">
+            <option value="rotate">Rotar: cada producto va a un mercado distinto (recomendado)</option>
+            <option value="all">Todos los mercados para cada producto</option>
+          </select>
+          <p class="field-hint">Rotar evita golpear la misma lista de compradores con todo el catálogo el mismo día y estira la cuota de búsqueda.</p>
+        </div>
+        <div class="field full"><label for="campaign-markets">Mercados</label><input class="input" id="campaign-markets" name="markets" value="${attr(markets.join(', '))}" placeholder="España, México, Estados Unidos"><p class="field-hint">Separados por coma. Se usan los de Ajustes → Misión si lo dejás vacío.</p></div>
+        <div class="field"><label for="campaign-depth">Profundidad</label><select class="select" id="campaign-depth" name="depth">
+          ${[['rapida', 'Rápida'], ['estandar', 'Estándar'], ['profunda', 'Profunda']].map(([value, label]) => `<option value="${value}" ${depth === value ? 'selected' : ''}>${label}</option>`).join('')}
+        </select></div>
+        <div class="field"><label for="campaign-name">Nombre</label><input class="input" id="campaign-name" name="name" placeholder="Catálogo de temporada"></div>
+      </div>
+      <div class="artifact-callout mt-3"><b>Qué va a pasar</b>Lumbre crea una misión por producto. Las misiones esperan en cola de a dos, buscan compradores, verifican y dejan los borradores en la bandeja. Nada se envía sin tu aprobación (salvo que actives el piloto automático).</div>
+    </form>`,
+    footer: `<button class="btn btn-ghost" type="button" data-action="close-modal">Cancelar</button>
+      <button class="btn btn-primary" type="button" data-action="launch-campaign">${icon('spark')} Lanzar campaña</button>`,
+  });
+}
+
+async function launchCampaign() {
+  const form = $('#campaign-form');
+  if (!form) return;
+  const fd = new FormData(form);
+  const markets = String(fd.get('markets') || '').split(/[,;\n]+/).map((market) => market.trim()).filter(Boolean);
+  try {
+    const result = await api('/api/campaigns', {
+      method: 'POST',
+      body: {
+        marketStrategy: String(fd.get('strategy') || 'rotate'),
+        markets,
+        depth: String(fd.get('depth') || ''),
+        name: String(fd.get('name') || '').trim(),
+      },
+    });
+    closeModal(true);
+    const created = result.campaign?.created?.length || 0;
+    const skipped = result.campaign?.skipped?.length || 0;
+    toast(`Campaña creada: ${created} misión${created === 1 ? '' : 'es'} en cola${skipped ? ` · ${skipped} producto${skipped === 1 ? '' : 's'} omitido${skipped === 1 ? '' : 's'}` : ''}.`);
+    await loadState();
+    navigate('#/misiones');
+  } catch (error) {
+    toast(error.message || 'No se pudo lanzar la campaña.', 'error');
   }
 }
 
@@ -1145,6 +1230,7 @@ function renderMissions() {
       <p class="page-sub">Cada pasada del equipo investiga, calcula, escribe y se contradice antes de darte un plan. Podés seguirla en vivo o leer el resultado cuando termine.</p>
     </div>
     <div class="page-actions">
+      ${arr(S.state.products).length ? `<button class="btn btn-ghost" type="button" data-action="campaign-catalog">${icon('spark')} Campaña de catálogo</button>` : ''}
       <button class="btn btn-primary" type="button" data-action="new-mission">${icon('plus')} Nueva misión</button>
     </div>
   </div>
@@ -2927,7 +3013,7 @@ function renderTeam() {
     </form>
     ${!S.state.flags?.ai ? '<div class="artifact-callout warn mt-3"><b>Modo demo</b>Sin una IA configurada, las respuestas son ejemplos del sistema. Configurá un proveedor en Ajustes para consultas reales sobre tus datos.</div>' : ''}
     ${ask.result ? `<div class="answer-box">
-      <div class="answer-head">${agentAvatar(ask.result.agent?.id || ask.agentId)}<div><b style="font-size:13px">${esc(ask.result.agent?.name || agentById(ask.agentId).name)}</b><p class="tiny muted">${ask.result.demo ? 'Respuesta de ejemplo' : 'Consulta real sobre tus datos'}${ask.result.usage?.total_tokens ? ` · ${numFmt(ask.result.usage.total_tokens)} tokens` : ''}</p></div></div>
+      <div class="answer-head">${agentAvatar(ask.result.agent?.id || ask.agentId)}<div><b style="font-size:13px">${esc(ask.result.agent?.name || agentById(ask.agentId).name)}</b><p class="tiny muted">${ask.result.demo ? 'Respuesta de ejemplo' : 'Consulta real sobre tus datos'}${(ask.result.usage?.total ?? ask.result.usage?.total_tokens) ? ` · ${numFmt(ask.result.usage?.total ?? ask.result.usage?.total_tokens)} tokens` : ''}</p></div></div>
       <div class="answer-text">${esc(ask.result.answer || '')}</div>
       <div class="artifact-chips mt-3">${copyButton(ask.result.answer || '', 'Copiar respuesta')}${ask.result.note ? `<span class="tiny muted" style="align-self:center">${esc(ask.result.note)}</span>` : ''}</div>
     </div>` : ''}
@@ -3436,11 +3522,23 @@ function settingsEmailHTML() {
       <div class="field full"><label for="email-webhook-token">Token para correos entrantes</label><div class="secret-row"><input class="input" id="email-webhook-token" name="webhookToken" type="password" value="${attr(email.webhookToken || '')}" placeholder="Una frase larga y secreta" autocomplete="new-password"><button class="btn btn-ghost btn-sm" type="button" data-action="clear-secret" data-path="email.webhookToken">Borrar</button></div><p class="field-hint">Protege <code>/api/webhooks/email</code>. Si no hay token, Lumbre solo acepta correos entrantes desde esta computadora. Para recibir respuestas desde internet, configurá uno acá o en <code>LUMBRE_WEBHOOK_TOKEN</code>.</p></div>
       <div class="field"><label for="email-limit">Límite diario</label><input class="input" id="email-limit" name="dailyLimit" type="number" min="1" max="200" value="${attr(email.dailyLimit || 20)}"><p class="field-hint">Hoy: ${num(limits.used)} de ${num(limits.limit || email.dailyLimit || 20)}${limits.warmup ? ` · calentamiento, día ${num(limits.day)}` : ''}.</p></div>
       <div class="field"><label class="switch" style="margin-top:24px"><input type="checkbox" name="warmup" ${email.warmup ? 'checked' : ''}><span class="track"></span><span>Calentamiento gradual</span></label><p class="field-hint">Empieza con pocos envíos por día y sube de a poco. Mejor reputación, menos spam.</p></div>
-      <div class="field full"><label for="email-footer">Pie de cumplimiento</label><textarea class="textarea" id="email-footer" name="footer" rows="4" placeholder="Ej.: Recibís este correo porque tu tienda trabaja con diseño. Podés responder “baja” para no recibir más.">${esc(email.footer || '')}</textarea><p class="field-hint">Se agrega al final de cada correo. Incluí cómo darse de baja y tus datos de contacto.</p></div>
+      <div class="field full"><label for="email-footer">Pie de cumplimiento</label><textarea class="textarea" id="email-footer" name="footer" rows="4" placeholder="Ej.: Recibís este correo porque tu tienda trabaja con diseño. Podés responder “baja” para no recibir más.">${esc(email.footer || '')}</textarea><p class="field-hint">Se agrega al final de cada correo. Lumbre ya incluye la baja y tu identidad (marca, dirección y web).</p></div>
+    </div>
+
+    <div class="form-section">
+      <p class="form-section-title">Piloto automático · opcional</p>
+      <p class="form-section-sub">Cuando lo activás, Lumbre envía solo los borradores que ya pasaron cumplimiento y red team, respetando el límite diario y el calentamiento. Si algo no cuadra, ese mensaje se detiene y te avisa.</p>
+      <div class="form-grid">
+        <div class="field full"><label class="switch"><input type="checkbox" name="emailAutopilot" ${email.autopilot ? 'checked' : ''}><span class="track"></span><span>Enviar automáticamente los borradores listos</span></label><p class="field-hint">Requiere Resend o webhook. En modo manual no se activa: marcar como enviado sin enviar sería un engaño.</p></div>
+        <div class="field"><label for="email-spacing">Minutos entre envíos</label><input class="input" id="email-spacing" name="autopilotSpacingMin" type="number" min="1" max="120" value="${attr(email.autopilotSpacingMin || 5)}"><p class="field-hint">Un ritmo humano reduce el riesgo de spam.</p></div>
+        <div class="field"><label class="switch" style="margin-top:24px"><input type="checkbox" name="emailFollowUps" ${email.followUps !== false ? 'checked' : ''}><span class="track"></span><span>Preparar seguimientos</span></label><p class="field-hint">Día 4 y día 10. Se detienen si hay respuesta o baja.</p></div>
+        <div class="field"><label class="switch" style="margin-top:24px"><input type="checkbox" name="emailPostSales" ${email.postSales !== false ? 'checked' : ''}><span class="track"></span><span>Postventa (fidelización)</span></label><p class="field-hint">Al marcar ganado: agradecimiento al día 3, feedback al día 30 y reorden al día 90. Sin piloto quedan “Por aprobar”.</p></div>
+      </div>
+      ${S.state.outbox?.enabled ? `<div class="artifact-callout mt-2"><b>Cola de salida</b>${num(S.state.outbox.pending)} pendiente${num(S.state.outbox.pending) === 1 ? '' : 's'} · ${num(S.state.outbox.sent)} enviado${num(S.state.outbox.sent) === 1 ? '' : 's'}${S.state.outbox.nextAt ? ` · próximo ${new Date(S.state.outbox.nextAt).toLocaleString()}` : ''}.</div>` : ''}
     </div>
     ${testResultBox('resend')}
     ${testResultBox('email')}
-    <div class="artifact-callout warn mt-3"><b>Nada se envía solo</b>Cada mensaje pasa por tu revisión. Los contactos de ejemplo terminan en example.com y están bloqueados para envíos reales.</div>`;
+    <div class="artifact-callout ${email.autopilot ? 'warn' : ''} mt-3"><b>${email.autopilot ? 'El piloto automático está activo' : 'Nada se envía solo'}</b>${email.autopilot ? 'Solo salen borradores aprobados por las guardas, con cupo y pausas. Podés apagarlo en cualquier momento.' : 'Cada mensaje pasa por tu revisión. Los contactos de ejemplo terminan en example.com y están bloqueados para envíos reales.'}</div>`;
   return settingsForm('correo', 'Cómo salen los mensajes', 'Empezá en manual. Cuando tengas dominio propio y confianza, conectá Resend o tu webhook.', body, 'El límite diario y el calentamiento se aplican a los envíos reales.');
 }
 
@@ -3789,6 +3887,10 @@ async function saveSettings(form) {
         warmup: check('warmup'),
         webhookUrl: val('webhookUrl'),
         webhookToken: val('webhookToken'),
+        autopilot: check('emailAutopilot'),
+        autopilotSpacingMin: Math.max(1, Math.min(120, Math.round(num(val('autopilotSpacingMin'), 5)))),
+        followUps: check('emailFollowUps'),
+        postSales: check('emailPostSales'),
       },
     };
   } else if (tab === 'notificaciones') {
@@ -4267,6 +4369,9 @@ async function handleAction(action, el) {
     case 'toggle-mobile-nav': toggleMobileNav(); return;
     case 'reload-state': await loadState(); return;
     case 'new-product': openProductModal(); return;
+    case 'import-products': $('#product-import-input')?.click(); return;
+    case 'campaign-catalog': openCampaignModal(); return;
+    case 'launch-campaign': await launchCampaign(); return;
     case 'edit-product': openProductModal(el.dataset.id); return;
     case 'delete-product': await deleteProduct(el.dataset.id); return;
     case 'save-product': await saveProduct(); return;

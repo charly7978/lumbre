@@ -223,6 +223,51 @@ const afterInbound = await api('/api/state');
 const newThread = afterInbound.threads.find((t) => t.contact?.email === 'marta@luzdeautor.test');
 console.log('new inbound thread', newThread?.contact?.company, newThread?.stage, newThread?.messageCount);
 console.log('intel countries', (await api('/api/intel')).countries.length);
+
+/* 10. Importación de catálogo por CSV. */
+const csv = [
+  'nombre,codigo,precio,costo,moneda,estado,materiales',
+  'Lámpara CSV Uno,CSV-1,120,40,USD,listo,PLA',
+  'Lámpara CSV Dos,CSV-2,"95,50",30,USD,borrador,PLA',
+  'Lámpara CSV Dos,CSV-3,100,30,USD,borrador,PLA',
+].join('\n');
+const imported = await fetch(`${base}/api/products/import`, {
+  method: 'POST',
+  headers: { 'content-type': 'text/csv' },
+  body: csv,
+}).then(async (response) => ({ status: response.status, data: await response.json() }));
+console.log('csv import', imported.status, imported.data.created, imported.data.skipped?.length);
+if (imported.data.created !== 2 || imported.data.skipped?.length !== 1) process.exitCode = 1;
+const csvTarget = imported.data.products.find((product) => /CSV Dos/.test(product.name));
+if (!csvTarget) {
+  console.log('csv target missing');
+  process.exitCode = 1;
+}
+const csvProduct = (await api(`/api/products/${csvTarget.id}`)).product;
+console.log('csv price', csvProduct.price, '| status', csvProduct.status, '| code', csvTarget.code);
+if (csvProduct.price !== 95.5) process.exitCode = 1;
+if (csvProduct.status !== 'borrador') process.exitCode = 1;
+
+/* 11. Campaña de catálogo: una misión por producto, mercados rotados. */
+const campaign = await api('/api/campaigns', {
+  method: 'POST',
+  body: JSON.stringify({
+    productIds: imported.data.products.map((product) => product.id),
+    markets: ['España', 'México'],
+    marketStrategy: 'rotate',
+    depth: 'rapida',
+    mode: 'demo',
+    name: 'Prueba de catálogo',
+  }),
+});
+const campaignMissions = campaign.campaign?.created || [];
+console.log('campaign', campaign.campaign?.campaignId, campaignMissions.length, campaignMissions.map((m) => m.markets.join('/')));
+if (campaignMissions.length !== 2 || campaignMissions[0].markets[0] === campaignMissions[1].markets[0]) process.exitCode = 1;
+const campaignState = await api('/api/state');
+const queuedCampaign = campaignState.missions.filter((m) => m.campaignId === campaign.campaign.campaignId);
+console.log('campaign queued', queuedCampaign.length, queuedCampaign.map((m) => m.status).join(','));
+if (queuedCampaign.length !== 2) process.exitCode = 1;
+
 await api('/api/demo', { method: 'DELETE' });
 state = await api('/api/state');
 console.log('after clear demo', state.counts, 'products', state.products.length, 'threads', state.threads.length);

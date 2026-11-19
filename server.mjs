@@ -25,6 +25,7 @@ import {
 } from './lib/agents.mjs';
 import { DEPTHS, STEPS } from './lib/prompts.mjs';
 import { clearDemo, seedDemo } from './lib/demo.mjs';
+import { Outbox } from './lib/outbox.mjs';
 import { createZip, readZip } from './lib/zip.mjs';
 import { productReadiness } from './lib/readiness.mjs';
 
@@ -149,6 +150,8 @@ function missionSummary(mission) {
     goal: mission.goal,
     markets: mission.markets,
     depth: mission.depth,
+    campaignId: mission.campaignId || null,
+    campaignName: mission.campaignName || '',
     status: mission.status,
     phase: mission.phase,
     progress: mission.progress || 0,
@@ -296,6 +299,41 @@ const notifier = new Notifier({
 });
 notifier.start();
 
+const outbox = new Outbox({
+  store,
+  deliver: async ({ threadId, draftId }) => {
+    const settings = store.settings();
+    const channel = settings.email?.provider === 'resend' ? 'resend' : 'webhook';
+    return sendThreadMessage(threadId, { draftId, channel });
+  },
+  notify: notifier,
+});
+outbox.start();
+
+/* Una campaña de catálogo puede dejar misiones en cola durante horas. Si
+   Lumbre se reinicia, esos temporizadores en memoria se pierden. Acá se
+   retoman las misiones que nunca llegaron a empezar, en orden de creación.
+   Las que estaban "running" las libera releaseInterruptedMissions para que
+   el dueño pueda reintentarlas sin perder lo ya hecho. */
+function resumeQueuedMissions() {
+  const queued = store.get('missions')
+    .filter((mission) => mission && mission.status === 'queued')
+    .sort((a, b) => (Date.parse(a.createdAt || 0) || 0) - (Date.parse(b.createdAt || 0) || 0));
+  for (const mission of queued) {
+    setTimeout(() => {
+      runMission(mission.id, {
+        store,
+        broadcast,
+        notifier,
+        onMissionFinished: (finished) => outbox.scheduleMission(finished),
+      }).catch((error) => console.error('[Lumbre] No se pudo retomar una misión en cola:', error));
+    }, 500);
+  }
+  return queued.length;
+}
+const resumedQueued = resumeQueuedMissions();
+if (resumedQueued) console.log(`  Misiones en cola retomadas: ${resumedQueued}.`);
+
 function statePayload() {
   const settings = store.settings();
   const products = store.get('products');
@@ -353,6 +391,7 @@ function statePayload() {
       replies: threads.reduce((acc, t) => acc + (t.messages || []).filter((m) => m.direction === 'in').length, 0),
     },
     limits: dailyLimitInfo(settings, threads),
+    outbox: outbox.status(),
     usage: meta.agentUsage || {},
     intel: buildIntel(missions),
   };
@@ -409,6 +448,124 @@ function productFields(body, existing, id) {
     notes: asString(body.notes ?? existing?.notes),
     status,
   };
+}
+
+/* Importación de catálogo por CSV. Sin dependencias y tolerante a exceles:
+   acepta coma o punto y coma, encabezados en español o inglés y números con
+   coma decimal. No crea duplicados por código ni por nombre. */
+function parseCsvRows(text) {
+  const source = String(text || '').replace(/^\uFEFF/, '');
+  const firstLine = source.split(/\r?\n/)[0] || '';
+  const delimiter = (firstLine.match(/;/g) || []).length > (firstLine.match(/,/g) || []).length ? ';' : ',';
+  const rows = [];
+  let row = [];
+  let field = '';
+  let quoted = false;
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index];
+    if (quoted) {
+      if (char === '"' && source[index + 1] === '"') { field += '"'; index += 1; }
+      else if (char === '"') quoted = false;
+      else field += char;
+      continue;
+    }
+    if (char === '"') { quoted = true; continue; }
+    if (char === delimiter) { row.push(field); field = ''; continue; }
+    if (char === '\n') { row.push(field); rows.push(row); row = []; field = ''; continue; }
+    if (char === '\r') continue;
+    field += char;
+  }
+  row.push(field);
+  if (row.some((value) => String(value).trim())) rows.push(row);
+  return rows.filter((cells) => cells.some((cell) => String(cell).trim()));
+}
+
+function normalizeHeader(value) {
+  return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '');
+}
+
+function csvNumber(value) {
+  const raw = String(value ?? '').replace(/[^\d.,-]/g, '').trim();
+  if (!raw) return 0;
+  if (raw.includes(',') && raw.includes('.')) return asNumber(raw.replace(/\./g, '').replace(',', '.'), 0);
+  return asNumber(raw.replace(',', '.'), 0);
+}
+
+const CSV_ALIASES = {
+  name: ['nombre', 'name', 'producto', 'product', 'titulo', 'title'],
+  code: ['codigo', 'code', 'sku', 'referencia', 'ref'],
+  category: ['categoria', 'category', 'tipo', 'type'],
+  price: ['precio', 'price', 'precioventa', 'preciodeventa', 'saleprice'],
+  cost: ['costo', 'cost', 'coste', 'costoproduccion', 'productioncost'],
+  currency: ['moneda', 'currency', 'divisa'],
+  status: ['estado', 'status', 'situacion'],
+  description: ['descripcion', 'description', 'detalle', 'detalles'],
+  notes: ['notas', 'notes', 'observaciones', 'comentarios'],
+  materials: ['materiales', 'materials', 'material', 'terminacion'],
+  weightGrams: ['peso', 'pesogramos', 'weight', 'weightgrams', 'pesogr'],
+  dimensions: ['medidas', 'dimensions', 'dimensiones', 'tamano'],
+};
+
+function mapCsvRow(headers, cells) {
+  const values = {};
+  headers.forEach((header, index) => {
+    for (const [key, aliases] of Object.entries(CSV_ALIASES)) {
+      if (aliases.includes(header)) { values[key] = cells[index] ?? ''; break; }
+    }
+  });
+  return values;
+}
+
+async function importProductsCsv(text) {
+  const rows = parseCsvRows(text);
+  if (rows.length < 2) throw new HttpError(400, 'El CSV necesita una fila de encabezados y al menos un producto.');
+  if (rows.length > 501) throw new HttpError(400, 'Máximo 500 productos por importación. Dividí el archivo.');
+  const headers = rows[0].map(normalizeHeader);
+  if (!headers.some((header) => CSV_ALIASES.name.includes(header))) {
+    throw new HttpError(400, 'Falta la columna de nombre. Usá "nombre" o "name" en la primera fila.');
+  }
+  const products = store.get('products');
+  const existingCodes = new Set(products.map((product) => String(product.code || '').toLowerCase()).filter(Boolean));
+  const existingNames = new Set(products.map((product) => normalizeCompany(product.name)));
+  const now = nowISO();
+  const created = [];
+  const skipped = [];
+  const errors = [];
+
+  for (let index = 1; index < rows.length; index += 1) {
+    const values = mapCsvRow(headers, rows[index]);
+    const name = asString(values.name).trim();
+    if (!name) { errors.push({ row: index + 1, reason: 'sin nombre' }); continue; }
+    const code = asString(values.code).trim();
+    if (code && existingCodes.has(code.toLowerCase())) { skipped.push({ row: index + 1, name, reason: `código ${code} ya existe` }); continue; }
+    if (existingNames.has(normalizeCompany(name))) { skipped.push({ row: index + 1, name, reason: 'nombre ya existe' }); continue; }
+    const id = uid('prd');
+    const fields = productFields({
+      name,
+      code,
+      category: asString(values.category).trim() || 'Lámpara',
+      price: csvNumber(values.price),
+      cost: csvNumber(values.cost),
+      currency: asString(values.currency).trim() || store.settings().brand.currency || 'USD',
+      status: asString(values.status).trim() || 'borrador',
+      description: asString(values.description),
+      notes: asString(values.notes),
+      materials: asString(values.materials),
+      weightGrams: csvNumber(values.weightGrams),
+      dimensions: asString(values.dimensions),
+    }, null, id);
+    const product = { id, ...fields, photos: [], demo: false, createdAt: now, updatedAt: now };
+    products.unshift(product);
+    existingNames.add(normalizeCompany(name));
+    if (product.code) existingCodes.add(product.code.toLowerCase());
+    created.push({ id, name: product.name, code: product.code });
+  }
+
+  if (created.length) {
+    await store.set('products', products);
+    await store.activity('product', `Importación CSV: ${created.length} productos creados.`, { created: created.length });
+  }
+  return { created: created.length, products: created, skipped, errors };
 }
 
 async function createProduct(body) {
@@ -494,6 +651,8 @@ async function createMission(body) {
     budget: Math.max(0, asNumber(body.budget, 0)),
     maxProspects: clamp(asNumber(body.maxProspects, settings.mission.maxProspects || 12), 1, 40),
     notes: asString(body.notes),
+    campaignId: asString(body.campaignId) || null,
+    campaignName: asString(body.campaignName) || '',
     status: 'queued',
     phase: 'queued',
     progress: 0,
@@ -518,11 +677,67 @@ async function createMission(body) {
   await store.set('missions', store.get('missions'));
   await store.activity('mission', `Misión creada: ${mission.name}${demo ? ' (demo)' : ''}.`, { missionId: id, demo });
   setTimeout(() => {
-    runMission(id, { store, broadcast, notifier }).catch((error) => {
+    runMission(id, { store, broadcast, notifier, onMissionFinished: (mission) => outbox.scheduleMission(mission) }).catch((error) => {
       console.error('[Lumbre] Error no controlado en la misión:', error);
     });
   }, 80);
   return mission;
+}
+
+/* Campaña de catálogo: una misión por producto, en cola.
+   La estrategia "rotate" asigna un mercado distinto a cada producto para no
+   golpear la misma lista de compradores con todo el catálogo el mismo día.
+   Es la forma correcta de cargar 20 artículos sin convertir la bandeja en
+   un embudo de duplicados. */
+async function createCampaign(body = {}) {
+  const settings = store.settings();
+  const requested = asArray(body.productIds).map((id) => asString(id)).filter(Boolean);
+  const all = store.get('products');
+  const pool = (requested.length ? all.filter((product) => requested.includes(product.id)) : all)
+    .filter((product) => product.status !== 'archivado')
+    .sort((a, b) => (a.status === 'listo' ? -1 : 0) - (b.status === 'listo' ? -1 : 0));
+  if (!pool.length) throw new HttpError(400, 'No hay productos activos para lanzar una campaña.');
+  const active = new Set(store.get('missions').filter((mission) => ['running', 'queued'].includes(mission.status)).map((mission) => mission.productId));
+  const markets = [...new Set(asArray(body.markets).map((market) => asString(market).trim()).filter(Boolean))].slice(0, 6);
+  const finalMarkets = markets.length ? markets : asArray(settings.mission.markets).slice(0, 6);
+  const strategy = body.marketStrategy === 'all' ? 'all' : 'rotate';
+  const depth = DEPTHS[body.depth] ? body.depth : settings.mission.depth || 'estandar';
+  const campaignId = uid('cmp');
+  const campaignName = asString(body.name).trim() || `Catálogo · ${new Date().toISOString().slice(0, 10)}`;
+  const created = [];
+  const skipped = [];
+
+  for (let index = 0; index < pool.length; index += 1) {
+    const product = pool[index];
+    if (active.has(product.id)) {
+      skipped.push({ productId: product.id, name: product.name, reason: 'ya tiene una misión en curso' });
+      continue;
+    }
+    const assigned = strategy === 'rotate'
+      ? [finalMarkets[index % finalMarkets.length]].filter(Boolean)
+      : finalMarkets;
+    try {
+      const mission = await createMission({
+        ...body,
+        // El nombre de la campaña describe el lote; cada misión se nombra
+        // por su producto y mercado para que la bandeja siga siendo legible.
+        name: `${product.name} · ${assigned[0] || 'Mercado global'}`,
+        productId: product.id,
+        markets: assigned,
+        depth,
+        campaignId,
+        campaignName,
+      });
+      created.push({ id: mission.id, name: mission.name, productId: product.id, markets: mission.markets });
+      active.add(product.id);
+    } catch (error) {
+      skipped.push({ productId: product.id, name: product.name, reason: error.message || 'no se pudo crear' });
+    }
+  }
+
+  if (!created.length) throw new HttpError(400, 'No se pudo crear ninguna misión. Revisá los productos y los mercados.');
+  await store.activity('mission', `Campaña creada: ${campaignName}. ${created.length} misiones en cola.`, { campaignId });
+  return { campaignId, name: campaignName, strategy, markets: finalMarkets, created, skipped };
 }
 
 async function retryMission(id) {
@@ -597,7 +812,7 @@ async function retryMission(id) {
   const done = (mission.steps || []).filter((s) => s.status === 'done').length;
   mission.progress = Math.round((done / Math.max(1, mission.steps.length)) * 100);
   await store.activity('mission', `Misión reintentada: ${mission.name}.`, { missionId: id });
-  setTimeout(() => runMission(id, { store, broadcast, notifier }).catch((error) => console.error(error)), 80);
+  setTimeout(() => runMission(id, { store, broadcast, notifier, onMissionFinished: (mission) => outbox.scheduleMission(mission) }).catch((error) => console.error(error)), 80);
   return mission;
 }
 
@@ -693,9 +908,30 @@ async function sendThreadMessage(threadId, body) {
   if (thread.stage === 'nuevo') thread.stage = 'contactado';
   thread.lastActivityAt = now;
   thread.updatedAt = now;
+ audit/ventas-2026-11-19
   thread.nextStep = 'Seguimiento con valor en 4 días.';
   thread.nextFollowUp = new Date(Date.now() + 4 * 86400000).toISOString();
   try { await store.set('threads', threads); } finally { dispatchInProgress.delete(dispatchKey); }
+
+  if (draft.source === 'seguimiento') {
+    // Un seguimiento cuenta una sola vez y agenda el siguiente paso.
+    // El paso 3 cierra la secuencia: no se vuelve a escribir.
+    thread.followUpCount = Number(thread.followUpCount || 0) + 1;
+    thread.nextStep = thread.followUpCount >= 2 ? 'Secuencia cerrada; esperar respuesta.' : 'Siguiente seguimiento en 6 días.';
+    thread.nextFollowUp = thread.followUpCount >= 2 ? null : new Date(Date.now() + 6 * 86400000).toISOString();
+  } else if (draft.source === 'postventa') {
+    // Un toque de postventa cuenta y NO agenda un seguimiento frío para
+    // un cliente que ya compró: la relación la sigue la postventa.
+    thread.postSaleCount = Number(thread.postSaleCount || 0) + 1;
+    thread.postSaleAt = thread.postSaleAt || now;
+    thread.nextFollowUp = null;
+    thread.nextStep = thread.postSaleCount >= 3 ? 'Postventa cerrada; reorden solo si escriben.' : 'Próximo toque de postventa según calendario.';
+  } else {
+    thread.nextStep = 'Seguimiento con valor en 4 días.';
+    thread.nextFollowUp = new Date(Date.now() + 4 * 86400000).toISOString();
+  }
+  await store.set('threads', threads);
+ main
   await store.activity('outreach', `Mensaje ${channel === 'manual' ? 'marcado como enviado' : 'enviado'} a ${thread.contact?.company || message.to || 'el contacto'}.`, { threadId, channel });
   return { thread, message: sent, draft };
 }
@@ -1123,6 +1359,25 @@ async function handle(req, res) {
     return;
   }
 
+  if (pathname === '/api/outbox' && method === 'GET') {
+    json(res, 200, { ...outbox.status(), items: outbox.items().slice(0, 60) });
+    return;
+  }
+
+  if (pathname === '/api/outbox/enqueue-ready' && method === 'POST') {
+    const result = await outbox.enqueueAllReady();
+    outbox.tick().catch(() => {});
+    json(res, 200, { ok: true, ...result, outbox: outbox.status() });
+    return;
+  }
+
+  const outboxCancel = pathname.match(/^\/api\/outbox\/([^/]+)\/cancel$/);
+  if (outboxCancel && method === 'POST') {
+    const ok = await outbox.cancel(decodeURIComponent(outboxCancel[1]));
+    json(res, ok ? 200 : 404, { ok, outbox: outbox.status() });
+    return;
+  }
+
   if (pathname === '/api/settings' && method === 'PUT') {
     const body = await readJson(req);
     const prevToken = store.settings()?.notify?.telegram?.token;
@@ -1181,6 +1436,13 @@ async function handle(req, res) {
     return;
   }
 
+  if (pathname === '/api/products/import' && method === 'POST') {
+    const buffer = await readBody(req, 5 * 1024 * 1024);
+    const result = await importProductsCsv(buffer.toString('utf8'));
+    json(res, 201, result);
+    return;
+  }
+
   const productMatch = pathname.match(/^\/api\/products\/([^/]+)$/);
   if (productMatch) {
     const id = decodeURIComponent(productMatch[1]);
@@ -1218,6 +1480,13 @@ async function handle(req, res) {
     const body = await readJson(req);
     const mission = await createMission(body);
     json(res, 201, { mission });
+    return;
+  }
+
+  if (pathname === '/api/campaigns' && method === 'POST') {
+    const body = await readJson(req);
+    const campaign = await createCampaign(body);
+    json(res, 201, { campaign });
     return;
   }
 
@@ -1339,6 +1608,8 @@ async function handle(req, res) {
         }
         if (target.stage !== body.stage) {
           await store.activity('reply', `${target.contact?.company || 'Contacto'} pasó a etapa ${body.stage}.`, { threadId: id });
+          // Ganada una venta, arranca el reloj de postventa (día 3/30/90).
+          if (body.stage === 'ganado' && !target.postSaleAt) target.postSaleAt = nowISO();
         }
         target.stage = body.stage;
       }
@@ -1925,12 +2196,50 @@ for (let attempt = 0; attempt < 8; attempt += 1) {
 const url = `http://localhost:${port}`;
 const settings = store.settings();
 const aiLabel = isAIReady(settings) ? `${settings.ai.provider} · ${resolveAIConfig(settings).model}` : 'modo demo (sin clave de IA)';
+
+/* Panel de listo para funcionar: solo conteos y booleanos. Nunca imprime
+   claves ni tokens. Sirve para saber de un vistazo qué está pendiente antes
+   de abrir el navegador. */
+function readinessLines() {
+  const threads = store.get('threads') || [];
+  const drafts = threads.flatMap((t) => t.drafts || []);
+  const pending = drafts.filter((d) => d.status === 'listo').length;
+  const reviewing = drafts.filter((d) => d.status === 'revisar').length;
+  const won = threads.filter((t) => t.stage === 'ganado').length;
+  const open = threads.filter((t) => ['respondio', 'interesado', 'negociando'].includes(t.stage)).length;
+  const email = settings.email || {};
+  const emailLabel = email.provider === 'manual'
+    ? 'manual (nada sale solo)'
+    : email.provider === 'resend'
+      ? (email.resendKey ? 'Resend conectado' : 'Resend elegido pero sin clave')
+      : email.provider === 'webhook'
+        ? (email.webhookUrl ? 'webhook configurado' : 'webhook elegido pero sin URL')
+        : `${email.provider}`;
+  const tg = settings.notify?.telegram;
+  const telegramLabel = tg?.enabled && tg?.token && tg?.chatId ? `configurado (avisos día ${tg.digestHour ?? 9}:00)` : 'apagado (Ajustes → Notificaciones)';
+  const queued = (store.get('missions') || []).filter((m) => m.status === 'queued').length;
+  const lines = [
+    '  Listo para funcionar:',
+    `  · IA: ${aiLabel}`,
+    `  · Datos: ${DATA_DIR}`,
+    `  · Búsqueda: ${settings.search?.provider || 'duckduckgo'}${settings.search?.provider === 'tavily' && !(settings.search?.tavilyKey || settings.search?.apiKey) ? ' (sin clave: usa solo la rotación sin clave)' : ''}`,
+    `  · Correo: ${emailLabel}${email.autopilot ? ' · piloto automático ACTIVO' : ''}`,
+    `  · Calentamiento: ${email.warmup !== false ? 'activo' : 'desactivado'} · límite diario ${email.dailyLimit ?? 20}`,
+    `  · Telegram (avisos y chat con el equipo): ${telegramLabel}`,
+    `  · Postventa (fidelización día 3/30/90): ${email.postSales !== false ? 'preparada, siempre con tu aprobación' : 'apagada'}`,
+    `  · Seguimientos: ${email.followUps !== false ? 'preparados, siempre con tu aprobación' : 'apagados'}`,
+    `  · Esperando tu decisión: ${pending} listo${pending === 1 ? '' : 's'} y ${reviewing} por revisar`,
+    `  · Conversaciones abiertas que esperan tu respuesta: ${open}${won ? ` · ganadas (con postventa en marcha): ${won}` : ''}`,
+    queued ? `  · Misiones en cola retomadas al arrancar: ${queued}` : null,
+  ].filter(Boolean);
+  return lines;
+}
 console.log('');
 console.log('  LUMBRE · sistema de ventas para lámparas de diseño');
 console.log(`  ${url}`);
-console.log(`  IA: ${aiLabel}`);
-console.log(`  Datos: ${DATA_DIR}`);
 console.log('  Ctrl+C para cerrar.');
+console.log('');
+for (const line of readinessLines()) console.log(line);
 console.log('');
 
 if (!process.env.LUMBRE_NO_OPEN) {
@@ -1945,6 +2254,7 @@ if (!process.env.LUMBRE_NO_OPEN) {
 async function shutdown() {
   console.log('\nCerrando Lumbre…');
   notifier.stop();
+  outbox.stop();
   try { await store.flush(); } catch { /* noop */ }
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(0), 2500).unref();

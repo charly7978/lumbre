@@ -280,6 +280,28 @@ ok(verifiedArtifact.descartados.some((item) => /fuente|sitio/i.test(item.motivo)
   const again = await releaseInterruptedMissions(store);
   ok(again.released === 0, 'la limpieza es idempotente');
 }
+
+/* Las misiones en cola nunca empezaron: no hay nada que liberar. Si se
+   marcaran como error, una campaña de 20 productos quedaría rota tras
+   cualquier reinicio. Se dejan intactas para que el arranque las retome. */
+{
+  const store = await freshStore();
+  const old = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+  await store.set('missions', [{
+    id: 'mis_queued',
+    name: 'En cola',
+    status: 'queued',
+    phase: 'queued',
+    createdAt: old,
+    startedAt: null,
+    updatedAt: old,
+    steps: [{ id: 'brief', title: 'Brief', status: 'pending' }],
+  }]);
+  const result = await releaseInterruptedMissions(store);
+  const queued = store.find('missions', 'mis_queued');
+  ok(result.released === 0, 'no libera una mision que nunca empezo');
+  ok(queued.status === 'queued', 'la deja en cola para retomarla al arrancar');
+}
 for (const dir of dirs) {
   await fs.rm(dir, { recursive: true, force: true });
 }
