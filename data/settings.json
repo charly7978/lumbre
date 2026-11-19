@@ -27,11 +27,11 @@
     "baseUrl": "https://api.groq.com/openai/v1",
     "model": "qwen/qwen3.8-27b",
     "visionModel": "",
-    "temperature": 0.7,
+    "temperature": 0.4,
     "maxTokens": 8192
   },
   "search": {
-    "provider": "tavily",
+    "provider": "duckduckgo",
     "apiKey": "tvly-1lO121-lAImdlZxUAaCdZUr2We6HL49ZXbleImKXdYF9PtJr3",
     "searxUrl": "",
     "depth": "search+pages",
@@ -42,7 +42,7 @@
     "enabled": false
   },
   "email": {
-    "provider": "manual",
+    "provider": "resend",
     "resendKey": "",
     "from": "charlyameghino@gmail.com",
     "replyTo": "charlyameghino@gmail.com",
@@ -55,9 +55,9 @@
   "notify": {
     "paused": false,
     "telegram": {
-      "enabled": false,
-      "token": "",
-      "chatId": "",
+      "enabled": true,
+      "token": "9290322689:AAGwOxYN6OQhkfWKEBFQx-NBOD2sq6GKCVs",
+      "chatId": "5144879357",
       "digestHour": 9
     },
     "whatsapp": {
@@ -78,7 +78,7 @@
     }
   },
   "mission": {
-    "depth": "estandar",
+    "depth": "rapida",
     "markets": [
       "España",
       "México",

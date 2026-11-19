@@ -1,5 +1,287 @@
 [
   {
+    "id": "act_74a05266dcb3",
+    "type": "mission",
+    "text": "Misión iniciada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_8d9e1e639399",
+      "demo": false
+    },
+    "at": "2026-11-19T04:48:04.872Z"
+  },
+  {
+    "id": "act_ec19a5f9b23a",
+    "type": "mission",
+    "text": "Misión creada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_8d9e1e639399",
+      "demo": false
+    },
+    "at": "2026-11-19T04:48:04.783Z"
+  },
+  {
+    "id": "act_09492f5259ea",
+    "type": "settings",
+    "text": "Ajustes actualizados.",
+    "meta": {},
+    "at": "2026-11-19T04:44:05.184Z"
+  },
+  {
+    "id": "act_cab2f12e6ac8",
+    "type": "settings",
+    "text": "Ajustes actualizados.",
+    "meta": {},
+    "at": "2026-11-19T04:43:10.148Z"
+  },
+  {
+    "id": "act_4fd563433147",
+    "type": "settings",
+    "text": "Ajustes actualizados.",
+    "meta": {},
+    "at": "2026-11-19T04:42:46.778Z"
+  },
+  {
+    "id": "act_24309c90d57b",
+    "type": "mission",
+    "text": "Misión con error: SIRI Velador (base alta) · Argentina. Mercado y competencia: 413 Request too large for model `qwen/qwen3.8-27b` in organization `org_01kyftzrnmed6vy7876t7bd4mv` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Requested 7574, please reduce your message size and try again. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing",
+    "meta": {
+      "missionId": "mis_4d7e8c243231",
+      "demo": false
+    },
+    "at": "2026-11-19T04:15:15.620Z"
+  },
+  {
+    "id": "act_8f42dec28d3d",
+    "type": "mission",
+    "text": "Misión eliminada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_683b205a3a45"
+    },
+    "at": "2026-11-19T04:14:44.860Z"
+  },
+  {
+    "id": "act_c0b1dd871711",
+    "type": "mission",
+    "text": "Misión iniciada: SIRI Velador (base alta) · Argentina.",
+    "meta": {
+      "missionId": "mis_4d7e8c243231",
+      "demo": false
+    },
+    "at": "2026-11-19T04:13:33.597Z"
+  },
+  {
+    "id": "act_b1a41d655496",
+    "type": "mission",
+    "text": "Misión creada: SIRI Velador (base alta) · Argentina.",
+    "meta": {
+      "missionId": "mis_4d7e8c243231",
+      "demo": false
+    },
+    "at": "2026-11-19T04:13:33.508Z"
+  },
+  {
+    "id": "act_0f782cd2cf57",
+    "type": "mission",
+    "text": "Misión eliminada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_3bfb16705719"
+    },
+    "at": "2026-11-19T04:12:41.024Z"
+  },
+  {
+    "id": "act_ea2f4190c702",
+    "type": "mission",
+    "text": "Misión iniciada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_980d6581290d",
+      "demo": false
+    },
+    "at": "2026-11-19T04:07:43.575Z"
+  },
+  {
+    "id": "act_fc28d913cc8e",
+    "type": "mission",
+    "text": "Misión creada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_980d6581290d",
+      "demo": false
+    },
+    "at": "2026-11-19T04:07:43.487Z"
+  },
+  {
+    "id": "act_ac3a5e50c384",
+    "type": "mission",
+    "text": "Misión con error: SIRI Velador (base alta) · España. Mensajes de apertura: El proveedor de IA está limitando las consultas (cuota gratuita agotada o demasiadas seguidas). Esperá un minuto o configurá un proveedor con clave.",
+    "meta": {
+      "missionId": "mis_b20d7c24a9c6",
+      "demo": false
+    },
+    "at": "2026-11-19T04:06:05.900Z"
+  },
+  {
+    "id": "act_329df9201f83",
+    "type": "mission",
+    "text": "Misión iniciada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_b20d7c24a9c6",
+      "demo": false
+    },
+    "at": "2026-11-19T04:00:23.842Z"
+  },
+  {
+    "id": "act_62d221d8ba3f",
+    "type": "mission",
+    "text": "Misión creada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_b20d7c24a9c6",
+      "demo": false
+    },
+    "at": "2026-11-19T04:00:23.751Z"
+  },
+  {
+    "id": "act_34ecc38a6a4b",
+    "type": "settings",
+    "text": "Ajustes actualizados.",
+    "meta": {},
+    "at": "2026-11-19T03:58:30.291Z"
+  },
+  {
+    "id": "act_52dc5c55e511",
+    "type": "settings",
+    "text": "Ajustes actualizados.",
+    "meta": {},
+    "at": "2026-11-19T03:57:16.446Z"
+  },
+  {
+    "id": "act_e65971668990",
+    "type": "mission",
+    "text": "Misión con error: SIRI Velador (base alta) · España. Plan final para el dueño: 413 Request too large for model `qwen/qwen3.8-27b` in organization `org_01kyftzrnmed6vy7876t7bd4mv` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Requested 7924, please reduce your message size and try again. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing",
+    "meta": {
+      "missionId": "mis_f33d39e773b0",
+      "demo": false
+    },
+    "at": "2026-11-19T03:45:24.309Z"
+  },
+  {
+    "id": "act_1cbefb8489c7",
+    "type": "mission",
+    "text": "Misión eliminada: Aurora 01 · España.",
+    "meta": {
+      "missionId": "mis_833ed7d79da5"
+    },
+    "at": "2026-11-19T03:42:05.732Z"
+  },
+  {
+    "id": "act_c849d311bb95",
+    "type": "mission",
+    "text": "Misión eliminada: Mazoma · España.",
+    "meta": {
+      "missionId": "mis_fd976e97ac32"
+    },
+    "at": "2026-11-19T03:42:00.365Z"
+  },
+  {
+    "id": "act_dc877e98b4b7",
+    "type": "mission",
+    "text": "Misión eliminada: Mazoma · España.",
+    "meta": {
+      "missionId": "mis_9a29d34e94c8"
+    },
+    "at": "2026-11-19T03:41:55.181Z"
+  },
+  {
+    "id": "act_d3c04b54ead1",
+    "type": "mission",
+    "text": "Misión eliminada: Aurora 01 · España y México.",
+    "meta": {
+      "missionId": "mis_demo_aurora"
+    },
+    "at": "2026-11-19T03:41:50.321Z"
+  },
+  {
+    "id": "act_5c8d620f80dc",
+    "type": "mission",
+    "text": "Misión eliminada: Mazoma · España.",
+    "meta": {
+      "missionId": "mis_0e02b63a3658"
+    },
+    "at": "2026-11-19T03:41:39.418Z"
+  },
+  {
+    "id": "act_ad8546ffc239",
+    "type": "mission",
+    "text": "Misión eliminada: Mazoma · España.",
+    "meta": {
+      "missionId": "mis_31c5b02ed803"
+    },
+    "at": "2026-11-19T03:41:31.421Z"
+  },
+  {
+    "id": "act_e87d709c42c4",
+    "type": "mission",
+    "text": "Misión eliminada: Mazoma · España.",
+    "meta": {
+      "missionId": "mis_75e371da513c"
+    },
+    "at": "2026-11-19T03:41:23.613Z"
+  },
+  {
+    "id": "act_ee6e02263ba2",
+    "type": "mission",
+    "text": "Misión iniciada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_f33d39e773b0",
+      "demo": false
+    },
+    "at": "2026-11-19T03:37:56.557Z"
+  },
+  {
+    "id": "act_bc2370f81ef8",
+    "type": "mission",
+    "text": "Misión creada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_f33d39e773b0",
+      "demo": false
+    },
+    "at": "2026-11-19T03:37:56.465Z"
+  },
+  {
+    "id": "act_866bc51a5d5f",
+    "type": "product",
+    "text": "Producto actualizado: SIRI Velador (base alta).",
+    "meta": {
+      "productId": "prd_8ecb7702a6de"
+    },
+    "at": "2026-11-19T03:36:27.950Z"
+  },
+  {
+    "id": "act_223cf073c4cc",
+    "type": "product",
+    "text": "Producto eliminado: Nube.",
+    "meta": {
+      "productId": "prod_demo_nube"
+    },
+    "at": "2026-11-19T03:35:30.856Z"
+  },
+  {
+    "id": "act_2b4866663f47",
+    "type": "product",
+    "text": "Producto eliminado: Aurora 01.",
+    "meta": {
+      "productId": "prod_demo_aurora"
+    },
+    "at": "2026-11-19T03:35:25.334Z"
+  },
+  {
+    "id": "act_fb6e3a8f8a26",
+    "type": "product",
+    "text": "Producto eliminado: Filo.",
+    "meta": {
+      "productId": "prod_demo_filo"
+    },
+    "at": "2026-11-19T03:35:17.257Z"
+  },
+  {
     "id": "act_91a437ed77d3",
     "type": "mission",
     "text": "Misión con error: SIRI Velador (base alta) · España. El proveedor de IA no tiene saldo suficiente. Cargá crédito o cambiá de proveedor.",
