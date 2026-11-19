@@ -921,6 +921,7 @@ function productGridHTML() {
 }
 
 function productCard(product) {
+  const readiness = product.readiness || { score: 0, warnings: [] };
   const margin = product.price > 0 && product.cost > 0 ? Math.round(((product.price - product.cost) / product.price) * 100) : null;
   return `<article class="product-card">
     <div class="product-photo">
@@ -931,6 +932,7 @@ function productCard(product) {
     <div class="product-body">
       <h3 class="product-name">${esc(product.name)}</h3>
       <p class="product-code">${esc(product.code || 'sin código')} · ${esc(product.category || 'Lámpara')}</p>
+      <p class="small muted">Ficha comercial: ${readiness.score}% ${readiness.warnings.length ? `· Faltan ${readiness.warnings.length} datos` : '· completa'}</p>
       ${product.description ? `<p class="product-desc">${esc(product.description)}</p>` : `<p class="product-desc muted">Sin descripción. Agregá medidas o materiales para que el equipo escriba mejor.</p>`}
       <div class="product-meta">
         ${product.materials ? `<span>${icon('factory')} ${esc(truncate(product.materials, 34))}</span>` : ''}
@@ -1000,6 +1002,9 @@ function openProductModal(id = null) {
         <div class="field"><label for="pf-currency">Moneda</label><select class="select" id="pf-currency" name="currency">${CURRENCIES.map((c) => `<option value="${c}" ${(product?.currency || settings.mission?.currency || b.currency || 'USD') === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
         <div class="field"><label for="pf-cost">Costo de producción</label><input class="input" id="pf-cost" name="cost" type="number" min="0" step="0.01" value="${attr(product?.cost ?? '')}" placeholder="80"><p class="field-hint">Materiales, impresión, terminación y packaging.</p></div>
         <div class="field"><label for="pf-weight">Peso (gramos)</label><input class="input" id="pf-weight" name="weightGrams" type="number" min="0" step="1" value="${attr(product?.weightGrams ?? '')}" placeholder="1200"></div>
+        <div class="field"><label for="pf-capacity">Capacidad semanal (unidades)</label><input class="input" id="pf-capacity" name="capacityPerWeek" type="number" min="0" step="1" value="${attr(product?.capacityPerWeek ?? '')}" placeholder="20"></div>
+        <div class="field"><label for="pf-lead">Plazo de fabricación (días)</label><input class="input" id="pf-lead" name="leadTimeDays" type="number" min="0" step="1" value="${attr(product?.leadTimeDays ?? '')}" placeholder="7"></div>
+        <div class="field"><label for="pf-moq">Pedido mínimo (unidades)</label><input class="input" id="pf-moq" name="minimumOrderQuantity" type="number" min="1" step="1" value="${attr(product?.minimumOrderQuantity ?? 1)}" placeholder="1"></div>
         <div class="field"><label for="pf-dimensions">Medidas</label><input class="input" id="pf-dimensions" name="dimensions" value="${attr(product?.dimensions || '')}" placeholder="Ø 32 cm · alto 24 cm · cable 180 cm"></div>
         <div class="field"><label for="pf-status">Estado</label><select class="select" id="pf-status" name="status">${[['borrador', 'Borrador'], ['listo', 'Listo para vender'], ['archivado', 'Archivado']].map(([v, l]) => `<option value="${v}" ${(product?.status || 'borrador') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
         <div class="field full"><label for="pf-materials">Materiales y terminación</label><input class="input" id="pf-materials" name="materials" value="${attr(product?.materials || '')}" placeholder="PLA / PETG, difusor opal, cable textil, casquillo E27"></div>
@@ -1105,6 +1110,9 @@ async function saveProduct() {
     currency: data.currency,
     cost: num(data.cost, 0),
     weightGrams: num(data.weightGrams, 0),
+    capacityPerWeek: num(data.capacityPerWeek, 0),
+    leadTimeDays: num(data.leadTimeDays, 0),
+    minimumOrderQuantity: num(data.minimumOrderQuantity, 1),
     dimensions: data.dimensions,
     materials: data.materials,
     description: data.description,
@@ -2374,6 +2382,7 @@ function openContactModal(thread) {
         <div class="field"><label for="ct-role">Rol</label><input class="input" id="ct-role" name="role" value="${attr(contact.role || '')}" placeholder="Compras, dueño, curador…"></div>
         <div class="field"><label for="ct-type">Tipo</label><input class="input" id="ct-type" name="type" value="${attr(contact.type || '')}" placeholder="tienda, estudio, hotel…"></div>
         <div class="field full"><label for="ct-email">Email</label><input class="input" id="ct-email" name="email" type="email" value="${attr(contact.email || '')}" placeholder="compras@tienda.com"></div>
+        <div class="field full"><label for="ct-permission">Fuente del consentimiento para recibir emails comerciales (solo si existe)</label><input class="input" id="ct-permission" name="emailPermissionSource" value="${attr(contact.emailPermissionSource || '')}" placeholder="Ej.: se suscribió por el formulario de la web el 15/11/2026"><p class="field-hint">Un correo publicado en una web NO equivale a autorización para marketing. Resend exige consentimiento.</p></div>
         <div class="field"><label for="ct-country">País</label><input class="input" id="ct-country" name="country" value="${attr(contact.country || '')}"></div>
         <div class="field"><label for="ct-city">Ciudad</label><input class="input" id="ct-city" name="city" value="${attr(contact.city || '')}"></div>
         <div class="field full"><label for="ct-website">Sitio web</label><input class="input" id="ct-website" name="website" value="${attr(contact.website || '')}" placeholder="https://…"></div>
@@ -2510,7 +2519,7 @@ function openSendModal(thread, draft) {
   const valid = isEmail(contact.email);
   const demoEmail = isDemoEmail(contact.email);
   const suppressed = Boolean(thread.suppressed);
-  const canResend = Boolean(S.state.flags?.email) && valid && !demoEmail && !suppressed;
+  const canResend = Boolean(S.state.flags?.email) && valid && !demoEmail && !suppressed && Boolean(contact.emailPermissionAt && contact.emailPermissionSource);
   const canWebhook = Boolean(settings.email?.webhookUrl) && valid && !demoEmail && !suppressed;
   const limits = S.state.limits || {};
   const subject = draft.subject || '(sin asunto)';
@@ -2524,6 +2533,7 @@ function openSendModal(thread, draft) {
       ${valid ? `Desde: ${esc(from || 'sin remitente configurado')}. Asunto: ${esc(subject)}.` : 'Podés copiar el texto, enviarlo por el formulario de la tienda o LinkedIn y marcarlo como contactado. Lumbre no inventa direcciones.'}
     </div>
     ${demoEmail ? '<div class="artifact-callout warn mt-3"><b>Email de ejemplo</b>Este contacto es demo (example.com). Podés copiar el texto, descargar el .eml o marcarlo como enviado, pero no se envía a nadie real.</div>' : ''}
+    ${valid && !contact.emailPermissionAt ? '<div class="artifact-callout warn mt-3"><b>Prospección y Resend</b>El email público no habilita envíos no solicitados con Resend. Registrá evidencia del consentimiento en Contacto para este canal.</div>' : ''}
     ${limits.limit ? `<p class="small muted mt-3">Hoy: ${limits.used || 0} de ${limits.limit} envíos usados${limits.warmup ? ` · calentamiento, día ${limits.day}` : ''}.</p>` : ''}
     <div class="form-section mt-3"><p class="form-section-title">El mensaje</p>
       <div class="message-card">
