@@ -1,0 +1,42 @@
+import os from 'node:os';
+import path from 'node:path';
+import fs from 'node:fs/promises';
+import { Store } from '../lib/store.mjs';
+import { seedDemo } from '../lib/demo.mjs';
+import { createZip, readZip } from '../lib/zip.mjs';
+import { buildEml, composeEmail, dailyLimitInfo } from '../lib/email.mjs';
+import { demoReply, demoStep } from '../lib/demo.mjs';
+
+const dir = path.join(os.tmpdir(), `lumbre-test-${Date.now()}`);
+const store = new Store(dir);
+await store.init();
+const seeded = await seedDemo(store);
+console.log('seed', seeded);
+console.log('products', store.get('products').length, 'missions', store.get('missions').length, 'threads', store.get('threads').length);
+const mission = store.get('missions')[0];
+console.log('mission', mission.id, mission.status, Object.keys(mission.artifacts));
+console.log('steps', mission.steps.length, 'summary', mission.summary.slice(0, 80));
+const thread = store.get('threads')[0];
+console.log('thread', thread.contact.company, thread.stage, thread.messages.length, thread.drafts.length);
+const reply = demoReply(thread, store.settings().brand);
+console.log('reply', reply.intencion, reply.score, reply.borrador.cuerpo.slice(0, 50));
+const message = composeEmail(thread, thread.drafts[0], store.settings());
+console.log('email', message.to, message.from, message.text.length);
+const eml = buildEml({ ...message, to: 'test@example.org', from: 'Lumbre <hola@lumbre.test>' });
+console.log('eml', eml.length, eml.split('\r\n')[0]);
+const zip = createZip([{ name: 'a.txt', data: 'hola' }, { name: 'media/x.txt', data: Buffer.from('mundo') }]);
+const entries = readZip(zip);
+console.log('zip', entries.map((e) => `${e.name}:${e.data.toString()}`).join(','));
+console.log('limit', dailyLimitInfo(store.settings(), store.get('threads')));
+const product = store.get('products')[0];
+const ctx = { product, mission, brand: store.settings().brand, settings: store.settings(), artifacts: {} };
+for (const stepId of ['brief', 'research', 'customs', 'pricing', 'prospecting', 'enrichment', 'outreach', 'content', 'compliance', 'redteam', 'synthesis', 'learning']) {
+  const out = demoStep(stepId, ctx);
+  ctx.artifacts[stepId] = out;
+  if (!out || typeof out !== 'object' || !Object.keys(out).length) throw new Error(`Paso vacío: ${stepId}`);
+}
+console.log('all demo steps ok');
+const backup = store.exportBundle();
+console.log('bundle', backup.app, Object.keys(backup.data));
+await fs.rm(dir, { recursive: true, force: true });
+console.log('OK');

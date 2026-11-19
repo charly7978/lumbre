@@ -1,0 +1,1825 @@
+{
+    "name": "04 - Marketing de Contenido (Borradores)",
+    "flow": [
+        {
+            "id": 1,
+            "module": "ai-local-agent:RunLocalAIAgent",
+            "version": 0,
+            "parameters": {
+                "makeConnectionId": 12349170
+            },
+            "mapper": {
+                "systemPrompt": "# ROL\n\nSos el Director de Marketing orgánico de la marca definida en Config. La marca diseña y fabrica lámparas de autor con impresión 3D. Tu trabajo es convertir el catálogo y el aprendizaje comercial en un plan semanal de contenido que atraiga compradores correctos, no en publicaciones genéricas.\n\nNo publicás nada. Creás piezas en la tabla Contenido con Estado = En_revision para que el dueño las apruebe y las publique.\n\n# DATOS QUE TENÉS QUE LEER\n\n1. Leer configuracion: marca, web, propuesta de valor, nichos, países, idiomas y prohibiciones.\n2. Leer catalogo: productos activos, precios, materiales, medidas, lead time, argumentos y link de ficha.\n3. Leer contenido previo: piezas anteriores, plataformas, formatos, ganchos y estados.\n4. Leer metricas: últimos 14 días de leads, envíos, respuestas, ventas e ingresos.\n5. Leer aprendizajes: patrones validados por el área comercial.\n\nSi Config está incompleta, no generes contenido. Devolvé un informe breve con lo que falta.\n\n# OBJETIVO SEMANAL\n\nGenerá entre 3 y 6 piezas de contenido para la próxima semana. Cada pieza debe:\n- Estar conectada a un producto activo o a un nicho prioritario.\n- Tener un gancho específico, no un slogan.\n- Mostrar el producto en uso, el proceso de fabricación o el resultado en un espacio real.\n- Incluir un CTA claro: \"Escribime para ver medidas\", \"Guardá esta idea\", \"Mirá la ficha\", \"Reservá una llamada\".\n- Estar en el idioma principal del público objetivo de esa pieza.\n- Respetar la verdad del catálogo: no inventes medidas, materiales, colores, plazos ni precios.\n\n# MEZCLA DE CONTENIDO\n\nPara cada semana, combiná:\n- 1 pieza de descubrimiento: un Reel o video corto que muestre el proceso o el efecto de la luz. Gancho visual en los primeros 2 segundos.\n- 1 pieza de consideración: carrusel o post con detalles de material, medidas, personalización y cómo elegir.\n- 1 pieza de prueba: foto en un espacio real, antes/después, o explicación de un proyecto.\n- 1 pieza de nicho: contenido dirigido a interioristas, hoteles, restaurantes o regalos corporativos.\n- 1 pieza de comunidad o detrás de escena: el taller, el proceso, los errores, el aprendizaje.\nNo repitas el mismo formato dos veces seguidas en la misma plataforma.\n\n# PLATAFORMAS\n\nPriorizá las plataformas donde el comprador correcto pasa tiempo:\n- Instagram: Reels, carruseles, historias y posts de producto.\n- TikTok: videos cortos de proceso, antes/después, iluminación.\n- Pinterest: fotos verticales con títulos buscables y enlaces a la ficha.\n- LinkedIn: contenido para interioristas, arquitectos, hoteles y regalos corporativos.\n- Facebook: grupos locales y marketplace si Config lo indica.\n- Blog o newsletter: solo si Config lo indica.\n\nNo inventes métricas de plataformas que no tenés. Si no hay datos, decilo.\n\n# MÉTRICAS Y APRENDIZAJE\n\nLeé las métricas y los aprendizajes disponibles. Usalos para:\n- Repetir ángulos que generaron respuestas o ventas.\n- Evitar ganchos que no funcionaron.\n- Ajustar el nicho, el formato y el CTA.\n- Proponer un experimento por semana (por ejemplo, dos ganchos distintos para el mismo producto).\n\nNo atribuyas ventas a contenido sin evidencia. Si no hay datos suficientes, proponé medir mejor.\n\n# GUARDAR CADA PIEZA\n\nUsá Guardar pieza de contenido una vez por pieza. Cada registro debe incluir:\n- Titulo: nombre interno corto.\n- Plataforma: Instagram, TikTok, Pinterest, LinkedIn, Facebook, YouTube, Blog o Email.\n- Formato: Reel, Carrusel, Foto, Historia, Post, Video, Articulo o Newsletter.\n- Gancho: primera frase o primera imagen.\n- Copy: texto completo listo para publicar, con saltos de línea.\n- Hashtags: solo los relevantes; no más de 12.\n- CTA: una sola acción.\n- Producto: nombre exacto del catálogo.\n- Estado: En_revision.\n- Fecha_publicacion: fecha planificada en ISO (YYYY-MM-DD).\n- Metricas: vacío.\n- Aprendizaje: vacío.\n\nNo crees dos piezas idénticas. No uses el mismo gancho en dos plataformas sin adaptarlo.\n\n# INFORME\n\nDevolvé un informe en texto plano, en español, de menos de 3000 caracteres:\n\nPLAN DE CONTENIDO — semana del {fecha}\n1. Contexto: productos activos, nichos, hallazgos de métricas.\n2. Calendario: día | plataforma | formato | gancho | CTA.\n3. Piezas creadas: título | plataforma | estado.\n4. Experimento de la semana.\n5. Qué necesito del dueño: fotos, videos, aprobaciones.\n6. Próxima semana: qué medir y qué ajustar.\n\n# REGLAS\n\n- No publiques.\n- No inventes precios ni especificaciones.\n- No uses emojis.\n- No uses frases genéricas como \"calidad premium\", \"diseño único\" o \"elegancia atemporal\" sin una prueba concreta.\n- No prometas resultados de ventas.\n- No copies contenido de competidores.\n- Si falta una foto o un video, pedilo en el informe; no inventes un archivo.\n- Cada pieza debe poder publicarse tal como está, sin placeholders.\n",
+                "message": "Generá el plan de contenido para la semana que empieza el {{formatDate(now; \"YYYY-MM-DD\")}}. Leé Config, catálogo, contenido previo, métricas y aprendizajes. Creá entre 3 y 6 piezas en Contenido con Estado = En_revision. No publiques. Devolvé el informe con el calendario y el experimento de la semana.",
+                "outputType": "text",
+                "defaultModel": "large",
+                "tokenLimit": 100,
+                "promptCaching": "none",
+                "fallbackEnabled": false,
+                "modelConfig": {
+                    "recursionLimit": 100,
+                    "iterationsFromHistoryCount": 10,
+                    "timeout": 600,
+                    "aiCompactionEnabled": true
+                }
+            },
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 0,
+                    "name": "Director de Marketing"
+                },
+                "restore": {
+                    "parameters": {
+                        "makeConnectionId": {
+                            "label": "Make's AI Provider (default)"
+                        }
+                    },
+                    "expect": {
+                        "defaultModel": {
+                            "mode": "chose",
+                            "label": "Large"
+                        },
+                        "outputType": {
+                            "mode": "chose",
+                            "label": "Text"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "label": "Connection",
+                        "name": "makeConnectionId",
+                        "type": "account:ai-provider,openai-gpt-3,anthropic-claude,gemini-ai-q9zyjp,ai-agent-foundry-openai,ai-agent-foundry-non-openai,mistral-ai,cohere,groq,ai-agent-xai,amazon-bedrock,ai-agent-openai-compatible",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "defaultModel",
+                        "type": "select",
+                        "label": "Model",
+                        "required": true,
+                        "mappable": true,
+                        "dynamic": true,
+                        "grouped": true,
+                        "isolated": true,
+                        "isContext": true,
+                        "default": "large",
+                        "validate": {
+                            "enum": [
+                                "small",
+                                "medium",
+                                "large",
+                                "gpt-6.1-sol",
+                                "gpt-6.1-terra",
+                                "gpt-6-astra",
+                                "gpt-6-sol",
+                                "gpt-6-luna",
+                                "gpt-5.6-sol",
+                                "gpt-5.6-terra",
+                                "gpt-5.6-luna",
+                                "gpt-5.5",
+                                "gpt-5.4",
+                                "gpt-5.4-mini",
+                                "gpt-5.2",
+                                "gpt-5",
+                                "gpt-5-mini",
+                                "gpt-5-nano",
+                                "global.anthropic.claude-fable-5-1",
+                                "global.anthropic.claude-fable-5",
+                                "global.anthropic.claude-sonnet-5-5",
+                                "global.anthropic.claude-sonnet-5",
+                                "global.anthropic.claude-opus-5-5",
+                                "global.anthropic.claude-opus-5",
+                                "global.anthropic.claude-opus-4-8",
+                                "global.anthropic.claude-opus-4-7",
+                                "global.anthropic.claude-sonnet-4-6",
+                                "global.anthropic.claude-opus-4-6-v1",
+                                "global.anthropic.claude-sonnet-4-5-20250929-v1:0",
+                                "global.anthropic.claude-haiku-5-5",
+                                "global.anthropic.claude-haiku-4-5-20251001-v1:0",
+                                "global.anthropic.claude-opus-4-5-20251101-v1:0"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "tokenLimit",
+                        "type": "number",
+                        "label": "Maximum output length (%)",
+                        "advanced": true,
+                        "required": false,
+                        "default": 100,
+                        "validate": {
+                            "min": 20,
+                            "max": 100
+                        }
+                    },
+                    {
+                        "name": "promptCaching",
+                        "type": "select",
+                        "label": "Prompt caching",
+                        "required": false,
+                        "advanced": true,
+                        "default": "none",
+                        "validate": {
+                            "enum": [
+                                "none"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "fallbackEnabled",
+                        "label": "Enable fallback connection",
+                        "type": "boolean",
+                        "required": true,
+                        "default": false,
+                        "advanced": false
+                    },
+                    {
+                        "name": "systemPrompt",
+                        "label": "Instructions",
+                        "type": "text",
+                        "placeholder": "You are an agent specialized in...",
+                        "required": false,
+                        "advanced": false,
+                        "editable": true
+                    },
+                    {
+                        "name": "message",
+                        "label": "Input",
+                        "type": "text",
+                        "placeholder": "Tasks or information for the agent to process...",
+                        "required": true,
+                        "editable": true
+                    },
+                    {
+                        "name": "files",
+                        "label": "Input files",
+                        "type": "array",
+                        "labels": {
+                            "add": "Add file",
+                            "item": "File"
+                        },
+                        "mappable": true,
+                        "spec": [
+                            {
+                                "name": "fileName",
+                                "type": "filename",
+                                "label": "File name",
+                                "semantic": "file:name"
+                            },
+                            {
+                                "name": "data",
+                                "type": "buffer",
+                                "label": "Data",
+                                "semantic": "file:data"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "threadId",
+                        "label": "Conversation ID",
+                        "type": "text",
+                        "advanced": false,
+                        "required": false,
+                        "validate": {
+                            "max": 256
+                        }
+                    },
+                    {
+                        "name": "modelConfig",
+                        "label": "Model configuration",
+                        "type": "collection",
+                        "advanced": true,
+                        "spec": [
+                            {
+                                "name": "recursionLimit",
+                                "label": "Steps per agent call",
+                                "type": "number",
+                                "advanced": true,
+                                "required": false,
+                                "default": 300
+                            },
+                            {
+                                "name": "iterationsFromHistoryCount",
+                                "label": "Maximum conversation history",
+                                "type": "number",
+                                "advanced": true,
+                                "required": false,
+                                "default": 10
+                            },
+                            {
+                                "name": "timeout",
+                                "label": "Step timeout",
+                                "type": "number",
+                                "required": false,
+                                "advanced": true,
+                                "validate": {
+                                    "min": 120,
+                                    "max": 600
+                                }
+                            },
+                            {
+                                "name": "aiCompactionEnabled",
+                                "label": "Enable compaction",
+                                "type": "boolean",
+                                "advanced": true,
+                                "required": true,
+                                "default": true
+                            }
+                        ]
+                    },
+                    {
+                        "name": "outputType",
+                        "label": "Response format",
+                        "type": "select",
+                        "advanced": true,
+                        "required": true,
+                        "default": "text",
+                        "validate": {
+                            "enum": [
+                                "text",
+                                "make-schema",
+                                "udt-schema"
+                            ]
+                        }
+                    }
+                ]
+            },
+            "tools": [
+                {
+                    "name": "Leer configuracion",
+                    "description": "Devuelve la configuración de la marca, nichos, países, idiomas y prohibiciones.",
+                    "flow": [
+                        {
+                            "id": 10,
+                            "module": "airtable:ActionSearchRecords",
+                            "version": 3,
+                            "parameters": {},
+                            "mapper": {
+                                "base": "appkk3JHBiWrBn4UF",
+                                "table": "tblYQ2OYheotsKmSo",
+                                "fields": [
+                                    "Clave",
+                                    "Valor"
+                                ],
+                                "formula": "",
+                                "maxRecords": "40",
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 300,
+                                    "y": 120,
+                                    "name": "Leer Config"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "mode": "chose",
+                                            "label": "Ventas Lamparas 3D"
+                                        },
+                                        "table": {
+                                            "mode": "chose",
+                                            "label": "Config"
+                                        },
+                                        "fields": {
+                                            "mode": "chose",
+                                            "label": [
+                                                "Clave",
+                                                "Valor"
+                                            ]
+                                        },
+                                        "formula": {
+                                            "mode": "chose"
+                                        },
+                                        "maxRecords": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "Airtable"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "formula",
+                                        "type": "text",
+                                        "label": "Formula"
+                                    },
+                                    {
+                                        "name": "maxRecords",
+                                        "type": "integer",
+                                        "label": "Limit"
+                                    },
+                                    {
+                                        "name": "sort",
+                                        "spec": [
+                                            {
+                                                "name": "field",
+                                                "type": "select",
+                                                "label": "Field",
+                                                "dynamic": true,
+                                                "options": []
+                                            },
+                                            {
+                                                "name": "direction",
+                                                "type": "select",
+                                                "label": "Direction",
+                                                "options": [
+                                                    {
+                                                        "label": "Descending",
+                                                        "value": "desc"
+                                                    },
+                                                    {
+                                                        "label": "Ascending",
+                                                        "value": "asc"
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Sort"
+                                    },
+                                    {
+                                        "name": "view",
+                                        "type": "select",
+                                        "label": "View"
+                                    },
+                                    {
+                                        "name": "fields",
+                                        "type": "select",
+                                        "label": "Output Fields",
+                                        "multiple": true
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "__IMTLENGTH__",
+                                        "type": "uinteger",
+                                        "label": "Total number of bundles"
+                                    },
+                                    {
+                                        "name": "__IMTINDEX__",
+                                        "type": "uinteger",
+                                        "label": "Bundle order position"
+                                    },
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "Clave",
+                                        "type": "text",
+                                        "label": "Clave"
+                                    },
+                                    {
+                                        "name": "Valor",
+                                        "type": "text",
+                                        "label": "Valor"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Leer catalogo",
+                    "description": "Devuelve los productos activos con precio, materiales, medidas, lead time y argumentos de venta.",
+                    "flow": [
+                        {
+                            "id": 11,
+                            "module": "airtable:ActionSearchRecords",
+                            "version": 3,
+                            "parameters": {},
+                            "mapper": {
+                                "base": "appkk3JHBiWrBn4UF",
+                                "table": "tblSrwh7WuhyRF0Na",
+                                "fields": [
+                                    "Producto",
+                                    "SKU",
+                                    "Estado",
+                                    "Descripcion_corta",
+                                    "Descripcion_larga",
+                                    "Precio",
+                                    "Moneda",
+                                    "Material",
+                                    "Medidas",
+                                    "Colores",
+                                    "Lead_time_dias",
+                                    "Capacidad_semanal",
+                                    "Link_ficha",
+                                    "Nicho_ideal",
+                                    "Paises_objetivo",
+                                    "Argumentos_venta"
+                                ],
+                                "formula": "{Estado}=\"Activo\"",
+                                "maxRecords": "10",
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 300,
+                                    "y": 260,
+                                    "name": "Leer Catalogo"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "mode": "chose",
+                                            "label": "Ventas Lamparas 3D"
+                                        },
+                                        "table": {
+                                            "mode": "chose",
+                                            "label": "Productos"
+                                        },
+                                        "fields": {
+                                            "mode": "chose",
+                                            "label": [
+                                                "Producto",
+                                                "SKU",
+                                                "Estado",
+                                                "Descripcion_corta",
+                                                "Descripcion_larga",
+                                                "Precio",
+                                                "Moneda",
+                                                "Material",
+                                                "Medidas",
+                                                "Colores",
+                                                "Lead_time_dias",
+                                                "Capacidad_semanal",
+                                                "Link_ficha",
+                                                "Nicho_ideal",
+                                                "Paises_objetivo",
+                                                "Argumentos_venta"
+                                            ]
+                                        },
+                                        "formula": {
+                                            "mode": "chose"
+                                        },
+                                        "maxRecords": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "Airtable"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "formula",
+                                        "type": "text",
+                                        "label": "Formula"
+                                    },
+                                    {
+                                        "name": "maxRecords",
+                                        "type": "integer",
+                                        "label": "Limit"
+                                    },
+                                    {
+                                        "name": "sort",
+                                        "spec": [
+                                            {
+                                                "name": "field",
+                                                "type": "select",
+                                                "label": "Field",
+                                                "dynamic": true,
+                                                "options": []
+                                            },
+                                            {
+                                                "name": "direction",
+                                                "type": "select",
+                                                "label": "Direction",
+                                                "options": [
+                                                    {
+                                                        "label": "Descending",
+                                                        "value": "desc"
+                                                    },
+                                                    {
+                                                        "label": "Ascending",
+                                                        "value": "asc"
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Sort"
+                                    },
+                                    {
+                                        "name": "view",
+                                        "type": "select",
+                                        "label": "View"
+                                    },
+                                    {
+                                        "name": "fields",
+                                        "type": "select",
+                                        "label": "Output Fields",
+                                        "multiple": true
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "__IMTLENGTH__",
+                                        "type": "uinteger",
+                                        "label": "Total number of bundles"
+                                    },
+                                    {
+                                        "name": "__IMTINDEX__",
+                                        "type": "uinteger",
+                                        "label": "Bundle order position"
+                                    },
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "Producto",
+                                        "type": "text",
+                                        "label": "Producto"
+                                    },
+                                    {
+                                        "name": "SKU",
+                                        "type": "text",
+                                        "label": "SKU"
+                                    },
+                                    {
+                                        "name": "Estado",
+                                        "type": "text",
+                                        "label": "Estado"
+                                    },
+                                    {
+                                        "name": "Descripcion_corta",
+                                        "type": "text",
+                                        "label": "Descripcion_corta"
+                                    },
+                                    {
+                                        "name": "Descripcion_larga",
+                                        "type": "text",
+                                        "label": "Descripcion_larga"
+                                    },
+                                    {
+                                        "name": "Precio",
+                                        "type": "number",
+                                        "label": "Precio"
+                                    },
+                                    {
+                                        "name": "Moneda",
+                                        "type": "text",
+                                        "label": "Moneda"
+                                    },
+                                    {
+                                        "name": "Material",
+                                        "type": "text",
+                                        "label": "Material"
+                                    },
+                                    {
+                                        "name": "Medidas",
+                                        "type": "text",
+                                        "label": "Medidas"
+                                    },
+                                    {
+                                        "name": "Colores",
+                                        "type": "text",
+                                        "label": "Colores"
+                                    },
+                                    {
+                                        "name": "Lead_time_dias",
+                                        "type": "number",
+                                        "label": "Lead_time_dias"
+                                    },
+                                    {
+                                        "name": "Capacidad_semanal",
+                                        "type": "number",
+                                        "label": "Capacidad_semanal"
+                                    },
+                                    {
+                                        "name": "Link_ficha",
+                                        "type": "url",
+                                        "label": "Link_ficha"
+                                    },
+                                    {
+                                        "name": "Nicho_ideal",
+                                        "type": "text",
+                                        "label": "Nicho_ideal"
+                                    },
+                                    {
+                                        "name": "Paises_objetivo",
+                                        "type": "text",
+                                        "label": "Paises_objetivo"
+                                    },
+                                    {
+                                        "name": "Argumentos_venta",
+                                        "type": "text",
+                                        "label": "Argumentos_venta"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Leer contenido previo",
+                    "description": "Devuelve las piezas de contenido anteriores con plataforma, formato, gancho, estado y métricas. Usala para no repetir y para aprender.",
+                    "flow": [
+                        {
+                            "id": 12,
+                            "module": "airtable:ActionSearchRecords",
+                            "version": 3,
+                            "parameters": {},
+                            "mapper": {
+                                "base": "appkk3JHBiWrBn4UF",
+                                "table": "tblfaoGBqyqmmsKYw",
+                                "fields": [
+                                    "Titulo",
+                                    "Plataforma",
+                                    "Formato",
+                                    "Gancho",
+                                    "Copy",
+                                    "Hashtags",
+                                    "CTA",
+                                    "Producto",
+                                    "Estado",
+                                    "Fecha_publicacion",
+                                    "Metricas",
+                                    "Aprendizaje"
+                                ],
+                                "formula": "",
+                                "maxRecords": "50",
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 300,
+                                    "y": 400,
+                                    "name": "Leer Contenido"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "mode": "chose",
+                                            "label": "Ventas Lamparas 3D"
+                                        },
+                                        "table": {
+                                            "mode": "chose",
+                                            "label": "Contenido"
+                                        },
+                                        "fields": {
+                                            "mode": "chose",
+                                            "label": [
+                                                "Titulo",
+                                                "Plataforma",
+                                                "Formato",
+                                                "Gancho",
+                                                "Copy",
+                                                "Hashtags",
+                                                "CTA",
+                                                "Producto",
+                                                "Estado",
+                                                "Fecha_publicacion",
+                                                "Metricas",
+                                                "Aprendizaje"
+                                            ]
+                                        },
+                                        "formula": {
+                                            "mode": "chose"
+                                        },
+                                        "maxRecords": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "Airtable"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "formula",
+                                        "type": "text",
+                                        "label": "Formula"
+                                    },
+                                    {
+                                        "name": "maxRecords",
+                                        "type": "integer",
+                                        "label": "Limit"
+                                    },
+                                    {
+                                        "name": "sort",
+                                        "spec": [
+                                            {
+                                                "name": "field",
+                                                "type": "select",
+                                                "label": "Field",
+                                                "dynamic": true,
+                                                "options": []
+                                            },
+                                            {
+                                                "name": "direction",
+                                                "type": "select",
+                                                "label": "Direction",
+                                                "options": [
+                                                    {
+                                                        "label": "Descending",
+                                                        "value": "desc"
+                                                    },
+                                                    {
+                                                        "label": "Ascending",
+                                                        "value": "asc"
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Sort"
+                                    },
+                                    {
+                                        "name": "view",
+                                        "type": "select",
+                                        "label": "View"
+                                    },
+                                    {
+                                        "name": "fields",
+                                        "type": "select",
+                                        "label": "Output Fields",
+                                        "multiple": true
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "__IMTLENGTH__",
+                                        "type": "uinteger",
+                                        "label": "Total number of bundles"
+                                    },
+                                    {
+                                        "name": "__IMTINDEX__",
+                                        "type": "uinteger",
+                                        "label": "Bundle order position"
+                                    },
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "Titulo",
+                                        "type": "text",
+                                        "label": "Titulo"
+                                    },
+                                    {
+                                        "name": "Plataforma",
+                                        "type": "text",
+                                        "label": "Plataforma"
+                                    },
+                                    {
+                                        "name": "Formato",
+                                        "type": "text",
+                                        "label": "Formato"
+                                    },
+                                    {
+                                        "name": "Gancho",
+                                        "type": "text",
+                                        "label": "Gancho"
+                                    },
+                                    {
+                                        "name": "Copy",
+                                        "type": "text",
+                                        "label": "Copy"
+                                    },
+                                    {
+                                        "name": "Hashtags",
+                                        "type": "text",
+                                        "label": "Hashtags"
+                                    },
+                                    {
+                                        "name": "CTA",
+                                        "type": "text",
+                                        "label": "CTA"
+                                    },
+                                    {
+                                        "name": "Producto",
+                                        "type": "text",
+                                        "label": "Producto"
+                                    },
+                                    {
+                                        "name": "Estado",
+                                        "type": "text",
+                                        "label": "Estado"
+                                    },
+                                    {
+                                        "name": "Fecha_publicacion",
+                                        "type": "date",
+                                        "label": "Fecha_publicacion"
+                                    },
+                                    {
+                                        "name": "Metricas",
+                                        "type": "text",
+                                        "label": "Metricas"
+                                    },
+                                    {
+                                        "name": "Aprendizaje",
+                                        "type": "text",
+                                        "label": "Aprendizaje"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Leer metricas",
+                    "description": "Devuelve las métricas diarias de leads, envíos, respuestas, ventas e ingresos. Usala para ajustar el plan.",
+                    "flow": [
+                        {
+                            "id": 13,
+                            "module": "airtable:ActionSearchRecords",
+                            "version": 3,
+                            "parameters": {},
+                            "mapper": {
+                                "base": "appkk3JHBiWrBn4UF",
+                                "table": "tblelh0iXLt1gWKwN",
+                                "fields": [
+                                    "Fecha",
+                                    "Leads_nuevos",
+                                    "Emails_enviados",
+                                    "Respuestas",
+                                    "Respuestas_positivas",
+                                    "Reuniones",
+                                    "Propuestas",
+                                    "Ventas",
+                                    "Ingresos",
+                                    "Notas"
+                                ],
+                                "formula": "",
+                                "maxRecords": "14",
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 300,
+                                    "y": 540,
+                                    "name": "Leer Metricas"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "mode": "chose",
+                                            "label": "Ventas Lamparas 3D"
+                                        },
+                                        "table": {
+                                            "mode": "chose",
+                                            "label": "Metricas"
+                                        },
+                                        "fields": {
+                                            "mode": "chose",
+                                            "label": [
+                                                "Fecha",
+                                                "Leads_nuevos",
+                                                "Emails_enviados",
+                                                "Respuestas",
+                                                "Respuestas_positivas",
+                                                "Reuniones",
+                                                "Propuestas",
+                                                "Ventas",
+                                                "Ingresos",
+                                                "Notas"
+                                            ]
+                                        },
+                                        "formula": {
+                                            "mode": "chose"
+                                        },
+                                        "maxRecords": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "Airtable"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "formula",
+                                        "type": "text",
+                                        "label": "Formula"
+                                    },
+                                    {
+                                        "name": "maxRecords",
+                                        "type": "integer",
+                                        "label": "Limit"
+                                    },
+                                    {
+                                        "name": "sort",
+                                        "spec": [
+                                            {
+                                                "name": "field",
+                                                "type": "select",
+                                                "label": "Field",
+                                                "dynamic": true,
+                                                "options": []
+                                            },
+                                            {
+                                                "name": "direction",
+                                                "type": "select",
+                                                "label": "Direction",
+                                                "options": [
+                                                    {
+                                                        "label": "Descending",
+                                                        "value": "desc"
+                                                    },
+                                                    {
+                                                        "label": "Ascending",
+                                                        "value": "asc"
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Sort"
+                                    },
+                                    {
+                                        "name": "view",
+                                        "type": "select",
+                                        "label": "View"
+                                    },
+                                    {
+                                        "name": "fields",
+                                        "type": "select",
+                                        "label": "Output Fields",
+                                        "multiple": true
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "__IMTLENGTH__",
+                                        "type": "uinteger",
+                                        "label": "Total number of bundles"
+                                    },
+                                    {
+                                        "name": "__IMTINDEX__",
+                                        "type": "uinteger",
+                                        "label": "Bundle order position"
+                                    },
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "Fecha",
+                                        "type": "text",
+                                        "label": "Fecha"
+                                    },
+                                    {
+                                        "name": "Leads_nuevos",
+                                        "type": "number",
+                                        "label": "Leads_nuevos"
+                                    },
+                                    {
+                                        "name": "Emails_enviados",
+                                        "type": "number",
+                                        "label": "Emails_enviados"
+                                    },
+                                    {
+                                        "name": "Respuestas",
+                                        "type": "number",
+                                        "label": "Respuestas"
+                                    },
+                                    {
+                                        "name": "Respuestas_positivas",
+                                        "type": "number",
+                                        "label": "Respuestas_positivas"
+                                    },
+                                    {
+                                        "name": "Reuniones",
+                                        "type": "number",
+                                        "label": "Reuniones"
+                                    },
+                                    {
+                                        "name": "Propuestas",
+                                        "type": "number",
+                                        "label": "Propuestas"
+                                    },
+                                    {
+                                        "name": "Ventas",
+                                        "type": "number",
+                                        "label": "Ventas"
+                                    },
+                                    {
+                                        "name": "Ingresos",
+                                        "type": "number",
+                                        "label": "Ingresos"
+                                    },
+                                    {
+                                        "name": "Notas",
+                                        "type": "text",
+                                        "label": "Notas"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Leer aprendizajes",
+                    "description": "Devuelve los patrones comerciales validados. Usalos para elegir ángulos y nichos.",
+                    "flow": [
+                        {
+                            "id": 14,
+                            "module": "airtable:ActionSearchRecords",
+                            "version": 3,
+                            "parameters": {},
+                            "mapper": {
+                                "base": "appkk3JHBiWrBn4UF",
+                                "table": "tbl3levRw5w1Dwpws",
+                                "fields": [
+                                    "Hallazgo",
+                                    "Fecha",
+                                    "Fuente",
+                                    "Evidencia",
+                                    "Accion",
+                                    "Agente"
+                                ],
+                                "formula": "",
+                                "maxRecords": "20",
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 300,
+                                    "y": 680,
+                                    "name": "Leer Aprendizajes"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "mode": "chose",
+                                            "label": "Ventas Lamparas 3D"
+                                        },
+                                        "table": {
+                                            "mode": "chose",
+                                            "label": "Aprendizajes"
+                                        },
+                                        "fields": {
+                                            "mode": "chose",
+                                            "label": [
+                                                "Hallazgo",
+                                                "Fecha",
+                                                "Fuente",
+                                                "Evidencia",
+                                                "Accion",
+                                                "Agente"
+                                            ]
+                                        },
+                                        "formula": {
+                                            "mode": "chose"
+                                        },
+                                        "maxRecords": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "Airtable"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "formula",
+                                        "type": "text",
+                                        "label": "Formula"
+                                    },
+                                    {
+                                        "name": "maxRecords",
+                                        "type": "integer",
+                                        "label": "Limit"
+                                    },
+                                    {
+                                        "name": "sort",
+                                        "spec": [
+                                            {
+                                                "name": "field",
+                                                "type": "select",
+                                                "label": "Field",
+                                                "dynamic": true,
+                                                "options": []
+                                            },
+                                            {
+                                                "name": "direction",
+                                                "type": "select",
+                                                "label": "Direction",
+                                                "options": [
+                                                    {
+                                                        "label": "Descending",
+                                                        "value": "desc"
+                                                    },
+                                                    {
+                                                        "label": "Ascending",
+                                                        "value": "asc"
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Sort"
+                                    },
+                                    {
+                                        "name": "view",
+                                        "type": "select",
+                                        "label": "View"
+                                    },
+                                    {
+                                        "name": "fields",
+                                        "type": "select",
+                                        "label": "Output Fields",
+                                        "multiple": true
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "__IMTLENGTH__",
+                                        "type": "uinteger",
+                                        "label": "Total number of bundles"
+                                    },
+                                    {
+                                        "name": "__IMTINDEX__",
+                                        "type": "uinteger",
+                                        "label": "Bundle order position"
+                                    },
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "Hallazgo",
+                                        "type": "text",
+                                        "label": "Hallazgo"
+                                    },
+                                    {
+                                        "name": "Fecha",
+                                        "type": "text",
+                                        "label": "Fecha"
+                                    },
+                                    {
+                                        "name": "Fuente",
+                                        "type": "text",
+                                        "label": "Fuente"
+                                    },
+                                    {
+                                        "name": "Evidencia",
+                                        "type": "text",
+                                        "label": "Evidencia"
+                                    },
+                                    {
+                                        "name": "Accion",
+                                        "type": "text",
+                                        "label": "Accion"
+                                    },
+                                    {
+                                        "name": "Agente",
+                                        "type": "text",
+                                        "label": "Agente"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Guardar pieza de contenido",
+                    "description": "Guarda una pieza de contenido en Airtable con Estado = En_revision. Usala una vez por pieza. No publica nada.",
+                    "flow": [
+                        {
+                            "id": 15,
+                            "module": "airtable:ActionCreateRecord",
+                            "version": 3,
+                            "parameters": {},
+                            "mapper": {
+                                "base": "appkk3JHBiWrBn4UF",
+                                "table": "tblfaoGBqyqmmsKYw",
+                                "record": "{{1.record}}",
+                                "typecast": true,
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 300,
+                                    "y": 820,
+                                    "name": "Guardar Contenido"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "mode": "chose",
+                                            "label": "Ventas Lamparas 3D"
+                                        },
+                                        "table": {
+                                            "mode": "chose",
+                                            "label": "Contenido",
+                                            "nested": [
+                                                {
+                                                    "name": "record",
+                                                    "spec": [
+                                                        {
+                                                            "name": "Titulo",
+                                                            "type": "text",
+                                                            "label": "Título"
+                                                        },
+                                                        {
+                                                            "name": "Plataforma",
+                                                            "type": "text",
+                                                            "label": "Plataforma"
+                                                        },
+                                                        {
+                                                            "name": "Formato",
+                                                            "type": "text",
+                                                            "label": "Formato"
+                                                        },
+                                                        {
+                                                            "name": "Gancho",
+                                                            "type": "text",
+                                                            "label": "Gancho"
+                                                        },
+                                                        {
+                                                            "name": "Copy",
+                                                            "type": "text",
+                                                            "label": "Copy"
+                                                        },
+                                                        {
+                                                            "name": "Hashtags",
+                                                            "type": "text",
+                                                            "label": "Hashtags"
+                                                        },
+                                                        {
+                                                            "name": "CTA",
+                                                            "type": "text",
+                                                            "label": "CTA"
+                                                        },
+                                                        {
+                                                            "name": "Producto",
+                                                            "type": "text",
+                                                            "label": "Producto"
+                                                        },
+                                                        {
+                                                            "name": "Estado",
+                                                            "type": "text",
+                                                            "label": "Estado"
+                                                        },
+                                                        {
+                                                            "name": "Fecha_publicacion",
+                                                            "type": "date",
+                                                            "label": "Fecha de publicación"
+                                                        }
+                                                    ],
+                                                    "type": "collection",
+                                                    "label": "Record"
+                                                }
+                                            ]
+                                        },
+                                        "record": {
+                                            "nested": {
+                                                "Titulo": {
+                                                    "extra": {
+                                                        "aiHelp": "Título interno.",
+                                                        "aiInstruction": "Nombre corto para identificar la pieza."
+                                                    }
+                                                },
+                                                "Plataforma": {
+                                                    "extra": {
+                                                        "aiHelp": "Plataforma.",
+                                                        "aiInstruction": "Instagram, TikTok, Pinterest, LinkedIn, Facebook, YouTube, Blog o Email."
+                                                    }
+                                                },
+                                                "Formato": {
+                                                    "extra": {
+                                                        "aiHelp": "Formato.",
+                                                        "aiInstruction": "Reel, Carrusel, Foto, Historia, Post, Video, Articulo o Newsletter."
+                                                    }
+                                                },
+                                                "Gancho": {
+                                                    "extra": {
+                                                        "aiHelp": "Gancho.",
+                                                        "aiInstruction": "Primera frase o primera imagen. Debe detener el scroll y ser específico."
+                                                    }
+                                                },
+                                                "Copy": {
+                                                    "extra": {
+                                                        "aiHelp": "Copy.",
+                                                        "aiInstruction": "Texto completo listo para publicar. Sin placeholders."
+                                                    }
+                                                },
+                                                "Hashtags": {
+                                                    "extra": {
+                                                        "aiHelp": "Hashtags.",
+                                                        "aiInstruction": "Máximo 12, relevantes, sin spam."
+                                                    }
+                                                },
+                                                "CTA": {
+                                                    "extra": {
+                                                        "aiHelp": "CTA.",
+                                                        "aiInstruction": "Una sola acción concreta."
+                                                    }
+                                                },
+                                                "Producto": {
+                                                    "extra": {
+                                                        "aiHelp": "Producto.",
+                                                        "aiInstruction": "Nombre exacto de un producto activo."
+                                                    }
+                                                },
+                                                "Estado": {
+                                                    "extra": {
+                                                        "aiHelp": "Estado.",
+                                                        "aiInstruction": "Usá En_revision."
+                                                    }
+                                                },
+                                                "Fecha_publicacion": {
+                                                    "extra": {
+                                                        "aiHelp": "Fecha ISO.",
+                                                        "aiInstruction": "Fecha planificada de publicación en formato YYYY-MM-DD."
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "typecast": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "Airtable"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "typecast",
+                                        "type": "boolean",
+                                        "label": "Smart links",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "record",
+                                        "spec": [
+                                            {
+                                                "name": "Titulo",
+                                                "type": "text",
+                                                "label": "Título"
+                                            },
+                                            {
+                                                "name": "Plataforma",
+                                                "type": "text",
+                                                "label": "Plataforma"
+                                            },
+                                            {
+                                                "name": "Formato",
+                                                "type": "text",
+                                                "label": "Formato"
+                                            },
+                                            {
+                                                "name": "Gancho",
+                                                "type": "text",
+                                                "label": "Gancho"
+                                            },
+                                            {
+                                                "name": "Copy",
+                                                "type": "text",
+                                                "label": "Copy"
+                                            },
+                                            {
+                                                "name": "Hashtags",
+                                                "type": "text",
+                                                "label": "Hashtags"
+                                            },
+                                            {
+                                                "name": "CTA",
+                                                "type": "text",
+                                                "label": "CTA"
+                                            },
+                                            {
+                                                "name": "Producto",
+                                                "type": "text",
+                                                "label": "Producto"
+                                            },
+                                            {
+                                                "name": "Estado",
+                                                "type": "text",
+                                                "label": "Estado"
+                                            },
+                                            {
+                                                "name": "Fecha_publicacion",
+                                                "type": "date",
+                                                "label": "Fecha de publicación"
+                                            }
+                                        ],
+                                        "type": "collection",
+                                        "label": "Record"
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "Titulo",
+                                        "type": "text",
+                                        "label": "Título"
+                                    },
+                                    {
+                                        "name": "Plataforma",
+                                        "type": "text",
+                                        "label": "Plataforma"
+                                    },
+                                    {
+                                        "name": "Formato",
+                                        "type": "text",
+                                        "label": "Formato"
+                                    },
+                                    {
+                                        "name": "Gancho",
+                                        "type": "text",
+                                        "label": "Gancho"
+                                    },
+                                    {
+                                        "name": "Copy",
+                                        "type": "text",
+                                        "label": "Copy"
+                                    },
+                                    {
+                                        "name": "Hashtags",
+                                        "type": "text",
+                                        "label": "Hashtags"
+                                    },
+                                    {
+                                        "name": "CTA",
+                                        "type": "text",
+                                        "label": "CTA"
+                                    },
+                                    {
+                                        "name": "Producto",
+                                        "type": "text",
+                                        "label": "Producto"
+                                    },
+                                    {
+                                        "name": "Estado",
+                                        "type": "text",
+                                        "label": "Estado"
+                                    },
+                                    {
+                                        "name": "Fecha_publicacion",
+                                        "type": "date",
+                                        "label": "Fecha de publicación"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "module": "telegram:SendReplyMessage",
+            "version": 1,
+            "parameters": {
+                "__IMTCONN__": 12349438
+            },
+            "mapper": {
+                "chatId": "5144879357",
+                "text": "PLAN DE CONTENIDO - {{formatDate(now; \"DD/MM/YYYY\")}}\n\n{{substring(1.response; 0; 3700)}}"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 450,
+                    "y": 0,
+                    "name": "Informe Telegram"
+                },
+                "restore": {
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "label": "ROLITO's Telegram Bot connection"
+                        }
+                    },
+                    "expect": {
+                        "chatId": {
+                            "extra": {
+                                "aiHelp": "Chat ID",
+                                "aiInstruction": "Identificador del chat del dueño."
+                            }
+                        },
+                        "text": {
+                            "extra": {
+                                "aiHelp": "Texto",
+                                "aiInstruction": "Informe breve, truncado para entrar en el límite de Telegram."
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:telegram",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "chatId",
+                        "type": "text",
+                        "label": "Chat ID",
+                        "required": true
+                    },
+                    {
+                        "name": "text",
+                        "type": "text",
+                        "label": "Text",
+                        "required": true
+                    },
+                    {
+                        "name": "messageThreadId",
+                        "type": "number",
+                        "label": "Message Thread ID"
+                    },
+                    {
+                        "name": "parseMode",
+                        "type": "select",
+                        "label": "Parse Mode",
+                        "validate": {
+                            "enum": [
+                                "Markdown",
+                                "HTML"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "disableNotification",
+                        "type": "boolean",
+                        "label": "Disable Notifications",
+                        "editable": true
+                    },
+                    {
+                        "name": "disableWebPagePreview",
+                        "type": "boolean",
+                        "label": "Disable Link Previews"
+                    },
+                    {
+                        "name": "replyToMessageId",
+                        "type": "number",
+                        "label": "Original Message ID",
+                        "advanced": true
+                    },
+                    {
+                        "name": "replyMarkupAssembleType",
+                        "type": "select",
+                        "label": "Enter/Assemble the Reply Markup Field",
+                        "default": "reply_markup_enter",
+                        "advanced": true,
+                        "validate": {
+                            "enum": [
+                                "reply_markup_enter",
+                                "reply_markup_assemble"
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "metadata": {
+        "instant": false,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": false,
+            "slots": null,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": false,
+            "freshVariables": false
+        },
+        "designer": {
+            "orphans": []
+        },
+        "zone": "us2.make.com",
+        "notes": []
+    }
+}

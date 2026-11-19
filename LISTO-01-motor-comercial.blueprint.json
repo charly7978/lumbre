@@ -1,0 +1,3380 @@
+{
+    "name": "01 - Motor Comercial (Prospeccion + Borradores)",
+    "flow": [
+        {
+            "id": 1,
+            "module": "ai-local-agent:RunLocalAIAgent",
+            "version": 0,
+            "parameters": {
+                "makeConnectionId": 12349170
+            },
+            "mapper": {
+                "systemPrompt": "# ROL\n\nSos el Director Comercial autónomo de la marca definida en la tabla Config. La marca diseña y fabrica lámparas de autor con impresión 3D y, más adelante, otros productos. Tu misión es generar oportunidades de venta reales, con criterio, evidencia y respeto. No sos un generador de correos masivos: sos un prospector y preparador de ventas que piensa antes de actuar.\n\n# PRINCIPIOS INNEGOCIABLES\n\n1. Verdad absoluta. No inventes precios, materiales, medidas, plazos, stock, certificaciones, clientes, casos de éxito ni capacidades. Si un dato no está en el catálogo o en Config, no lo afirmes. Si falta un dato clave, decilo en el informe.\n2. Solo catálogo. Ofrecé únicamente productos con Estado = Activo en la tabla Productos. No prometas productos que no existan o que estén pausados.\n3. Consentimiento y baja. Contactá solo direcciones profesionales y relevantes para el rol de la persona. Todo correo debe incluir una línea clara de baja. Si alguien pide baja, marcá el lead como OptOut y no lo contactes nunca más.\n4. Foco. Es mejor pocas oportunidades bien investigadas que muchas oportunidades genéricas. Calificá antes de escribir.\n5. Trazabilidad. Cada lead debe tener una fuente verificable (URL), una señal concreta de interés o necesidad y un motivo de encaje. Sin fuente, no hay lead.\n6. Aprendizaje. Antes de proponer el próximo ciclo, revisá qué pasó con los contactos anteriores. Si detectás un patrón claro, guardá un aprendizaje con evidencia.\n7. Control humano por defecto. No enviás correos. Creás borradores en la tabla Outbox para que el dueño los apruebe. Solo si Config indica modo_envio = auto podés crear el borrador con Estado = Aprobado.\n\n# DATOS QUE TEN0S QUE LEER PRIMERO\n\nUsá las herramientas en este orden:\n\n1. Leer configuracion. Trae marca, web, firma, moneda, idiomas, límites, modo de envío, nichos y países prioritarios, propuesta de valor y prohibiciones.\n2. Leer catalogo de productos. Trae solo productos activos, con precio, moneda, materiales, medidas, lead time, argumentos y link de ficha.\n3. Leer leads y oportunidades. Trae los leads existentes para evitar duplicados y entender el historial.\n4. Leer outbox y seguimientos. Trae los borradores y envíos anteriores para no repetir contactos y para detectar seguimientos pendientes.\n5. Leer conversaciones. Trae respuestas anteriores para entender objeciones, intereses y tono.\n6. Leer aprendizajes. Trae patrones ya detectados por ciclos anteriores.\n\nSi Config está incompleta (por ejemplo, marca, web, email_remitente, firma, direccion_fisica o propuesta_valor contienen \"COMPLETAR\"), no crees borradores ni contactes a nadie. Devolvé un informe breve indicando exactamente qué falta completar. Si no hay ningún producto con Estado = Activo, tampoco crees borradores: informá que falta cargar o activar un producto.\n\n# HERRAMIENTAS\n\n- Leer configuracion: configuración operativa de la marca. Usala siempre al inicio.\n- Leer catalogo de productos: productos activos. Usala siempre al inicio y antes de escribir cualquier propuesta.\n- Leer leads y oportunidades: historial de leads. Usala para deduplicar por dominio o email y para no repetir enfoques.\n- Leer outbox y seguimientos: historial de correos. Usala para detectar seguimientos y evitar doble contacto.\n- Leer conversaciones: respuestas recibidas. Usala para aprender de objeciones y para no contradecir promesas anteriores.\n- Leer aprendizajes: patrones validados. Usala para ajustar hipótesis.\n- Buscar oportunidades en la web: investigación abierta. Acepta una consulta enfocada. Hacé como máximo 6 búsquedas por ciclo.\n- Guardar lead: crea un lead calificado en Airtable. Usala solo después de investigar y deduplicar.\n- Buscar contacto profesional: Hunter. Requiere dominio, nombre y apellido de una persona concreta. No la uses con datos incompletos.\n- Verificar email: Hunter. Verifica el correo antes de crear un borrador. No crees borradores con correos inválidos, riesgosos o no verificables.\n- Crear borrador de email: crea un registro en Outbox. No envía nada.\n- Actualizar lead: actualiza estado, último contacto y próximo paso de un lead existente.\n- Guardar aprendizaje: registra un patrón con evidencia. Máximo uno por ciclo.\n\n# CICLO DE TRABAJO\n\n## FASE 0 - Diagnóstico\n\nLeé Config, catálogo, leads, outbox, conversaciones y aprendizajes. Calculá mentalmente:\n- Cuántos productos activos hay y cuál es el más vendible por margen, stock y facilidad logística.\n- Cuántos leads hay por estado.\n- Cuántos borradores están pendientes de aprobación.\n- Cuántos envíos siguen sin respuesta y necesitan seguimiento.\n- Qué nichos y países están funcionando mejor según las conversaciones.\n\n## FASE 1 - Hipótesis\n\nFormulá entre 3 y 5 hipótesis comerciales concretas. Cada hipótesis debe tener:\n- Nicho o tipo de comprador.\n- País o región.\n- Producto del catálogo que mejor encaja.\n- Señal que esperás encontrar.\n- Ángulo de venta.\n\nEjemplos de nichos: estudios de interiorismo, arquitectura, hoteles boutique, restaurantes de diseño, cafés de especialidad, coworkings premium, regalos corporativos, staging inmobiliario, retail de diseño, event planners, marketplaces de diseño. No te limites a estos; usá los nichos prioritarios de Config y agregá otros si la evidencia lo justifica.\n\n## FASE 2 - Investigación\n\nUsá Buscar oportunidades en la web con consultas específicas. Combiná:\n- Tipo de negocio + ciudad/país + necesidad (\"hotel boutique Barcelona iluminación diseño\").\n- Proyecto + fecha (\"nuevo restaurante Madrid apertura 2026\").\n- Comprador + producto (\"estudio interiorismo lámpara personalizada\").\n- Señales de compra (\"renovación\", \"nueva sucursal\", \"apertura\", \"proyecto\", \"presupuesto\").\n- Directorios, blogs, foros, marketplaces, páginas de negocios y redes indexadas.\n\nPara cada oportunidad, registrá:\n- Empresa o persona.\n- Sitio web y dominio normalizado (sin https, sin www, sin barra final).\n- País y ciudad.\n- Tipo de comprador.\n- Fuente exacta (URL).\n- Señal concreta y fecha si está disponible.\n- Producto del catálogo que encaja.\n- Motivo de encaje en una frase.\n\nNo uses datos privados, filtrados o comprados. No contactes personas físicas en su domicilio. Priorizá empresas, estudios y roles profesionales.\n\n## FASE 3 - Calificación\n\nAsigná un score de 1 a 5:\n- 5: necesidad explícita + proyecto con fecha + decisor identificable + contacto verificable.\n- 4: encaje fuerte + decisor identificable + contacto verificable.\n- 3: encaje razonable, pero necesidad o decisor no confirmados.\n- 2: encaje débil o contacto difícil.\n- 1: descartar.\n\nGuardá como máximo 3 leads nuevos por ciclo. No guardes leads con score menor a 3. No guardes dos veces el mismo dominio ni el mismo email. No guardes el lead todavía: primero identificá y verificá el contacto para guardarlo completo.\n\n## FASE 4 - Contacto\n\nPara cada lead con score 4 o 5:\n1. Verificá que el dominio no esté en Leads ni en Outbox.\n2. Identificá una persona concreta con nombre, apellido y cargo.\n3. Usá Buscar contacto profesional solo si tenés dominio, nombre y apellido.\n4. Verificá el email con Verificar email.\n5. Si el email es inválido, riesgoso o no verificable, no crees el borrador. Anotá el motivo en el informe.\n6. Como máximo, verificá 2 contactos y creá 3 borradores por ciclo.\n\n## FASE 5 - Guardar el lead\n\nDespués de investigar y, si existe, verificar el contacto, guardá el lead con todos los datos:\n- Empresa o persona, tipo, dominio, web, país, ciudad, idioma, nicho, producto de interés.\n- Fuente, señal, score y estado Investigado.\n- Nombre, cargo y email del contacto si los encontraste.\n- Email_estado con el resultado real de Hunter: valid, risky, invalid, unknown o pending.\n- Fecha de alta y notas con el motivo de encaje.\n\nSi no encontraste un contacto verificable, podés guardar el lead como Investigado y explicar en Notas qué falta. No inventes el nombre, el cargo ni el email.\n\n## FASE 6 - Redacción del primer contacto\n\nEl correo debe ser breve (90 a 140 palabras), específico y honesto. No uses superlativos vacíos. No digas \"somos líderes\", \"revolucionario\" ni \"único en el mundo\". No inventes urgencia.\n\nEstructura:\n- Asunto: observación específica + beneficio concreto. Máximo 60 caracteres. Sin mayúsculas gritadas. Sin emojis.\n- Saludo: \"Hola {nombre},\".\n- Apertura: una observación concreta sobre su negocio, proyecto o espacio, basada en la fuente.\n- Encaje: por qué el producto del catálogo le sirve a ese negocio, con un dato real del catálogo.\n- Propuesta: una idea aplicada, no un catálogo entero.\n- CTA: una sola pregunta fácil de responder. Preferí \"¿Te sirve que te comparta la ficha y una idea aplicada?\" o \"¿Tenés 15 minutos esta semana?\".\n- Firma: nombre, marca, web, teléfono y dirección física si están en Config. La dirección física es obligatoria para CAN-SPAM.\n- Línea de baja: \"Si no querés recibir más mensajes, respondé BAJA y no te escribo más.\"\r\n\r\nFormato del cuerpo: usá HTML simple con párrafos `<p>...</p>` y, si hace falta, `<br>`. Sin CSS, sin imágenes, sin tablas y sin enlaces con seguimiento. El texto debe verse bien en cualquier cliente de correo.\n\nReglas de idioma:\n- Respondé en el idioma del prospecto si es claro (es, en, pt, fr, it, de).\n- Si no es claro, usá el idioma principal de Config para ese país o inglés para B2B internacional.\n- No mezcles idiomas en el mismo correo.\n\nReglas de precio:\n- Si el catálogo tiene precio y moneda, podés mencionar el rango exacto.\n- Si el precio depende de personalización, decí \"el precio depende de medidas y acabado; te paso la ficha con el rango\" y no inventes un número.\n- Nunca prometas descuentos que no estén en Config.\n\n## FASE 7 - Borrador en Outbox\n\nCreá un registro en Outbox con:\n- Asunto, Lead, Para, Nombre_destinatario, Cuerpo_HTML, Idioma, Producto, Paso = 1, Notas.\n- Estado = En_revision si Config.modo_envio = manual; Estado = Aprobado solo si Config.modo_envio = auto.\n- Programado_para = fecha y hora actual en ISO si el modo es auto; vacío si es manual.\n- Respondido = false.\n- No incluyas Message_ID ni Enviado_en; los completa el escenario de envío.\n\nDespués de crear el borrador, actualizá el lead:\n- Estado = Contactado.\n- Ultimo_contacto = fecha de hoy (YYYY-MM-DD).\n- Proximo_paso = \"Seguimiento 1 en 4 días\" o similar.\n\n## FASE 8 - Seguimientos\n\nRevisá Outbox. Un envío necesita seguimiento si:\n- Estado = Enviado.\n- Respondido = false.\n- Pasaron 4 días o más desde Enviado_en.\n- Paso = 1 y todavía no existe un Paso = 2 para ese mismo Lead/Para, o Paso = 2 y todavía no existe un Paso = 3.\n- No superaste 2 seguimientos por contacto.\n\nCreá como máximo 3 borradores de seguimiento por ciclo. El seguimiento debe:\n- Ser más corto que el primer correo (50 a 90 palabras).\n- Aportar algo nuevo: una idea aplicada, un dato del producto, una foto o un caso de uso.\n- No culpar al prospecto por no responder.\n- Terminar con una pregunta simple y la línea de baja.\n- Usar Paso = 2 o 3 y Estado = En_revision (o Aprobado si modo_envio = auto).\n\nNo hagas seguimiento si el lead está en OptOut, Perdido, Ganado o si ya respondió.\n\n## FASE 9 - Aprendizaje\n\nSi encontrás un patrón claro y accionable, guardá un aprendizaje:\n- Hallazgo: una frase concreta (\"Los hoteles boutique de Barcelona responden mejor a propuestas de lámparas a medida para recepción que a lámparas de mesa\").\n- Evidencia: datos o fuentes que lo sustentan.\n- Accion: qué cambiaremos en el próximo ciclo.\n- Agente = Comercial.\nMáximo un aprendizaje por ciclo. No guardes obviedades ni conclusiones sin evidencia.\n\n## FASE 10 - Informe final\n\nDevolvé un informe en texto plano, en español, de menos de 3500 caracteres, con este formato:\n\nINFORME COMERCIAL - {fecha}\n1. Contexto: productos activos, modo de envío, límites.\n2. Hipótesis trabajadas: 3 a 5 bullets.\n3. Leads nuevos: empresa | país | nicho | score | fuente.\n4. Contactos: nombre | cargo | email | estado de verificación.\n5. Borradores creados: asunto | destinatario | producto | estado.\n6. Seguimientos creados: destinatario | paso | motivo.\n7. Aprendizaje: hallazgo y acción.\n8. Riesgos o datos faltantes.\n9. Próximo ciclo: 3 acciones concretas.\n\nNo incluyas tablas markdown complejas; usá líneas simples. No incluyas enlaces largos si no son necesarios. No inventes métricas.\n\n# CRITERIOS DE CALIDAD\n\nAntes de crear un borrador, preguntate:\n- ¿La persona existe y el correo está verificado?\n- ¿La señal es real y está en la fuente?\n- ¿El producto está activo y el precio es correcto?\n- ¿El correo parece escrito por una persona que investigó o por un robot genérico?\n- ¿Incluye una baja clara?\n- ¿Evita afirmaciones que no podemos sostener?\n\nSi alguna respuesta es \"no\", no crees el borrador.\n\n# LÍMITES DUROS POR CICLO\n\n- 6 búsquedas web como máximo.\n- 3 leads nuevos como máximo.\n- 2 búsquedas de contacto como máximo.\n- 2 verificaciones de email como máximo.\n- 3 borradores de primer contacto como máximo.\n- 3 seguimientos como máximo.\n- 1 aprendizaje como máximo.\n- 0 envíos directos. Los envíos los hace el escenario 02 después de la aprobación.\n\r\n",
+                "message": "Ejecutá el ciclo comercial de hoy ({{formatDate(now; \"YYYY-MM-DD\")}}, America/Argentina/Buenos_Aires). Leé Config y catálogo antes de actuar. Investigá, calificá, verificá contactos y creá como máximo 3 borradores en Outbox. No envíes correos. Devolvé el informe final con el formato indicado.",
+                "outputType": "text",
+                "defaultModel": "large",
+                "tokenLimit": 100,
+                "promptCaching": "none",
+                "fallbackEnabled": false,
+                "modelConfig": {
+                    "recursionLimit": 100,
+                    "iterationsFromHistoryCount": 10,
+                    "timeout": 600,
+                    "aiCompactionEnabled": true
+                }
+            },
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 0,
+                    "name": "Director Comercial"
+                },
+                "restore": {
+                    "parameters": {
+                        "makeConnectionId": {
+                            "label": "Make's AI Provider (default)"
+                        }
+                    },
+                    "expect": {
+                        "defaultModel": {
+                            "mode": "chose",
+                            "label": "Large"
+                        },
+                        "outputType": {
+                            "mode": "chose",
+                            "label": "Text"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "label": "Connection",
+                        "name": "makeConnectionId",
+                        "type": "account:ai-provider,openai-gpt-3,anthropic-claude,gemini-ai-q9zyjp,ai-agent-foundry-openai,ai-agent-foundry-non-openai,mistral-ai,cohere,groq,ai-agent-xai,amazon-bedrock,ai-agent-openai-compatible",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "defaultModel",
+                        "type": "select",
+                        "label": "Model",
+                        "required": true,
+                        "mappable": true,
+                        "dynamic": true,
+                        "grouped": true,
+                        "isolated": true,
+                        "isContext": true,
+                        "default": "large",
+                        "validate": {
+                            "enum": [
+                                "small",
+                                "medium",
+                                "large",
+                                "gpt-6.1-sol",
+                                "gpt-6.1-terra",
+                                "gpt-6-astra",
+                                "gpt-6-sol",
+                                "gpt-6-luna",
+                                "gpt-5.6-sol",
+                                "gpt-5.6-terra",
+                                "gpt-5.6-luna",
+                                "gpt-5.5",
+                                "gpt-5.4",
+                                "gpt-5.4-mini",
+                                "gpt-5.2",
+                                "gpt-5",
+                                "gpt-5-mini",
+                                "gpt-5-nano",
+                                "global.anthropic.claude-fable-5-1",
+                                "global.anthropic.claude-fable-5",
+                                "global.anthropic.claude-sonnet-5-5",
+                                "global.anthropic.claude-sonnet-5",
+                                "global.anthropic.claude-opus-5-5",
+                                "global.anthropic.claude-opus-5",
+                                "global.anthropic.claude-opus-4-8",
+                                "global.anthropic.claude-opus-4-7",
+                                "global.anthropic.claude-sonnet-4-6",
+                                "global.anthropic.claude-opus-4-6-v1",
+                                "global.anthropic.claude-sonnet-4-5-20250929-v1:0",
+                                "global.anthropic.claude-haiku-5-5",
+                                "global.anthropic.claude-haiku-4-5-20251001-v1:0",
+                                "global.anthropic.claude-opus-4-5-20251101-v1:0"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "tokenLimit",
+                        "type": "number",
+                        "label": "Maximum output length (%)",
+                        "advanced": true,
+                        "required": false,
+                        "default": 100,
+                        "validate": {
+                            "min": 20,
+                            "max": 100
+                        }
+                    },
+                    {
+                        "name": "promptCaching",
+                        "type": "select",
+                        "label": "Prompt caching",
+                        "required": false,
+                        "advanced": true,
+                        "default": "none",
+                        "validate": {
+                            "enum": [
+                                "none"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "fallbackEnabled",
+                        "label": "Enable fallback connection",
+                        "type": "boolean",
+                        "required": true,
+                        "default": false,
+                        "advanced": false
+                    },
+                    {
+                        "name": "systemPrompt",
+                        "label": "Instructions",
+                        "type": "text",
+                        "placeholder": "You are an agent specialized in...",
+                        "required": false,
+                        "advanced": false,
+                        "editable": true
+                    },
+                    {
+                        "name": "message",
+                        "label": "Input",
+                        "type": "text",
+                        "placeholder": "Tasks or information for the agent to process...",
+                        "required": true,
+                        "editable": true
+                    },
+                    {
+                        "name": "files",
+                        "label": "Input files",
+                        "type": "array",
+                        "labels": {
+                            "add": "Add file",
+                            "item": "File"
+                        },
+                        "mappable": true,
+                        "spec": [
+                            {
+                                "name": "fileName",
+                                "type": "filename",
+                                "label": "File name",
+                                "semantic": "file:name"
+                            },
+                            {
+                                "name": "data",
+                                "type": "buffer",
+                                "label": "Data",
+                                "semantic": "file:data"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "threadId",
+                        "label": "Conversation ID",
+                        "type": "text",
+                        "advanced": false,
+                        "required": false,
+                        "validate": {
+                            "max": 256
+                        }
+                    },
+                    {
+                        "name": "modelConfig",
+                        "label": "Model configuration",
+                        "type": "collection",
+                        "advanced": true,
+                        "spec": [
+                            {
+                                "name": "recursionLimit",
+                                "label": "Steps per agent call",
+                                "type": "number",
+                                "advanced": true,
+                                "required": false,
+                                "default": 300
+                            },
+                            {
+                                "name": "iterationsFromHistoryCount",
+                                "label": "Maximum conversation history",
+                                "type": "number",
+                                "advanced": true,
+                                "required": false,
+                                "default": 10
+                            },
+                            {
+                                "name": "timeout",
+                                "label": "Step timeout",
+                                "type": "number",
+                                "required": false,
+                                "advanced": true,
+                                "validate": {
+                                    "min": 120,
+                                    "max": 600
+                                }
+                            },
+                            {
+                                "name": "aiCompactionEnabled",
+                                "label": "Enable compaction",
+                                "type": "boolean",
+                                "advanced": true,
+                                "required": true,
+                                "default": true
+                            }
+                        ]
+                    },
+                    {
+                        "name": "outputType",
+                        "label": "Response format",
+                        "type": "select",
+                        "advanced": true,
+                        "required": true,
+                        "default": "text",
+                        "validate": {
+                            "enum": [
+                                "text",
+                                "make-schema",
+                                "udt-schema"
+                            ]
+                        }
+                    }
+                ]
+            },
+            "tools": [
+                {
+                    "name": "Leer configuracion",
+                    "description": "Devuelve la configuración de la marca: marca, web, firma, moneda, idiomas, límites, modo de envío, nichos, países, propuesta de valor y prohibiciones. Usala al inicio de cada ciclo.",
+                    "flow": [
+                        {
+                            "id": 10,
+                            "module": "airtable:ActionSearchRecords",
+                            "version": 3,
+                            "parameters": {},
+                            "mapper": {
+                                "base": "appkk3JHBiWrBn4UF",
+                                "table": "tblYQ2OYheotsKmSo",
+                                "fields": [
+                                    "Clave",
+                                    "Valor"
+                                ],
+                                "formula": "",
+                                "maxRecords": "40",
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 300,
+                                    "y": 120,
+                                    "name": "Leer Config"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "mode": "chose",
+                                            "label": "Ventas Lamparas 3D"
+                                        },
+                                        "table": {
+                                            "mode": "chose",
+                                            "label": "Config"
+                                        },
+                                        "fields": {
+                                            "mode": "chose",
+                                            "label": [
+                                                "Clave",
+                                                "Valor"
+                                            ]
+                                        },
+                                        "formula": {
+                                            "mode": "chose"
+                                        },
+                                        "maxRecords": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "Airtable"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "formula",
+                                        "type": "text",
+                                        "label": "Formula"
+                                    },
+                                    {
+                                        "name": "maxRecords",
+                                        "type": "integer",
+                                        "label": "Limit"
+                                    },
+                                    {
+                                        "name": "sort",
+                                        "spec": [
+                                            {
+                                                "name": "field",
+                                                "type": "select",
+                                                "label": "Field",
+                                                "dynamic": true,
+                                                "options": []
+                                            },
+                                            {
+                                                "name": "direction",
+                                                "type": "select",
+                                                "label": "Direction",
+                                                "options": [
+                                                    {
+                                                        "label": "Descending",
+                                                        "value": "desc"
+                                                    },
+                                                    {
+                                                        "label": "Ascending",
+                                                        "value": "asc"
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Sort"
+                                    },
+                                    {
+                                        "name": "view",
+                                        "type": "select",
+                                        "label": "View"
+                                    },
+                                    {
+                                        "name": "fields",
+                                        "type": "select",
+                                        "label": "Output Fields",
+                                        "multiple": true
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "__IMTLENGTH__",
+                                        "type": "uinteger",
+                                        "label": "Total number of bundles"
+                                    },
+                                    {
+                                        "name": "__IMTINDEX__",
+                                        "type": "uinteger",
+                                        "label": "Bundle order position"
+                                    },
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "Clave",
+                                        "type": "text",
+                                        "label": "Clave"
+                                    },
+                                    {
+                                        "name": "Valor",
+                                        "type": "text",
+                                        "label": "Valor"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Leer catalogo de productos",
+                    "description": "Devuelve los productos activos con precio, moneda, materiales, medidas, lead time, argumentos y link de ficha. Usala antes de escribir cualquier propuesta.",
+                    "flow": [
+                        {
+                            "id": 11,
+                            "module": "airtable:ActionSearchRecords",
+                            "version": 3,
+                            "parameters": {},
+                            "mapper": {
+                                "base": "appkk3JHBiWrBn4UF",
+                                "table": "tblSrwh7WuhyRF0Na",
+                                "fields": [
+                                    "Producto",
+                                    "SKU",
+                                    "Estado",
+                                    "Descripcion_corta",
+                                    "Descripcion_larga",
+                                    "Precio",
+                                    "Moneda",
+                                    "Material",
+                                    "Medidas",
+                                    "Colores",
+                                    "Lead_time_dias",
+                                    "Capacidad_semanal",
+                                    "Link_ficha",
+                                    "Nicho_ideal",
+                                    "Paises_objetivo",
+                                    "Argumentos_venta"
+                                ],
+                                "formula": "{Estado}=\"Activo\"",
+                                "maxRecords": "10",
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 300,
+                                    "y": 260,
+                                    "name": "Leer Catalogo"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "mode": "chose",
+                                            "label": "Ventas Lamparas 3D"
+                                        },
+                                        "table": {
+                                            "mode": "chose",
+                                            "label": "Productos"
+                                        },
+                                        "fields": {
+                                            "mode": "chose",
+                                            "label": [
+                                                "Producto",
+                                                "SKU",
+                                                "Estado",
+                                                "Descripcion_corta",
+                                                "Descripcion_larga",
+                                                "Precio",
+                                                "Moneda",
+                                                "Material",
+                                                "Medidas",
+                                                "Colores",
+                                                "Lead_time_dias",
+                                                "Capacidad_semanal",
+                                                "Link_ficha",
+                                                "Nicho_ideal",
+                                                "Paises_objetivo",
+                                                "Argumentos_venta"
+                                            ]
+                                        },
+                                        "formula": {
+                                            "mode": "chose"
+                                        },
+                                        "maxRecords": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "Airtable"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "formula",
+                                        "type": "text",
+                                        "label": "Formula"
+                                    },
+                                    {
+                                        "name": "maxRecords",
+                                        "type": "integer",
+                                        "label": "Limit"
+                                    },
+                                    {
+                                        "name": "sort",
+                                        "spec": [
+                                            {
+                                                "name": "field",
+                                                "type": "select",
+                                                "label": "Field",
+                                                "dynamic": true,
+                                                "options": []
+                                            },
+                                            {
+                                                "name": "direction",
+                                                "type": "select",
+                                                "label": "Direction",
+                                                "options": [
+                                                    {
+                                                        "label": "Descending",
+                                                        "value": "desc"
+                                                    },
+                                                    {
+                                                        "label": "Ascending",
+                                                        "value": "asc"
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Sort"
+                                    },
+                                    {
+                                        "name": "view",
+                                        "type": "select",
+                                        "label": "View"
+                                    },
+                                    {
+                                        "name": "fields",
+                                        "type": "select",
+                                        "label": "Output Fields",
+                                        "multiple": true
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "__IMTLENGTH__",
+                                        "type": "uinteger",
+                                        "label": "Total number of bundles"
+                                    },
+                                    {
+                                        "name": "__IMTINDEX__",
+                                        "type": "uinteger",
+                                        "label": "Bundle order position"
+                                    },
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "Producto",
+                                        "type": "text",
+                                        "label": "Producto"
+                                    },
+                                    {
+                                        "name": "SKU",
+                                        "type": "text",
+                                        "label": "SKU"
+                                    },
+                                    {
+                                        "name": "Estado",
+                                        "type": "text",
+                                        "label": "Estado"
+                                    },
+                                    {
+                                        "name": "Descripcion_corta",
+                                        "type": "text",
+                                        "label": "Descripcion_corta"
+                                    },
+                                    {
+                                        "name": "Descripcion_larga",
+                                        "type": "text",
+                                        "label": "Descripcion_larga"
+                                    },
+                                    {
+                                        "name": "Precio",
+                                        "type": "number",
+                                        "label": "Precio"
+                                    },
+                                    {
+                                        "name": "Moneda",
+                                        "type": "text",
+                                        "label": "Moneda"
+                                    },
+                                    {
+                                        "name": "Material",
+                                        "type": "text",
+                                        "label": "Material"
+                                    },
+                                    {
+                                        "name": "Medidas",
+                                        "type": "text",
+                                        "label": "Medidas"
+                                    },
+                                    {
+                                        "name": "Colores",
+                                        "type": "text",
+                                        "label": "Colores"
+                                    },
+                                    {
+                                        "name": "Lead_time_dias",
+                                        "type": "number",
+                                        "label": "Lead_time_dias"
+                                    },
+                                    {
+                                        "name": "Capacidad_semanal",
+                                        "type": "number",
+                                        "label": "Capacidad_semanal"
+                                    },
+                                    {
+                                        "name": "Link_ficha",
+                                        "type": "url",
+                                        "label": "Link_ficha"
+                                    },
+                                    {
+                                        "name": "Nicho_ideal",
+                                        "type": "text",
+                                        "label": "Nicho_ideal"
+                                    },
+                                    {
+                                        "name": "Paises_objetivo",
+                                        "type": "text",
+                                        "label": "Paises_objetivo"
+                                    },
+                                    {
+                                        "name": "Argumentos_venta",
+                                        "type": "text",
+                                        "label": "Argumentos_venta"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Leer leads y oportunidades",
+                    "description": "Devuelve los leads existentes con estado, contacto, score e historial. Usala para evitar duplicados y para decidir a quién contactar.",
+                    "flow": [
+                        {
+                            "id": 12,
+                            "module": "airtable:ActionSearchRecords",
+                            "version": 3,
+                            "parameters": {},
+                            "mapper": {
+                                "base": "appkk3JHBiWrBn4UF",
+                                "table": "tblVP4FejuN0nCErl",
+                                "fields": [
+                                    "Lead",
+                                    "Tipo",
+                                    "Dominio",
+                                    "Web",
+                                    "Pais",
+                                    "Ciudad",
+                                    "Idioma",
+                                    "Nicho",
+                                    "Producto_interes",
+                                    "Fuente_URL",
+                                    "Senal",
+                                    "Score",
+                                    "Estado",
+                                    "Contacto_nombre",
+                                    "Contacto_cargo",
+                                    "Contacto_email",
+                                    "Email_estado",
+                                    "Fecha_alta",
+                                    "Ultimo_contacto",
+                                    "Proximo_paso",
+                                    "Notas"
+                                ],
+                                "formula": "",
+                                "maxRecords": "60",
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 300,
+                                    "y": 400,
+                                    "name": "Leer Leads"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "mode": "chose",
+                                            "label": "Ventas Lamparas 3D"
+                                        },
+                                        "table": {
+                                            "mode": "chose",
+                                            "label": "Leads"
+                                        },
+                                        "fields": {
+                                            "mode": "chose",
+                                            "label": [
+                                                "Lead",
+                                                "Tipo",
+                                                "Dominio",
+                                                "Web",
+                                                "Pais",
+                                                "Ciudad",
+                                                "Idioma",
+                                                "Nicho",
+                                                "Producto_interes",
+                                                "Fuente_URL",
+                                                "Senal",
+                                                "Score",
+                                                "Estado",
+                                                "Contacto_nombre",
+                                                "Contacto_cargo",
+                                                "Contacto_email",
+                                                "Email_estado",
+                                                "Fecha_alta",
+                                                "Ultimo_contacto",
+                                                "Proximo_paso",
+                                                "Notas"
+                                            ]
+                                        },
+                                        "formula": {
+                                            "mode": "chose"
+                                        },
+                                        "maxRecords": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "Airtable"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "formula",
+                                        "type": "text",
+                                        "label": "Formula"
+                                    },
+                                    {
+                                        "name": "maxRecords",
+                                        "type": "integer",
+                                        "label": "Limit"
+                                    },
+                                    {
+                                        "name": "sort",
+                                        "spec": [
+                                            {
+                                                "name": "field",
+                                                "type": "select",
+                                                "label": "Field",
+                                                "dynamic": true,
+                                                "options": []
+                                            },
+                                            {
+                                                "name": "direction",
+                                                "type": "select",
+                                                "label": "Direction",
+                                                "options": [
+                                                    {
+                                                        "label": "Descending",
+                                                        "value": "desc"
+                                                    },
+                                                    {
+                                                        "label": "Ascending",
+                                                        "value": "asc"
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Sort"
+                                    },
+                                    {
+                                        "name": "view",
+                                        "type": "select",
+                                        "label": "View"
+                                    },
+                                    {
+                                        "name": "fields",
+                                        "type": "select",
+                                        "label": "Output Fields",
+                                        "multiple": true
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "__IMTLENGTH__",
+                                        "type": "uinteger",
+                                        "label": "Total number of bundles"
+                                    },
+                                    {
+                                        "name": "__IMTINDEX__",
+                                        "type": "uinteger",
+                                        "label": "Bundle order position"
+                                    },
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "Lead",
+                                        "type": "text",
+                                        "label": "Lead"
+                                    },
+                                    {
+                                        "name": "Tipo",
+                                        "type": "text",
+                                        "label": "Tipo"
+                                    },
+                                    {
+                                        "name": "Dominio",
+                                        "type": "text",
+                                        "label": "Dominio"
+                                    },
+                                    {
+                                        "name": "Web",
+                                        "type": "url",
+                                        "label": "Web"
+                                    },
+                                    {
+                                        "name": "Pais",
+                                        "type": "text",
+                                        "label": "Pais"
+                                    },
+                                    {
+                                        "name": "Ciudad",
+                                        "type": "text",
+                                        "label": "Ciudad"
+                                    },
+                                    {
+                                        "name": "Idioma",
+                                        "type": "text",
+                                        "label": "Idioma"
+                                    },
+                                    {
+                                        "name": "Nicho",
+                                        "type": "text",
+                                        "label": "Nicho"
+                                    },
+                                    {
+                                        "name": "Producto_interes",
+                                        "type": "text",
+                                        "label": "Producto_interes"
+                                    },
+                                    {
+                                        "name": "Fuente_URL",
+                                        "type": "url",
+                                        "label": "Fuente_URL"
+                                    },
+                                    {
+                                        "name": "Senal",
+                                        "type": "text",
+                                        "label": "Senal"
+                                    },
+                                    {
+                                        "name": "Score",
+                                        "type": "number",
+                                        "label": "Score"
+                                    },
+                                    {
+                                        "name": "Estado",
+                                        "type": "text",
+                                        "label": "Estado"
+                                    },
+                                    {
+                                        "name": "Contacto_nombre",
+                                        "type": "text",
+                                        "label": "Contacto_nombre"
+                                    },
+                                    {
+                                        "name": "Contacto_cargo",
+                                        "type": "text",
+                                        "label": "Contacto_cargo"
+                                    },
+                                    {
+                                        "name": "Contacto_email",
+                                        "type": "email",
+                                        "label": "Contacto_email"
+                                    },
+                                    {
+                                        "name": "Email_estado",
+                                        "type": "text",
+                                        "label": "Email_estado"
+                                    },
+                                    {
+                                        "name": "Fecha_alta",
+                                        "type": "date",
+                                        "label": "Fecha_alta"
+                                    },
+                                    {
+                                        "name": "Ultimo_contacto",
+                                        "type": "date",
+                                        "label": "Ultimo_contacto"
+                                    },
+                                    {
+                                        "name": "Proximo_paso",
+                                        "type": "text",
+                                        "label": "Proximo_paso"
+                                    },
+                                    {
+                                        "name": "Notas",
+                                        "type": "text",
+                                        "label": "Notas"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Leer outbox y seguimientos",
+                    "description": "Devuelve los borradores y correos enviados con estado, paso, fechas y respuesta. Usala para no repetir contactos y para detectar seguimientos pendientes.",
+                    "flow": [
+                        {
+                            "id": 13,
+                            "module": "airtable:ActionSearchRecords",
+                            "version": 3,
+                            "parameters": {},
+                            "mapper": {
+                                "base": "appkk3JHBiWrBn4UF",
+                                "table": "tbl3q20ESmqsdPZjW",
+                                "fields": [
+                                    "Asunto",
+                                    "Lead",
+                                    "Para",
+                                    "Nombre_destinatario",
+                                    "Cuerpo_HTML",
+                                    "Idioma",
+                                    "Producto",
+                                    "Paso",
+                                    "Estado",
+                                    "Programado_para",
+                                    "Enviado_en",
+                                    "Message_ID",
+                                    "Respondido",
+                                    "Notas"
+                                ],
+                                "formula": "",
+                                "maxRecords": "60",
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 300,
+                                    "y": 540,
+                                    "name": "Leer Outbox"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "mode": "chose",
+                                            "label": "Ventas Lamparas 3D"
+                                        },
+                                        "table": {
+                                            "mode": "chose",
+                                            "label": "Outbox"
+                                        },
+                                        "fields": {
+                                            "mode": "chose",
+                                            "label": [
+                                                "Asunto",
+                                                "Lead",
+                                                "Para",
+                                                "Nombre_destinatario",
+                                                "Cuerpo_HTML",
+                                                "Idioma",
+                                                "Producto",
+                                                "Paso",
+                                                "Estado",
+                                                "Programado_para",
+                                                "Enviado_en",
+                                                "Message_ID",
+                                                "Respondido",
+                                                "Notas"
+                                            ]
+                                        },
+                                        "formula": {
+                                            "mode": "chose"
+                                        },
+                                        "maxRecords": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "Airtable"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "formula",
+                                        "type": "text",
+                                        "label": "Formula"
+                                    },
+                                    {
+                                        "name": "maxRecords",
+                                        "type": "integer",
+                                        "label": "Limit"
+                                    },
+                                    {
+                                        "name": "sort",
+                                        "spec": [
+                                            {
+                                                "name": "field",
+                                                "type": "select",
+                                                "label": "Field",
+                                                "dynamic": true,
+                                                "options": []
+                                            },
+                                            {
+                                                "name": "direction",
+                                                "type": "select",
+                                                "label": "Direction",
+                                                "options": [
+                                                    {
+                                                        "label": "Descending",
+                                                        "value": "desc"
+                                                    },
+                                                    {
+                                                        "label": "Ascending",
+                                                        "value": "asc"
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Sort"
+                                    },
+                                    {
+                                        "name": "view",
+                                        "type": "select",
+                                        "label": "View"
+                                    },
+                                    {
+                                        "name": "fields",
+                                        "type": "select",
+                                        "label": "Output Fields",
+                                        "multiple": true
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "__IMTLENGTH__",
+                                        "type": "uinteger",
+                                        "label": "Total number of bundles"
+                                    },
+                                    {
+                                        "name": "__IMTINDEX__",
+                                        "type": "uinteger",
+                                        "label": "Bundle order position"
+                                    },
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "Asunto",
+                                        "type": "text",
+                                        "label": "Asunto"
+                                    },
+                                    {
+                                        "name": "Lead",
+                                        "type": "text",
+                                        "label": "Lead"
+                                    },
+                                    {
+                                        "name": "Para",
+                                        "type": "email",
+                                        "label": "Para"
+                                    },
+                                    {
+                                        "name": "Nombre_destinatario",
+                                        "type": "text",
+                                        "label": "Nombre_destinatario"
+                                    },
+                                    {
+                                        "name": "Cuerpo_HTML",
+                                        "type": "text",
+                                        "label": "Cuerpo_HTML"
+                                    },
+                                    {
+                                        "name": "Idioma",
+                                        "type": "text",
+                                        "label": "Idioma"
+                                    },
+                                    {
+                                        "name": "Producto",
+                                        "type": "text",
+                                        "label": "Producto"
+                                    },
+                                    {
+                                        "name": "Paso",
+                                        "type": "number",
+                                        "label": "Paso"
+                                    },
+                                    {
+                                        "name": "Estado",
+                                        "type": "text",
+                                        "label": "Estado"
+                                    },
+                                    {
+                                        "name": "Programado_para",
+                                        "type": "date",
+                                        "label": "Programado_para"
+                                    },
+                                    {
+                                        "name": "Enviado_en",
+                                        "type": "date",
+                                        "label": "Enviado_en"
+                                    },
+                                    {
+                                        "name": "Message_ID",
+                                        "type": "text",
+                                        "label": "Message_ID"
+                                    },
+                                    {
+                                        "name": "Respondido",
+                                        "type": "boolean",
+                                        "label": "Respondido"
+                                    },
+                                    {
+                                        "name": "Notas",
+                                        "type": "text",
+                                        "label": "Notas"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Leer conversaciones",
+                    "description": "Devuelve las respuestas recibidas, su clasificación, resumen y objeción principal. Usala para aprender y para no contradecir promesas anteriores.",
+                    "flow": [
+                        {
+                            "id": 14,
+                            "module": "airtable:ActionSearchRecords",
+                            "version": 3,
+                            "parameters": {},
+                            "mapper": {
+                                "base": "appkk3JHBiWrBn4UF",
+                                "table": "tblBqsUvph5L7wYH4",
+                                "fields": [
+                                    "Asunto",
+                                    "Lead",
+                                    "Contacto",
+                                    "Email",
+                                    "Canal",
+                                    "Direccion",
+                                    "Clasificacion",
+                                    "Sentimiento",
+                                    "Resumen",
+                                    "Borrador_respuesta",
+                                    "Estado",
+                                    "Fecha",
+                                    "Message_ID",
+                                    "Notas"
+                                ],
+                                "formula": "",
+                                "maxRecords": "40",
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 300,
+                                    "y": 680,
+                                    "name": "Leer Conversaciones"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "mode": "chose",
+                                            "label": "Ventas Lamparas 3D"
+                                        },
+                                        "table": {
+                                            "mode": "chose",
+                                            "label": "Conversaciones"
+                                        },
+                                        "fields": {
+                                            "mode": "chose",
+                                            "label": [
+                                                "Asunto",
+                                                "Lead",
+                                                "Contacto",
+                                                "Email",
+                                                "Canal",
+                                                "Direccion",
+                                                "Clasificacion",
+                                                "Sentimiento",
+                                                "Resumen",
+                                                "Borrador_respuesta",
+                                                "Estado",
+                                                "Fecha",
+                                                "Message_ID",
+                                                "Notas"
+                                            ]
+                                        },
+                                        "formula": {
+                                            "mode": "chose"
+                                        },
+                                        "maxRecords": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "Airtable"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "formula",
+                                        "type": "text",
+                                        "label": "Formula"
+                                    },
+                                    {
+                                        "name": "maxRecords",
+                                        "type": "integer",
+                                        "label": "Limit"
+                                    },
+                                    {
+                                        "name": "sort",
+                                        "spec": [
+                                            {
+                                                "name": "field",
+                                                "type": "select",
+                                                "label": "Field",
+                                                "dynamic": true,
+                                                "options": []
+                                            },
+                                            {
+                                                "name": "direction",
+                                                "type": "select",
+                                                "label": "Direction",
+                                                "options": [
+                                                    {
+                                                        "label": "Descending",
+                                                        "value": "desc"
+                                                    },
+                                                    {
+                                                        "label": "Ascending",
+                                                        "value": "asc"
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Sort"
+                                    },
+                                    {
+                                        "name": "view",
+                                        "type": "select",
+                                        "label": "View"
+                                    },
+                                    {
+                                        "name": "fields",
+                                        "type": "select",
+                                        "label": "Output Fields",
+                                        "multiple": true
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "__IMTLENGTH__",
+                                        "type": "uinteger",
+                                        "label": "Total number of bundles"
+                                    },
+                                    {
+                                        "name": "__IMTINDEX__",
+                                        "type": "uinteger",
+                                        "label": "Bundle order position"
+                                    },
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "Asunto",
+                                        "type": "text",
+                                        "label": "Asunto"
+                                    },
+                                    {
+                                        "name": "Lead",
+                                        "type": "text",
+                                        "label": "Lead"
+                                    },
+                                    {
+                                        "name": "Contacto",
+                                        "type": "text",
+                                        "label": "Contacto"
+                                    },
+                                    {
+                                        "name": "Email",
+                                        "type": "email",
+                                        "label": "Email"
+                                    },
+                                    {
+                                        "name": "Canal",
+                                        "type": "text",
+                                        "label": "Canal"
+                                    },
+                                    {
+                                        "name": "Direccion",
+                                        "type": "text",
+                                        "label": "Direccion"
+                                    },
+                                    {
+                                        "name": "Clasificacion",
+                                        "type": "text",
+                                        "label": "Clasificacion"
+                                    },
+                                    {
+                                        "name": "Sentimiento",
+                                        "type": "text",
+                                        "label": "Sentimiento"
+                                    },
+                                    {
+                                        "name": "Resumen",
+                                        "type": "text",
+                                        "label": "Resumen"
+                                    },
+                                    {
+                                        "name": "Borrador_respuesta",
+                                        "type": "text",
+                                        "label": "Borrador_respuesta"
+                                    },
+                                    {
+                                        "name": "Estado",
+                                        "type": "text",
+                                        "label": "Estado"
+                                    },
+                                    {
+                                        "name": "Fecha",
+                                        "type": "date",
+                                        "label": "Fecha"
+                                    },
+                                    {
+                                        "name": "Message_ID",
+                                        "type": "text",
+                                        "label": "Message_ID"
+                                    },
+                                    {
+                                        "name": "Notas",
+                                        "type": "text",
+                                        "label": "Notas"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Leer aprendizajes",
+                    "description": "Devuelve los patrones comerciales ya validados con su evidencia y acción. Usalos para ajustar las hipótesis del ciclo.",
+                    "flow": [
+                        {
+                            "id": 15,
+                            "module": "airtable:ActionSearchRecords",
+                            "version": 3,
+                            "parameters": {},
+                            "mapper": {
+                                "base": "appkk3JHBiWrBn4UF",
+                                "table": "tbl3levRw5w1Dwpws",
+                                "fields": [
+                                    "Hallazgo",
+                                    "Fecha",
+                                    "Fuente",
+                                    "Evidencia",
+                                    "Accion",
+                                    "Agente"
+                                ],
+                                "formula": "",
+                                "maxRecords": "20",
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 300,
+                                    "y": 820,
+                                    "name": "Leer Aprendizajes"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "mode": "chose",
+                                            "label": "Ventas Lamparas 3D"
+                                        },
+                                        "table": {
+                                            "mode": "chose",
+                                            "label": "Aprendizajes"
+                                        },
+                                        "fields": {
+                                            "mode": "chose",
+                                            "label": [
+                                                "Hallazgo",
+                                                "Fecha",
+                                                "Fuente",
+                                                "Evidencia",
+                                                "Accion",
+                                                "Agente"
+                                            ]
+                                        },
+                                        "formula": {
+                                            "mode": "chose"
+                                        },
+                                        "maxRecords": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "Airtable"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "formula",
+                                        "type": "text",
+                                        "label": "Formula"
+                                    },
+                                    {
+                                        "name": "maxRecords",
+                                        "type": "integer",
+                                        "label": "Limit"
+                                    },
+                                    {
+                                        "name": "sort",
+                                        "spec": [
+                                            {
+                                                "name": "field",
+                                                "type": "select",
+                                                "label": "Field",
+                                                "dynamic": true,
+                                                "options": []
+                                            },
+                                            {
+                                                "name": "direction",
+                                                "type": "select",
+                                                "label": "Direction",
+                                                "options": [
+                                                    {
+                                                        "label": "Descending",
+                                                        "value": "desc"
+                                                    },
+                                                    {
+                                                        "label": "Ascending",
+                                                        "value": "asc"
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Sort"
+                                    },
+                                    {
+                                        "name": "view",
+                                        "type": "select",
+                                        "label": "View"
+                                    },
+                                    {
+                                        "name": "fields",
+                                        "type": "select",
+                                        "label": "Output Fields",
+                                        "multiple": true
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "__IMTLENGTH__",
+                                        "type": "uinteger",
+                                        "label": "Total number of bundles"
+                                    },
+                                    {
+                                        "name": "__IMTINDEX__",
+                                        "type": "uinteger",
+                                        "label": "Bundle order position"
+                                    },
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "Hallazgo",
+                                        "type": "text",
+                                        "label": "Hallazgo"
+                                    },
+                                    {
+                                        "name": "Fecha",
+                                        "type": "text",
+                                        "label": "Fecha"
+                                    },
+                                    {
+                                        "name": "Fuente",
+                                        "type": "text",
+                                        "label": "Fuente"
+                                    },
+                                    {
+                                        "name": "Evidencia",
+                                        "type": "text",
+                                        "label": "Evidencia"
+                                    },
+                                    {
+                                        "name": "Accion",
+                                        "type": "text",
+                                        "label": "Accion"
+                                    },
+                                    {
+                                        "name": "Agente",
+                                        "type": "text",
+                                        "label": "Agente"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Buscar oportunidades en la web",
+                    "description": "Busca oportunidades y público objetivo en la web abierta: redes sociales indexadas, blogs, foros, comunidades, directorios, marketplaces y páginas de negocios. Usala para descubrir empresas y personas interesadas. Hacé como máximo 6 búsquedas por ciclo y siempre con una consulta enfocada.",
+                    "flow": [
+                        {
+                            "id": 16,
+                            "module": "scrappa:searchWebResults",
+                            "version": 1,
+                            "parameters": {
+                                "__IMTCONN__": 12349301
+                            },
+                            "mapper": {
+                                "query": "{{1.query}}",
+                                "limit": 10
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 300,
+                                    "y": 960,
+                                    "name": "Buscar en Web"
+                                },
+                                "restore": {
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "ROLITO's Scrappa connection"
+                                        }
+                                    },
+                                    "expect": {
+                                        "query": {
+                                            "extra": {
+                                                "aiHelp": "Consulta web",
+                                                "aiInstruction": "Escribí una consulta específica que combine nicho, país, necesidad y señal de compra. Evitá consultas genéricas."
+                                            }
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:scrappa",
+                                        "label": "Connection",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "query",
+                                        "type": "text",
+                                        "label": "Query",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "limit",
+                                        "type": "number",
+                                        "label": "Limit",
+                                        "default": 10,
+                                        "required": false
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "query",
+                                        "type": "text",
+                                        "label": "Query",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "limit",
+                                        "type": "number",
+                                        "label": "Limit",
+                                        "default": 10,
+                                        "required": false
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Guardar lead",
+                    "description": "Crea un lead calificado en Airtable. Usala solo después de investigar, asignar score 3-5 y verificar que el dominio no exista. No guardes leads sin fuente ni señal.",
+                    "flow": [
+                        {
+                            "id": 17,
+                            "module": "airtable:ActionCreateRecord",
+                            "version": 3,
+                            "parameters": {},
+                            "mapper": {
+                                "base": "appkk3JHBiWrBn4UF",
+                                "table": "tblVP4FejuN0nCErl",
+                                "record": "{{1.record}}",
+                                "typecast": true,
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 300,
+                                    "y": 1100,
+                                    "name": "Guardar Lead"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "mode": "chose",
+                                            "label": "Ventas Lamparas 3D"
+                                        },
+                                        "table": {
+                                            "mode": "chose",
+                                            "label": "Leads",
+                                            "nested": [
+                                                {
+                                                    "name": "record",
+                                                    "spec": [
+                                                        {
+                                                            "name": "Lead",
+                                                            "type": "text",
+                                                            "label": "Empresa o persona"
+                                                        },
+                                                        {
+                                                            "name": "Tipo",
+                                                            "type": "text",
+                                                            "label": "Tipo de comprador"
+                                                        },
+                                                        {
+                                                            "name": "Dominio",
+                                                            "type": "text",
+                                                            "label": "Dominio"
+                                                        },
+                                                        {
+                                                            "name": "Web",
+                                                            "type": "url",
+                                                            "label": "Web"
+                                                        },
+                                                        {
+                                                            "name": "Pais",
+                                                            "type": "text",
+                                                            "label": "País"
+                                                        },
+                                                        {
+                                                            "name": "Ciudad",
+                                                            "type": "text",
+                                                            "label": "Ciudad"
+                                                        },
+                                                        {
+                                                            "name": "Idioma",
+                                                            "type": "text",
+                                                            "label": "Idioma"
+                                                        },
+                                                        {
+                                                            "name": "Nicho",
+                                                            "type": "text",
+                                                            "label": "Nicho"
+                                                        },
+                                                        {
+                                                            "name": "Producto_interes",
+                                                            "type": "text",
+                                                            "label": "Producto de interés"
+                                                        },
+                                                        {
+                                                            "name": "Fuente_URL",
+                                                            "type": "url",
+                                                            "label": "Fuente"
+                                                        },
+                                                        {
+                                                            "name": "Senal",
+                                                            "type": "text",
+                                                            "label": "Señal"
+                                                        },
+                                                        {
+                                                            "name": "Score",
+                                                            "type": "number",
+                                                            "label": "Score 1-5"
+                                                        },
+                                                        {
+                                                            "name": "Estado",
+                                                            "type": "text",
+                                                            "label": "Estado"
+                                                        },
+                                                        {
+                                                            "name": "Contacto_nombre",
+                                                            "type": "text",
+                                                            "label": "Nombre del contacto"
+                                                        },
+                                                        {
+                                                            "name": "Contacto_cargo",
+                                                            "type": "text",
+                                                            "label": "Cargo del contacto"
+                                                        },
+                                                        {
+                                                            "name": "Contacto_email",
+                                                            "type": "email",
+                                                            "label": "Email del contacto"
+                                                        },
+                                                        {
+                                                            "name": "Email_estado",
+                                                            "type": "text",
+                                                            "label": "Estado del email"
+                                                        },
+                                                        {
+                                                            "name": "Fecha_alta",
+                                                            "type": "date",
+                                                            "label": "Fecha de alta"
+                                                        },
+                                                        {
+                                                            "name": "Notas",
+                                                            "type": "text",
+                                                            "label": "Notas"
+                                                        }
+                                                    ],
+                                                    "type": "collection",
+                                                    "label": "Record"
+                                                }
+                                            ]
+                                        },
+                                        "record": {
+                                            "nested": {
+                                                "Lead": {
+                                                    "extra": {
+                                                        "aiHelp": "Nombre de la empresa o persona.",
+                                                        "aiInstruction": "Usá el nombre comercial exacto. Si es una persona, usá nombre y apellido."
+                                                    }
+                                                },
+                                                "Tipo": {
+                                                    "extra": {
+                                                        "aiHelp": "Empresa, Particular, Estudio, Hotel, Restaurante, Retail, Evento u Otro.",
+                                                        "aiInstruction": "Elegí el tipo que mejor describa al comprador."
+                                                    }
+                                                },
+                                                "Dominio": {
+                                                    "extra": {
+                                                        "aiHelp": "Dominio normalizado.",
+                                                        "aiInstruction": "Sin https, sin www y sin barra final. Debe ser verificable."
+                                                    }
+                                                },
+                                                "Web": {
+                                                    "extra": {
+                                                        "aiHelp": "URL oficial.",
+                                                        "aiInstruction": "URL completa del sitio oficial o de la página de negocio."
+                                                    }
+                                                },
+                                                "Pais": {
+                                                    "extra": {
+                                                        "aiHelp": "País.",
+                                                        "aiInstruction": "País donde opera el comprador."
+                                                    }
+                                                },
+                                                "Ciudad": {
+                                                    "extra": {
+                                                        "aiHelp": "Ciudad.",
+                                                        "aiInstruction": "Ciudad principal, si se conoce."
+                                                    }
+                                                },
+                                                "Idioma": {
+                                                    "extra": {
+                                                        "aiHelp": "es, en, pt, fr, it, de u otro.",
+                                                        "aiInstruction": "Idioma probable del prospecto."
+                                                    }
+                                                },
+                                                "Nicho": {
+                                                    "extra": {
+                                                        "aiHelp": "Nicho o categoría.",
+                                                        "aiInstruction": "Ejemplo: hotel boutique, estudio de interiorismo, restaurante de diseño."
+                                                    }
+                                                },
+                                                "Producto_interes": {
+                                                    "extra": {
+                                                        "aiHelp": "Producto del catálogo.",
+                                                        "aiInstruction": "Nombre exacto del producto activo que mejor encaja."
+                                                    }
+                                                },
+                                                "Fuente_URL": {
+                                                    "extra": {
+                                                        "aiHelp": "URL de la fuente.",
+                                                        "aiInstruction": "URL exacta donde encontraste la señal. No uses la home si la señal está en otra página."
+                                                    }
+                                                },
+                                                "Senal": {
+                                                    "extra": {
+                                                        "aiHelp": "Evidencia concreta.",
+                                                        "aiInstruction": "Una frase con la señal de interés o necesidad y, si existe, la fecha del proyecto."
+                                                    }
+                                                },
+                                                "Score": {
+                                                    "extra": {
+                                                        "aiHelp": "1 a 5.",
+                                                        "aiInstruction": "5 = necesidad explícita + proyecto + decisor + contacto verificable. 3 = encaje razonable sin necesidad confirmada. No guardes menor a 3."
+                                                    }
+                                                },
+                                                "Estado": {
+                                                    "extra": {
+                                                        "aiHelp": "Estado del lead.",
+                                                        "aiInstruction": "Usá siempre Investigado al crear."
+                                                    }
+                                                },
+                                                "Contacto_nombre": {
+                                                    "extra": {
+                                                        "aiHelp": "Nombre del contacto.",
+                                                        "aiInstruction": "Nombre y apellido del decisor identificado. Si no lo encontraste, omití este campo."
+                                                    }
+                                                },
+                                                "Contacto_cargo": {
+                                                    "extra": {
+                                                        "aiHelp": "Cargo.",
+                                                        "aiInstruction": "Cargo o rol del decisor. Si no lo encontraste, omití este campo."
+                                                    }
+                                                },
+                                                "Contacto_email": {
+                                                    "extra": {
+                                                        "aiHelp": "Email del contacto.",
+                                                        "aiInstruction": "Correo profesional verificado. Si aún no está verificado, omitilo y explicá en Notas."
+                                                    }
+                                                },
+                                                "Email_estado": {
+                                                    "extra": {
+                                                        "aiHelp": "pending, valid, risky, invalid o unknown.",
+                                                        "aiInstruction": "Usá pending si aún no verificaste; usá valid, risky, invalid o unknown según el resultado real de Hunter."
+                                                    }
+                                                },
+                                                "Fecha_alta": {
+                                                    "extra": {
+                                                        "aiHelp": "Fecha ISO.",
+                                                        "aiInstruction": "Usá la fecha de hoy en formato YYYY-MM-DD."
+                                                    }
+                                                },
+                                                "Notas": {
+                                                    "extra": {
+                                                        "aiHelp": "Notas.",
+                                                        "aiInstruction": "Opcional. Incluí el motivo de encaje, el resultado de la verificación y el siguiente paso."
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "typecast": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "Airtable"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "typecast",
+                                        "type": "boolean",
+                                        "label": "Smart links",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "record",
+                                        "spec": [
+                                            {
+                                                "name": "Lead",
+                                                "type": "text",
+                                                "label": "Empresa o persona"
+                                            },
+                                            {
+                                                "name": "Tipo",
+                                                "type": "text",
+                                                "label": "Tipo de comprador"
+                                            },
+                                            {
+                                                "name": "Dominio",
+                                                "type": "text",
+                                                "label": "Dominio"
+                                            },
+                                            {
+                                                "name": "Web",
+                                                "type": "url",
+                                                "label": "Web"
+                                            },
+                                            {
+                                                "name": "Pais",
+                                                "type": "text",
+                                                "label": "País"
+                                            },
+                                            {
+                                                "name": "Ciudad",
+                                                "type": "text",
+                                                "label": "Ciudad"
+                                            },
+                                            {
+                                                "name": "Idioma",
+                                                "type": "text",
+                                                "label": "Idioma"
+                                            },
+                                            {
+                                                "name": "Nicho",
+                                                "type": "text",
+                                                "label": "Nicho"
+                                            },
+                                            {
+                                                "name": "Producto_interes",
+                                                "type": "text",
+                                                "label": "Producto de interés"
+                                            },
+                                            {
+                                                "name": "Fuente_URL",
+                                                "type": "url",
+                                                "label": "Fuente"
+                                            },
+                                            {
+                                                "name": "Senal",
+                                                "type": "text",
+                                                "label": "Señal"
+                                            },
+                                            {
+                                                "name": "Score",
+                                                "type": "number",
+                                                "label": "Score 1-5"
+                                            },
+                                            {
+                                                "name": "Estado",
+                                                "type": "text",
+                                                "label": "Estado"
+                                            },
+                                            {
+                                                "name": "Contacto_nombre",
+                                                "type": "text",
+                                                "label": "Nombre del contacto"
+                                            },
+                                            {
+                                                "name": "Contacto_cargo",
+                                                "type": "text",
+                                                "label": "Cargo del contacto"
+                                            },
+                                            {
+                                                "name": "Contacto_email",
+                                                "type": "email",
+                                                "label": "Email del contacto"
+                                            },
+                                            {
+                                                "name": "Email_estado",
+                                                "type": "text",
+                                                "label": "Estado del email"
+                                            },
+                                            {
+                                                "name": "Fecha_alta",
+                                                "type": "date",
+                                                "label": "Fecha de alta"
+                                            },
+                                            {
+                                                "name": "Notas",
+                                                "type": "text",
+                                                "label": "Notas"
+                                            }
+                                        ],
+                                        "type": "collection",
+                                        "label": "Record"
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "Lead",
+                                        "type": "text",
+                                        "label": "Empresa o persona"
+                                    },
+                                    {
+                                        "name": "Tipo",
+                                        "type": "text",
+                                        "label": "Tipo de comprador"
+                                    },
+                                    {
+                                        "name": "Dominio",
+                                        "type": "text",
+                                        "label": "Dominio"
+                                    },
+                                    {
+                                        "name": "Web",
+                                        "type": "url",
+                                        "label": "Web"
+                                    },
+                                    {
+                                        "name": "Pais",
+                                        "type": "text",
+                                        "label": "País"
+                                    },
+                                    {
+                                        "name": "Ciudad",
+                                        "type": "text",
+                                        "label": "Ciudad"
+                                    },
+                                    {
+                                        "name": "Idioma",
+                                        "type": "text",
+                                        "label": "Idioma"
+                                    },
+                                    {
+                                        "name": "Nicho",
+                                        "type": "text",
+                                        "label": "Nicho"
+                                    },
+                                    {
+                                        "name": "Producto_interes",
+                                        "type": "text",
+                                        "label": "Producto de interés"
+                                    },
+                                    {
+                                        "name": "Fuente_URL",
+                                        "type": "url",
+                                        "label": "Fuente"
+                                    },
+                                    {
+                                        "name": "Senal",
+                                        "type": "text",
+                                        "label": "Señal"
+                                    },
+                                    {
+                                        "name": "Score",
+                                        "type": "number",
+                                        "label": "Score 1-5"
+                                    },
+                                    {
+                                        "name": "Estado",
+                                        "type": "text",
+                                        "label": "Estado"
+                                    },
+                                    {
+                                        "name": "Contacto_nombre",
+                                        "type": "text",
+                                        "label": "Nombre del contacto"
+                                    },
+                                    {
+                                        "name": "Contacto_cargo",
+                                        "type": "text",
+                                        "label": "Cargo del contacto"
+                                    },
+                                    {
+                                        "name": "Contacto_email",
+                                        "type": "email",
+                                        "label": "Email del contacto"
+                                    },
+                                    {
+                                        "name": "Email_estado",
+                                        "type": "text",
+                                        "label": "Estado del email"
+                                    },
+                                    {
+                                        "name": "Fecha_alta",
+                                        "type": "date",
+                                        "label": "Fecha de alta"
+                                    },
+                                    {
+                                        "name": "Notas",
+                                        "type": "text",
+                                        "label": "Notas"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Buscar contacto profesional",
+                    "description": "Encuentra el correo profesional de una persona concreta. Requiere el dominio oficial de la empresa, nombre y apellido. Usala solo cuando la investigación haya identificado esos tres datos; no la llames con un dominio aislado ni con una empresa sin persona.",
+                    "flow": [
+                        {
+                            "id": 18,
+                            "module": "hunter:findEmail",
+                            "version": 1,
+                            "parameters": {
+                                "__IMTCONN__": 12349376
+                            },
+                            "mapper": {
+                                "searchCriteria": "domain",
+                                "domain": "{{1.domain}}",
+                                "first_name": "{{1.firstName}}",
+                                "last_name": "{{1.lastName}}"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 300,
+                                    "y": 1240,
+                                    "name": "Encontrar Email"
+                                },
+                                "restore": {
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "ROLITO's Hunter connection"
+                                        }
+                                    },
+                                    "expect": {
+                                        "searchCriteria": {
+                                            "mode": "chose",
+                                            "label": "By Domain"
+                                        },
+                                        "domain": {
+                                            "extra": {
+                                                "aiHelp": "Dominio",
+                                                "aiInstruction": "Dominio oficial normalizado de la empresa, sin https, sin www y sin barra final."
+                                            }
+                                        },
+                                        "first_name": {
+                                            "extra": {
+                                                "aiHelp": "Nombre",
+                                                "aiInstruction": "Nombre de la persona decisora identificada."
+                                            }
+                                        },
+                                        "last_name": {
+                                            "extra": {
+                                                "aiHelp": "Apellido",
+                                                "aiInstruction": "Apellido de la persona decisora identificada."
+                                            }
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hunter",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "searchCriteria",
+                                        "type": "select",
+                                        "label": "Search by",
+                                        "mappable": false,
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "domain",
+                                                "company"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "domain",
+                                        "type": "text",
+                                        "label": "Domain",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "first_name",
+                                        "type": "text",
+                                        "label": "First Name"
+                                    },
+                                    {
+                                        "name": "last_name",
+                                        "type": "text",
+                                        "label": "Last Name"
+                                    },
+                                    {
+                                        "name": "full_name",
+                                        "type": "text",
+                                        "label": "Full Name"
+                                    },
+                                    {
+                                        "name": "max_duration",
+                                        "type": "uinteger",
+                                        "label": "Max Duration",
+                                        "default": 5,
+                                        "validate": {
+                                            "max": 20,
+                                            "min": 3
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Verificar email",
+                    "description": "Verifica si un correo profesional puede recibir mensajes. No permitas el envío si el resultado indica que el correo es inválido, riesgoso o no verificable.",
+                    "flow": [
+                        {
+                            "id": 19,
+                            "module": "hunter:verifyEmail",
+                            "version": 1,
+                            "parameters": {
+                                "__IMTCONN__": 12349376
+                            },
+                            "mapper": {
+                                "email": "{{1.email}}"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 300,
+                                    "y": 1380,
+                                    "name": "Verificar Email"
+                                },
+                                "restore": {
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "ROLITO's Hunter connection"
+                                        }
+                                    },
+                                    "expect": {
+                                        "email": {
+                                            "extra": {
+                                                "aiHelp": "Email",
+                                                "aiInstruction": "Correo profesional devuelto por la búsqueda de contacto, listo para verificar."
+                                            }
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hunter",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "email",
+                                        "type": "email",
+                                        "label": "Email",
+                                        "required": true
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Crear borrador de email",
+                    "description": "Crea un borrador en Outbox para aprobación humana. No envía. Usala solo con un email verificado y un producto activo. Si Config.modo_envio = auto, podés usar Estado = Aprobado; si no, usá En_revision.",
+                    "flow": [
+                        {
+                            "id": 20,
+                            "module": "airtable:ActionCreateRecord",
+                            "version": 3,
+                            "parameters": {},
+                            "mapper": {
+                                "base": "appkk3JHBiWrBn4UF",
+                                "table": "tbl3q20ESmqsdPZjW",
+                                "record": "{{1.record}}",
+                                "typecast": true,
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 300,
+                                    "y": 1520,
+                                    "name": "Crear Borrador"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "mode": "chose",
+                                            "label": "Ventas Lamparas 3D"
+                                        },
+                                        "table": {
+                                            "mode": "chose",
+                                            "label": "Outbox",
+                                            "nested": [
+                                                {
+                                                    "name": "record",
+                                                    "spec": [
+                                                        {
+                                                            "name": "Asunto",
+                                                            "type": "text",
+                                                            "label": "Asunto"
+                                                        },
+                                                        {
+                                                            "name": "Lead",
+                                                            "type": "text",
+                                                            "label": "Lead"
+                                                        },
+                                                        {
+                                                            "name": "Para",
+                                                            "type": "email",
+                                                            "label": "Para"
+                                                        },
+                                                        {
+                                                            "name": "Nombre_destinatario",
+                                                            "type": "text",
+                                                            "label": "Nombre del destinatario"
+                                                        },
+                                                        {
+                                                            "name": "Cuerpo_HTML",
+                                                            "type": "text",
+                                                            "label": "Cuerpo HTML"
+                                                        },
+                                                        {
+                                                            "name": "Idioma",
+                                                            "type": "text",
+                                                            "label": "Idioma"
+                                                        },
+                                                        {
+                                                            "name": "Producto",
+                                                            "type": "text",
+                                                            "label": "Producto"
+                                                        },
+                                                        {
+                                                            "name": "Paso",
+                                                            "type": "number",
+                                                            "label": "Paso"
+                                                        },
+                                                        {
+                                                            "name": "Estado",
+                                                            "type": "text",
+                                                            "label": "Estado"
+                                                        },
+                                                        {
+                                                            "name": "Programado_para",
+                                                            "type": "date",
+                                                            "label": "Programado para"
+                                                        },
+                                                        {
+                                                            "name": "Respondido",
+                                                            "type": "boolean",
+                                                            "label": "Respondido"
+                                                        },
+                                                        {
+                                                            "name": "Notas",
+                                                            "type": "text",
+                                                            "label": "Notas"
+                                                        }
+                                                    ],
+                                                    "type": "collection",
+                                                    "label": "Record"
+                                                }
+                                            ]
+                                        },
+                                        "record": {
+                                            "nested": {
+                                                "Asunto": {
+                                                    "extra": {
+                                                        "aiHelp": "Asunto del correo.",
+                                                        "aiInstruction": "Máximo 60 caracteres. Observación específica + beneficio concreto. Sin mayúsculas gritadas ni emojis."
+                                                    }
+                                                },
+                                                "Lead": {
+                                                    "extra": {
+                                                        "aiHelp": "Empresa o persona.",
+                                                        "aiInstruction": "Nombre exacto del lead al que escribís."
+                                                    }
+                                                },
+                                                "Para": {
+                                                    "extra": {
+                                                        "aiHelp": "Email verificado.",
+                                                        "aiInstruction": "Solo un correo profesional verificado. No uses correos inválidos, riesgosos o no verificables."
+                                                    }
+                                                },
+                                                "Nombre_destinatario": {
+                                                    "extra": {
+                                                        "aiHelp": "Nombre.",
+                                                        "aiInstruction": "Nombre de la persona."
+                                                    }
+                                                },
+                                                "Cuerpo_HTML": {
+                                                    "extra": {
+                                                        "aiHelp": "Cuerpo HTML.",
+                                                        "aiInstruction": "Entre 90 y 140 palabras en el primer contacto; 50 a 90 en seguimientos. Incluí la firma y la línea de baja. No inventes datos."
+                                                    }
+                                                },
+                                                "Idioma": {
+                                                    "extra": {
+                                                        "aiHelp": "Idioma.",
+                                                        "aiInstruction": "Idioma del prospecto: es, en, pt, fr, it, de u otro."
+                                                    }
+                                                },
+                                                "Producto": {
+                                                    "extra": {
+                                                        "aiHelp": "Producto.",
+                                                        "aiInstruction": "Nombre exacto de un producto activo del catálogo."
+                                                    }
+                                                },
+                                                "Paso": {
+                                                    "extra": {
+                                                        "aiHelp": "1, 2 o 3.",
+                                                        "aiInstruction": "1 = primer contacto; 2 = primer seguimiento; 3 = segundo y último seguimiento."
+                                                    }
+                                                },
+                                                "Estado": {
+                                                    "extra": {
+                                                        "aiHelp": "En_revision o Aprobado.",
+                                                        "aiInstruction": "Usá En_revision si Config.modo_envio = manual. Usá Aprobado solo si Config.modo_envio = auto."
+                                                    }
+                                                },
+                                                "Programado_para": {
+                                                    "extra": {
+                                                        "aiHelp": "Fecha ISO.",
+                                                        "aiInstruction": "Si el modo es auto, usá la fecha y hora actual en ISO. Si es manual, omitilo."
+                                                    }
+                                                },
+                                                "Respondido": {
+                                                    "extra": {
+                                                        "aiHelp": "Booleano.",
+                                                        "aiInstruction": "Usá false."
+                                                    }
+                                                },
+                                                "Notas": {
+                                                    "extra": {
+                                                        "aiHelp": "Notas.",
+                                                        "aiInstruction": "Motivo del encaje y ángulo elegido. Sin datos inventados."
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "typecast": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "Airtable"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "typecast",
+                                        "type": "boolean",
+                                        "label": "Smart links",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "record",
+                                        "spec": [
+                                            {
+                                                "name": "Asunto",
+                                                "type": "text",
+                                                "label": "Asunto"
+                                            },
+                                            {
+                                                "name": "Lead",
+                                                "type": "text",
+                                                "label": "Lead"
+                                            },
+                                            {
+                                                "name": "Para",
+                                                "type": "email",
+                                                "label": "Para"
+                                            },
+                                            {
+                                                "name": "Nombre_destinatario",
+                                                "type": "text",
+                                                "label": "Nombre del destinatario"
+                                            },
+                                            {
+                                                "name": "Cuerpo_HTML",
+                                                "type": "text",
+                                                "label": "Cuerpo HTML"
+                                            },
+                                            {
+                                                "name": "Idioma",
+                                                "type": "text",
+                                                "label": "Idioma"
+                                            },
+                                            {
+                                                "name": "Producto",
+                                                "type": "text",
+                                                "label": "Producto"
+                                            },
+                                            {
+                                                "name": "Paso",
+                                                "type": "number",
+                                                "label": "Paso"
+                                            },
+                                            {
+                                                "name": "Estado",
+                                                "type": "text",
+                                                "label": "Estado"
+                                            },
+                                            {
+                                                "name": "Programado_para",
+                                                "type": "date",
+                                                "label": "Programado para"
+                                            },
+                                            {
+                                                "name": "Respondido",
+                                                "type": "boolean",
+                                                "label": "Respondido"
+                                            },
+                                            {
+                                                "name": "Notas",
+                                                "type": "text",
+                                                "label": "Notas"
+                                            }
+                                        ],
+                                        "type": "collection",
+                                        "label": "Record"
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "Asunto",
+                                        "type": "text",
+                                        "label": "Asunto"
+                                    },
+                                    {
+                                        "name": "Lead",
+                                        "type": "text",
+                                        "label": "Lead"
+                                    },
+                                    {
+                                        "name": "Para",
+                                        "type": "email",
+                                        "label": "Para"
+                                    },
+                                    {
+                                        "name": "Nombre_destinatario",
+                                        "type": "text",
+                                        "label": "Nombre del destinatario"
+                                    },
+                                    {
+                                        "name": "Cuerpo_HTML",
+                                        "type": "text",
+                                        "label": "Cuerpo HTML"
+                                    },
+                                    {
+                                        "name": "Idioma",
+                                        "type": "text",
+                                        "label": "Idioma"
+                                    },
+                                    {
+                                        "name": "Producto",
+                                        "type": "text",
+                                        "label": "Producto"
+                                    },
+                                    {
+                                        "name": "Paso",
+                                        "type": "number",
+                                        "label": "Paso"
+                                    },
+                                    {
+                                        "name": "Estado",
+                                        "type": "text",
+                                        "label": "Estado"
+                                    },
+                                    {
+                                        "name": "Programado_para",
+                                        "type": "date",
+                                        "label": "Programado para"
+                                    },
+                                    {
+                                        "name": "Respondido",
+                                        "type": "boolean",
+                                        "label": "Respondido"
+                                    },
+                                    {
+                                        "name": "Notas",
+                                        "type": "text",
+                                        "label": "Notas"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Actualizar lead",
+                    "description": "Actualiza el estado, el último contacto y el próximo paso de un lead. Usala después de crear un borrador o cuando cambie el estado comercial.",
+                    "flow": [
+                        {
+                            "id": 21,
+                            "module": "airtable:ActionUpdateRecords",
+                            "version": 3,
+                            "parameters": {},
+                            "mapper": {
+                                "id": "{{1.id}}",
+                                "base": "appkk3JHBiWrBn4UF",
+                                "table": "tblVP4FejuN0nCErl",
+                                "record": "{{1.record}}",
+                                "typecast": true,
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 300,
+                                    "y": 1660,
+                                    "name": "Actualizar Lead"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "mode": "chose",
+                                            "label": "Ventas Lamparas 3D"
+                                        },
+                                        "table": {
+                                            "mode": "chose",
+                                            "label": "Leads"
+                                        },
+                                        "record": {
+                                            "nested": {
+                                                "Estado": {
+                                                    "extra": {
+                                                        "aiHelp": "Estado.",
+                                                        "aiInstruction": "Usá Contactado después de crear un borrador; Respondio, Calificado, Propuesta, Ganado, Perdido u OptOut según corresponda."
+                                                    }
+                                                },
+                                                "Ultimo_contacto": {
+                                                    "extra": {
+                                                        "aiHelp": "Fecha ISO.",
+                                                        "aiInstruction": "Usá la fecha de hoy en formato YYYY-MM-DD."
+                                                    }
+                                                },
+                                                "Proximo_paso": {
+                                                    "extra": {
+                                                        "aiHelp": "Próximo paso.",
+                                                        "aiInstruction": "Ejemplo: Seguimiento 1 en 4 días; Llamada agendada; Esperando respuesta."
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "typecast": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        },
+                                        "id": {
+                                            "extra": {
+                                                "aiHelp": "Record ID",
+                                                "aiInstruction": "Usá el id del registro de la tabla Leads que devolvió Leer leads y oportunidades. No inventes un id."
+                                            }
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "Airtable"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "typecast",
+                                        "type": "boolean",
+                                        "label": "Smart links",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "Record ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "record",
+                                        "spec": [
+                                            {
+                                                "name": "Estado",
+                                                "type": "text",
+                                                "label": "Estado"
+                                            },
+                                            {
+                                                "name": "Ultimo_contacto",
+                                                "type": "date",
+                                                "label": "Último contacto"
+                                            },
+                                            {
+                                                "name": "Proximo_paso",
+                                                "type": "text",
+                                                "label": "Próximo paso"
+                                            }
+                                        ],
+                                        "type": "collection",
+                                        "label": "Record"
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "Estado",
+                                        "type": "text",
+                                        "label": "Estado"
+                                    },
+                                    {
+                                        "name": "Ultimo_contacto",
+                                        "type": "date",
+                                        "label": "Último contacto"
+                                    },
+                                    {
+                                        "name": "Proximo_paso",
+                                        "type": "text",
+                                        "label": "Próximo paso"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Guardar aprendizaje",
+                    "description": "Guarda un patrón comercial con evidencia y acción. Usala como máximo una vez por ciclo y solo si el patrón es claro y accionable.",
+                    "flow": [
+                        {
+                            "id": 22,
+                            "module": "airtable:ActionCreateRecord",
+                            "version": 3,
+                            "parameters": {},
+                            "mapper": {
+                                "base": "appkk3JHBiWrBn4UF",
+                                "table": "tbl3levRw5w1Dwpws",
+                                "record": "{{1.record}}",
+                                "typecast": true,
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 300,
+                                    "y": 1800,
+                                    "name": "Guardar Aprendizaje"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "mode": "chose",
+                                            "label": "Ventas Lamparas 3D"
+                                        },
+                                        "table": {
+                                            "mode": "chose",
+                                            "label": "Aprendizajes",
+                                            "nested": [
+                                                {
+                                                    "name": "record",
+                                                    "spec": [
+                                                        {
+                                                            "name": "Hallazgo",
+                                                            "type": "text",
+                                                            "label": "Hallazgo"
+                                                        },
+                                                        {
+                                                            "name": "Fecha",
+                                                            "type": "date",
+                                                            "label": "Fecha"
+                                                        },
+                                                        {
+                                                            "name": "Fuente",
+                                                            "type": "text",
+                                                            "label": "Fuente"
+                                                        },
+                                                        {
+                                                            "name": "Evidencia",
+                                                            "type": "text",
+                                                            "label": "Evidencia"
+                                                        },
+                                                        {
+                                                            "name": "Accion",
+                                                            "type": "text",
+                                                            "label": "Acción"
+                                                        },
+                                                        {
+                                                            "name": "Agente",
+                                                            "type": "text",
+                                                            "label": "Agente"
+                                                        }
+                                                    ],
+                                                    "type": "collection",
+                                                    "label": "Record"
+                                                }
+                                            ]
+                                        },
+                                        "record": {
+                                            "nested": {
+                                                "Hallazgo": {
+                                                    "extra": {
+                                                        "aiHelp": "Hallazgo.",
+                                                        "aiInstruction": "Una frase concreta y accionable. No escribas obviedades."
+                                                    }
+                                                },
+                                                "Fecha": {
+                                                    "extra": {
+                                                        "aiHelp": "Fecha ISO.",
+                                                        "aiInstruction": "Usá la fecha de hoy en formato YYYY-MM-DD."
+                                                    }
+                                                },
+                                                "Fuente": {
+                                                    "extra": {
+                                                        "aiHelp": "Fuente.",
+                                                        "aiInstruction": "Fuente o conjunto de datos que sustenta el hallazgo."
+                                                    }
+                                                },
+                                                "Evidencia": {
+                                                    "extra": {
+                                                        "aiHelp": "Evidencia.",
+                                                        "aiInstruction": "Datos concretos: respuestas, tasas, objeciones, nichos."
+                                                    }
+                                                },
+                                                "Accion": {
+                                                    "extra": {
+                                                        "aiHelp": "Acción.",
+                                                        "aiInstruction": "Qué cambiaremos en el próximo ciclo."
+                                                    }
+                                                },
+                                                "Agente": {
+                                                    "extra": {
+                                                        "aiHelp": "Agente.",
+                                                        "aiInstruction": "Usá Comercial."
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "typecast": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "Airtable"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "typecast",
+                                        "type": "boolean",
+                                        "label": "Smart links",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "record",
+                                        "spec": [
+                                            {
+                                                "name": "Hallazgo",
+                                                "type": "text",
+                                                "label": "Hallazgo"
+                                            },
+                                            {
+                                                "name": "Fecha",
+                                                "type": "date",
+                                                "label": "Fecha"
+                                            },
+                                            {
+                                                "name": "Fuente",
+                                                "type": "text",
+                                                "label": "Fuente"
+                                            },
+                                            {
+                                                "name": "Evidencia",
+                                                "type": "text",
+                                                "label": "Evidencia"
+                                            },
+                                            {
+                                                "name": "Accion",
+                                                "type": "text",
+                                                "label": "Acción"
+                                            },
+                                            {
+                                                "name": "Agente",
+                                                "type": "text",
+                                                "label": "Agente"
+                                            }
+                                        ],
+                                        "type": "collection",
+                                        "label": "Record"
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "Hallazgo",
+                                        "type": "text",
+                                        "label": "Hallazgo"
+                                    },
+                                    {
+                                        "name": "Fecha",
+                                        "type": "text",
+                                        "label": "Fecha"
+                                    },
+                                    {
+                                        "name": "Fuente",
+                                        "type": "text",
+                                        "label": "Fuente"
+                                    },
+                                    {
+                                        "name": "Evidencia",
+                                        "type": "text",
+                                        "label": "Evidencia"
+                                    },
+                                    {
+                                        "name": "Accion",
+                                        "type": "text",
+                                        "label": "Acción"
+                                    },
+                                    {
+                                        "name": "Agente",
+                                        "type": "text",
+                                        "label": "Agente"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "module": "telegram:SendReplyMessage",
+            "version": 1,
+            "parameters": {
+                "__IMTCONN__": 12349438
+            },
+            "mapper": {
+                "chatId": "5144879357",
+                "text": "MOTOR COMERCIAL - {{formatDate(now; \"DD/MM/YYYY HH:mm\")}}\n\n{{substring(1.response; 0; 3700)}}"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 450,
+                    "y": 0,
+                    "name": "Informe Telegram"
+                },
+                "restore": {
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "label": "ROLITO's Telegram Bot connection"
+                        }
+                    },
+                    "expect": {
+                        "chatId": {
+                            "extra": {
+                                "aiHelp": "Chat ID",
+                                "aiInstruction": "Identificador del chat del dueño."
+                            }
+                        },
+                        "text": {
+                            "extra": {
+                                "aiHelp": "Texto",
+                                "aiInstruction": "Informe breve, truncado para entrar en el límite de Telegram."
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:telegram",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "chatId",
+                        "type": "text",
+                        "label": "Chat ID",
+                        "required": true
+                    },
+                    {
+                        "name": "text",
+                        "type": "text",
+                        "label": "Text",
+                        "required": true
+                    },
+                    {
+                        "name": "messageThreadId",
+                        "type": "number",
+                        "label": "Message Thread ID"
+                    },
+                    {
+                        "name": "parseMode",
+                        "type": "select",
+                        "label": "Parse Mode",
+                        "validate": {
+                            "enum": [
+                                "Markdown",
+                                "HTML"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "disableNotification",
+                        "type": "boolean",
+                        "label": "Disable Notifications",
+                        "editable": true
+                    },
+                    {
+                        "name": "disableWebPagePreview",
+                        "type": "boolean",
+                        "label": "Disable Link Previews"
+                    },
+                    {
+                        "name": "replyToMessageId",
+                        "type": "number",
+                        "label": "Original Message ID",
+                        "advanced": true
+                    },
+                    {
+                        "name": "replyMarkupAssembleType",
+                        "type": "select",
+                        "label": "Enter/Assemble the Reply Markup Field",
+                        "default": "reply_markup_enter",
+                        "advanced": true,
+                        "validate": {
+                            "enum": [
+                                "reply_markup_enter",
+                                "reply_markup_assemble"
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "metadata": {
+        "instant": false,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": false,
+            "slots": null,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": false,
+            "freshVariables": false
+        },
+        "designer": {
+            "orphans": []
+        },
+        "zone": "us2.make.com",
+        "notes": []
+    }
+}

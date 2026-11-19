@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import { productReadiness } from '../lib/readiness.mjs';
+const empty = productReadiness({ name: 'Prueba', status: 'borrador' });
+assert.equal(empty.score, 0);
+assert.equal(empty.readyForProspecting, false);
+assert(empty.missing.some((m) => m.id === 'capacity'));
+const complete = productReadiness({ status: 'listo', price: 50, cost: 20, photos: [{}], description: 'Una luminaria artesanal hecha a pedido.', dimensions: '20cm', weightGrams: 600, capacityPerWeek: 12, leadTimeDays: 5 });
+assert.equal(complete.score, 100);
+assert.equal(complete.readyForProspecting, true);
+assert.equal(productReadiness({ ...complete, status: 'archivado' }).readyForProspecting, false);
+console.log('readiness OK');

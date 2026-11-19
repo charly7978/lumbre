@@ -1,0 +1,16 @@
+# Datos locales (contienen claves y misiones)
+data/
+# Estado de herramientas de IA y editores (no es código del proyecto)
+.refact/
+.kilo/
+.qodo/
+.agents/
+.andromity/
+.vscode/
+# Temporales
+*.tmp
+# Node
+node_modules/
+# Sistema
+.DS_Store
+Thumbs.db

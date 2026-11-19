@@ -1,0 +1,8 @@
+.andromity/
+data/
+*.tmp
+.refact/
+.kilo/
+.qodo/
+.agents/
+.vscode/
