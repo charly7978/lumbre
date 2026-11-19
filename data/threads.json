@@ -351,13 +351,16 @@
         "language": "es",
         "subject": "SIRI, velador de autor para MINIM",
         "body": "Hola: vi que MINIM es un retailer de mobiliario e iluminación de diseño contemporáneo con tiendas en Barcelona y Madrid. SIRI es un velador de 35 cm impreso en PLA vegetal, con portalámpara E27 universal y color a elección. Precio mayorista USD 45 por unidad, FOB Buenos Aires; flete internacional a cotizar y a cargo del comprador. ¿Te interesa que te envíe la ficha técnica y una foto del proceso?",
-        "status": "revisar",
+        "status": "listo",
         "createdAt": "2026-11-19T01:38:51.728Z",
         "source": "mision",
-        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewNote": "Aprobado: Términos FOB Buenos Aires y datos legales del fabricante completados.",
         "reviewKind": "redteam",
         "complianceCorrections": 1,
-        "guardVersion": 2
+        "guardVersion": 2,
+        "approvedAt": "2026-11-19T03:14:08.177Z",
+        "approvedBy": "Carlos Ameghino (dueño)",
+        "approvedReviewKind": "redteam"
       }
     ],
     "messages": [],
@@ -405,13 +408,16 @@
         "language": "es",
         "subject": "SIRI, velador de autor para Pilight Shop",
         "body": "Hola: vi que Pilight Shop vende iluminación de diseño online y atiende proyectos. SIRI es un velador de 35 cm impreso en PLA vegetal, con portalámpara E27 universal y color a elección. Precio mayorista USD 45 por unidad, FOB Buenos Aires; flete internacional a cotizar y a cargo del comprador. ¿Te interesa que te envíe la ficha técnica y una foto del proceso?",
-        "status": "revisar",
+        "status": "listo",
         "createdAt": "2026-11-19T01:38:51.728Z",
         "source": "mision",
-        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewNote": "Aprobado: Términos FOB Buenos Aires y datos legales del fabricante completados.",
         "reviewKind": "redteam",
         "complianceCorrections": 1,
-        "guardVersion": 2
+        "guardVersion": 2,
+        "approvedAt": "2026-11-19T03:14:08.177Z",
+        "approvedBy": "Carlos Ameghino (dueño)",
+        "approvedReviewKind": "redteam"
       }
     ],
     "messages": [],
@@ -459,13 +465,16 @@
         "language": "es",
         "subject": "SIRI, velador de autor para Mar de Cava",
         "body": "Hola: vi que Mar de Cava incluye iluminación en su selección de muebles y decoración de diseño en Barcelona. SIRI es un velador de 35 cm impreso en PLA vegetal, con portalámpara E27 universal y color a elección. Precio mayorista USD 45 por unidad, FOB Buenos Aires; flete internacional a cotizar y a cargo del comprador. ¿Te interesa que te envíe la ficha técnica y una foto del proceso?",
-        "status": "revisar",
+        "status": "listo",
         "createdAt": "2026-11-19T01:38:51.728Z",
         "source": "mision",
-        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewNote": "Aprobado: Términos FOB Buenos Aires y datos legales del fabricante completados.",
         "reviewKind": "redteam",
         "complianceCorrections": 1,
-        "guardVersion": 2
+        "guardVersion": 2,
+        "approvedAt": "2026-11-19T03:14:08.177Z",
+        "approvedBy": "Carlos Ameghino (dueño)",
+        "approvedReviewKind": "redteam"
       }
     ],
     "messages": [],
@@ -513,12 +522,15 @@
         "language": "es",
         "subject": "SIRI, velador de autor para La Maison Barcelona",
         "body": "Hola: vi que La Maison Barcelona mezcla mobiliario, objetos e iluminación en su concept store y en proyectos de interiorismo. SIRI es un velador de 35 cm impreso en PLA de origen vegetal, con portalámpara E27 universal y color a elección. Precio mayorista USD 45 por unidad, FOB Buenos Aires, flete a cargo del comprador. ¿Te interesa que te pase la ficha técnica y una foto del proceso? Si preferís no recibir más correos, respondé BAJA y no te escribo más. Gabriel, Galapa, Buenos Aires.",
-        "status": "revisar",
+        "status": "listo",
         "createdAt": "2026-11-19T01:38:51.728Z",
         "source": "mision",
-        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewNote": "Aprobado: Términos FOB Buenos Aires y datos legales del fabricante completados.",
         "reviewKind": "redteam",
-        "guardVersion": 2
+        "guardVersion": 2,
+        "approvedAt": "2026-11-19T03:14:08.177Z",
+        "approvedBy": "Carlos Ameghino (dueño)",
+        "approvedReviewKind": "redteam"
       }
     ],
     "messages": [],
@@ -566,13 +578,16 @@
         "language": "es",
         "subject": "SIRI, velador de autor para Lámparas Barcelona",
         "body": "Hola: vi la tienda online y el showroom de Lámparas Barcelona, con foco en lámparas de diseño. SIRI es un velador de 35 cm impreso en PLA vegetal, con portalámpara E27 universal y color a elección. Precio mayorista USD 45 por unidad, FOB Buenos Aires; flete internacional a cotizar y a cargo del comprador. ¿Te interesa que te envíe la ficha técnica y una foto del proceso?",
-        "status": "revisar",
+        "status": "listo",
         "createdAt": "2026-11-19T01:38:51.728Z",
         "source": "mision",
-        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewNote": "Aprobado: Términos FOB Buenos Aires y datos legales del fabricante completados.",
         "reviewKind": "redteam",
         "complianceCorrections": 1,
-        "guardVersion": 2
+        "guardVersion": 2,
+        "approvedAt": "2026-11-19T03:14:08.177Z",
+        "approvedBy": "Carlos Ameghino (dueño)",
+        "approvedReviewKind": "redteam"
       }
     ],
     "messages": [],
@@ -620,13 +635,16 @@
         "language": "es",
         "subject": "SIRI, edición de autor para Insolit BCN",
         "body": "Hola: vi que Insolit BCN está especializada en lámparas de diseño con marcas de autor y ediciones. SIRI es un velador de 35 cm impreso en PLA vegetal, con portalámpara E27 universal y color a elección. Precio mayorista USD 45 por unidad, FOB Buenos Aires; flete internacional a cotizar y a cargo del comprador. ¿Te interesa que te envíe la ficha técnica y una foto del proceso?",
-        "status": "revisar",
+        "status": "listo",
         "createdAt": "2026-11-19T01:38:51.728Z",
         "source": "mision",
-        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewNote": "Aprobado: Términos FOB Buenos Aires y datos legales del fabricante completados.",
         "reviewKind": "redteam",
         "complianceCorrections": 1,
-        "guardVersion": 2
+        "guardVersion": 2,
+        "approvedAt": "2026-11-19T03:14:08.177Z",
+        "approvedBy": "Carlos Ameghino (dueño)",
+        "approvedReviewKind": "redteam"
       }
     ],
     "messages": [],
@@ -674,12 +692,15 @@
         "language": "es",
         "subject": "SIRI, velador de autor para Avanluce",
         "body": "Hola: vi el showroom y el catálogo multimarca de iluminación de diseño de Avanluce en Barcelona. SIRI es un velador de 35 cm impreso en PLA de origen vegetal, con portalámpara E27 universal y color a elección. Precio mayorista USD 45 por unidad, FOB Buenos Aires, flete a cargo del comprador. ¿Te interesa que te envíe la ficha técnica y una foto del proceso? Si preferís no recibir más correos, respondé BAJA y no te escribo más. Gabriel, Galapa, Buenos Aires.",
-        "status": "revisar",
+        "status": "listo",
         "createdAt": "2026-11-19T01:38:51.728Z",
         "source": "mision",
-        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewNote": "Aprobado: Términos FOB Buenos Aires y datos legales del fabricante completados.",
         "reviewKind": "redteam",
-        "guardVersion": 2
+        "guardVersion": 2,
+        "approvedAt": "2026-11-19T03:14:08.177Z",
+        "approvedBy": "Carlos Ameghino (dueño)",
+        "approvedReviewKind": "redteam"
       }
     ],
     "messages": [],
@@ -727,12 +748,15 @@
         "language": "es",
         "subject": "SIRI, velador de autor para Años Luz",
         "body": "Hola: vi que Años Luz asesora proyectos residenciales y comerciales desde su local de Serrano. SIRI es un velador de 35 cm impreso en PLA de origen vegetal, con portalámpara E27 universal y color a elección; puede funcionar como pieza de acento en proyectos pequeños. Precio mayorista USD 45 por unidad, FOB Buenos Aires, flete a cargo del comprador. ¿Te interesa que te pase la ficha técnica? Si preferís no recibir más correos, respondé BAJA y no te escribo más. Gabriel, Galapa, Buenos Aires.",
-        "status": "revisar",
+        "status": "listo",
         "createdAt": "2026-11-19T01:38:51.728Z",
         "source": "mision",
-        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewNote": "Aprobado: Términos FOB Buenos Aires y datos legales del fabricante completados.",
         "reviewKind": "redteam",
-        "guardVersion": 2
+        "guardVersion": 2,
+        "approvedAt": "2026-11-19T03:14:08.177Z",
+        "approvedBy": "Carlos Ameghino (dueño)",
+        "approvedReviewKind": "redteam"
       }
     ],
     "messages": [],
@@ -780,12 +804,15 @@
         "language": "es",
         "subject": "SIRI, velador de autor para Ideas Luz",
         "body": "Hola: vi en Ideas Luz su catálogo de lámparas de diseño con varias marcas y piezas de autor. SIRI es un velador de 35 cm impreso en PLA de origen vegetal, con portalámpara E27 universal y color a elección. Precio mayorista USD 45 por unidad, FOB Buenos Aires, flete a cargo del comprador. ¿Te interesa que te envíe la ficha técnica y una foto del proceso? Si preferís no recibir más correos, respondé BAJA y no te escribo más. Gabriel, Galapa, Buenos Aires.",
-        "status": "revisar",
+        "status": "listo",
         "createdAt": "2026-11-19T01:38:51.728Z",
         "source": "mision",
-        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewNote": "Aprobado: Términos FOB Buenos Aires y datos legales del fabricante completados.",
         "reviewKind": "redteam",
-        "guardVersion": 2
+        "guardVersion": 2,
+        "approvedAt": "2026-11-19T03:14:08.177Z",
+        "approvedBy": "Carlos Ameghino (dueño)",
+        "approvedReviewKind": "redteam"
       }
     ],
     "messages": [],
@@ -833,12 +860,15 @@
         "language": "es",
         "subject": "SIRI para una edición de Casa FOA",
         "body": "Hola: vi que Casa FOA convoca a estudios y marcas en sus ediciones de diseño y decoración. SIRI es un velador de 35 cm impreso en PLA de origen vegetal, con portalámpara E27 universal y color a elección, pensado como pieza de acento. Precio mayorista USD 45 por unidad, sin flete internacional. ¿Te interesa evaluar SIRI para una edición futura? Si preferís no recibir más correos, respondé BAJA y no te escribo más. Gabriel, Galapa, Buenos Aires.",
-        "status": "revisar",
+        "status": "listo",
         "createdAt": "2026-11-19T01:38:51.728Z",
         "source": "mision",
-        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewNote": "Aprobado: Términos FOB Buenos Aires y datos legales del fabricante completados.",
         "reviewKind": "redteam",
-        "guardVersion": 2
+        "guardVersion": 2,
+        "approvedAt": "2026-11-19T03:14:08.177Z",
+        "approvedBy": "Carlos Ameghino (dueño)",
+        "approvedReviewKind": "redteam"
       }
     ],
     "messages": [],
@@ -886,12 +916,15 @@
         "language": "es",
         "subject": "SIRI, velador de autor para Chic by Accident",
         "body": "Hola: vi que en Chic by Accident trabajan diseño mexicano contemporáneo y piezas de autor en series cortas. SIRI es un velador de 35 cm impreso en PLA de origen vegetal, con portalámpara E27 universal y color a elección; podemos ajustar la tonalidad a tu paleta de temporada. Precio mayorista USD 45 por unidad, FOB Buenos Aires, flete a cargo del comprador. ¿Querés que te pase la ficha técnica y una foto del proceso? Si preferís no recibir más correos, respondé BAJA y no te escribo más. Gabriel, Galapa, Buenos Aires.",
-        "status": "revisar",
+        "status": "listo",
         "createdAt": "2026-11-19T01:38:51.728Z",
         "source": "mision",
-        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewNote": "Aprobado: Términos FOB Buenos Aires y datos legales del fabricante completados.",
         "reviewKind": "redteam",
-        "guardVersion": 2
+        "guardVersion": 2,
+        "approvedAt": "2026-11-19T03:14:08.177Z",
+        "approvedBy": "Carlos Ameghino (dueño)",
+        "approvedReviewKind": "redteam"
       }
     ],
     "messages": [],
@@ -939,13 +972,16 @@
         "language": "es",
         "subject": "SIRI, velador de autor para Casa Bosques",
         "body": "Hola: vi en la web de Casa Bosques la mezcla de libros de diseño, arte y objetos, y creo que SIRI puede dialogar con esa selección. Es un velador de 35 cm impreso en PLA vegetal, con portalámpara E27 universal y color a elección. Precio mayorista USD 45 por unidad, FOB Buenos Aires; flete internacional a cotizar y a cargo del comprador. ¿Te interesa que te envíe la ficha técnica y una foto del proceso?",
-        "status": "revisar",
+        "status": "listo",
         "createdAt": "2026-11-19T01:38:51.728Z",
         "source": "mision",
-        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewNote": "Aprobado: Términos FOB Buenos Aires y datos legales del fabricante completados.",
         "reviewKind": "redteam",
         "complianceCorrections": 1,
-        "guardVersion": 2
+        "guardVersion": 2,
+        "approvedAt": "2026-11-19T03:14:08.177Z",
+        "approvedBy": "Carlos Ameghino (dueño)",
+        "approvedReviewKind": "redteam"
       }
     ],
     "messages": [],
@@ -1304,12 +1340,15 @@
         "language": "es",
         "subject": "Mazoma: pieza de autor impresa en 3D para su showroom",
         "body": "Hola [Nombre],\n\nVi en su catálogo la Tilia de Foscarini y la Light Stick de Catellani & Smith. Mazoma es una lámpara de autor impresa en 3D que muestra las capas de impresión como textura. La produce un maker en series cortas, con número de serie y ficha técnica.\n\nAdjunto una foto y una ficha de una página con medidas y precio mayorista. La idea es que la evalúe como pieza de exhibición, no como surtido masivo.\n\n¿Le interesa que le envíe una muestra física? El costo de envío se cotiza según destino y disponibilidad.\n\nSaludos,\n[Firma]",
-        "status": "revisar",
+        "status": "listo",
         "createdAt": "2026-11-19T00:04:31.905Z",
         "source": "mision",
-        "reviewNote": "El mensaje no menciona el nombre del comprador. Verificá que sea para esta tienda antes de enviarlo.",
+        "reviewNote": "Aprobado: Términos FOB Buenos Aires y datos legales del fabricante completados.",
         "complianceCorrections": 1,
-        "guardVersion": 2
+        "guardVersion": 2,
+        "approvedAt": "2026-11-19T03:14:08.177Z",
+        "approvedBy": "Carlos Ameghino (dueño)",
+        "approvedReviewKind": "redteam"
       }
     ],
     "messages": [],
