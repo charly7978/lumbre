@@ -238,25 +238,37 @@ const baseArtifacts = (messages) => ({
   ok(contentStore.get('threads')[0].drafts[0].status === 'listo', 'una corrección citada del contenido no bloquea el correo');
 }
 
-/* 4. Dedupe por email y por empresa entre misiones. */
+/* 4. Enfriamiento entre misiones: no repetir de inmediato, pero permitir
+   vender otro producto cuando el contacto ya se enfrió. */
 {
   const store = await freshStore();
+  const now = Date.now();
+  const recent = new Date(now - 5 * 86400000).toISOString();
+  const old = new Date(now - 120 * 86400000).toISOString();
   store.get('threads').push(
-    { id: 'thr_old_1', missionId: 'mis_old_1', contact: { company: 'Luz de Autor', email: 'compras@luzdeautor.test' }, drafts: [], messages: [] },
-    { id: 'thr_old_2', missionId: 'mis_old_2', contact: { company: 'Casa Nórdica', email: 'contacto@casanordica-old.test' }, drafts: [], messages: [] },
+    { id: 'thr_recent', missionId: 'mis_old_1', createdAt: recent, contact: { company: 'Luz de Autor', email: 'compras@luzdeautor.test' }, drafts: [], messages: [{ direction: 'out', at: recent }] },
+    { id: 'thr_active', missionId: 'mis_old_2', stage: 'interesado', createdAt: old, contact: { company: 'Casa Nórdica', email: 'contacto@casanordica-old.test' }, drafts: [], messages: [{ direction: 'out', at: old }] },
+    { id: 'thr_lost', missionId: 'mis_old_3', stage: 'perdido', createdAt: old, contact: { company: 'Hotel Alba', email: 'reservas@hotelalba-old.test' }, drafts: [], messages: [{ direction: 'out', at: old }] },
+    { id: 'thr_pending', missionId: 'mis_old_4', stage: 'nuevo', createdAt: old, contact: { company: 'Estudio Prado', email: 'hola@estudioprado.test' }, drafts: [{ id: 'drf_pending', status: 'listo' }], messages: [] },
+    { id: 'thr_cooled', missionId: 'mis_old_5', stage: 'nuevo', createdAt: old, contact: { company: 'Taller Sur', email: 'taller@tallersur.test' }, drafts: [], messages: [{ direction: 'out', at: old }] },
   );
   await store.set('threads', store.get('threads'));
   const mission = missionFor({
     artifacts: baseArtifacts([
       { comprador: 'Luz de Autor', email: 'compras@luzdeautor.test', asunto: 'Hola', cuerpo: 'Hola Luz de Autor. BAJA.' },
       { comprador: 'Casa Nórdica', email: 'nuevo@casanordica.test', asunto: 'Hola', cuerpo: 'Hola Casa Nórdica. BAJA.' },
+      { comprador: 'Hotel Alba', email: 'nuevo@hotelalba.test', asunto: 'Hola', cuerpo: 'Hola Hotel Alba. BAJA.' },
+      { comprador: 'Estudio Prado', email: 'nuevo@estudioprado.test', asunto: 'Hola', cuerpo: 'Hola Estudio Prado. BAJA.' },
+      { comprador: 'Taller Sur', email: 'nuevo@tallersur.test', asunto: 'Hola', cuerpo: 'Hola Taller Sur. BAJA.' },
     ]),
   });
   const result = await createThreads(mission, product, settings, store);
-  ok(result.created === 0, 'no crea hilos de contactos ya contactados');
-  ok(mission.skippedProspects.length === 2, 'registra los dos compradores salteados');
-  ok(mission.skippedProspects.some((s) => s.reason.includes('email')), 'detecta el email repetido');
-  ok(mission.skippedProspects.some((s) => s.reason.includes('empresa')), 'detecta la empresa repetida');
+  ok(result.created === 1, 'solo crea el hilo del contacto ya enfriado');
+  ok(mission.skippedProspects.length === 4, 'registra los cuatro compradores salteados');
+  ok(mission.skippedProspects.some((s) => s.reason.includes('enfriamiento')), 'respeta el enfriamiento reciente');
+  ok(mission.skippedProspects.some((s) => s.reason.includes('activa')), 'nunca repite una conversación activa');
+  ok(mission.skippedProspects.some((s) => s.reason.includes('perdido')), 'nunca repite un contacto perdido');
+  ok(mission.skippedProspects.some((s) => s.reason.includes('borrador')), 'no duplica un borrador sin enviar');
 }
 
 /* 4b. Los datos demo no bloquean una misión real. */

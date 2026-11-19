@@ -1,6 +1,10 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+// La caché de búsqueda se persiste en disco junto a los datos; los tests
+// nunca deben tocar el directorio real del dueño.
+process.env.LUMBRE_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'lumbre-cache-test-'));
 import {
   clearSearchCache, filterRelevantResults, isDuckDuckGoChallenge, parseSearxngResults,
   searchProviderInfo, searchWeb, searchWebDetailed,
@@ -13,6 +17,7 @@ const searxFixture = fs.readFileSync(path.join(here, 'fixtures', 'searxng-result
 const ddgChallenge = fs.readFileSync(path.join(here, 'fixtures', 'ddg-challenge.html'), 'utf8');
 
 let passed = 0;
+process.on('exit', () => { try { fs.rmSync(process.env.LUMBRE_DATA_DIR, { recursive: true, force: true }); } catch { /* noop */ } });
 function ok(condition, label) {
   if (!condition) {
     console.error(`FALLO: ${label}`);
