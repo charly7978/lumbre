@@ -1,0 +1,93 @@
+﻿{
+    "version":  1,
+    "brand":  {
+                  "name":  "Lumbre",
+                  "maker":  "",
+                  "tagline":  "LÃ¡mparas de diseÃ±o impresas en 3D",
+                  "city":  "",
+                  "country":  "",
+                  "website":  "",
+                  "instagram":  "",
+                  "email":  "",
+                  "address":  "",
+                  "currency":  "USD",
+                  "languages":  [
+                                    "es",
+                                    "en"
+                                ]
+              },
+    "onboarding":  {
+                       "done":  false,
+                       "demoLoaded":  false,
+                       "startedAt":  null
+                   },
+    "ai":  {
+               "provider":  "deepseek",
+               "apiKey":  "sk-ce23214823e24ae3858b927a432eae6f",
+               "baseUrl":  "https://api.deepseek.com/v1",
+               "model":  "deepseek-chat",
+               "visionModel":  "",
+               "temperature":  0.8,
+               "maxTokens":  3200
+           },
+    "search":  {
+                   "provider":  "duckduckgo",
+                   "apiKey":  "",
+                   "searxUrl":  "",
+                   "depth":  "search+pages",
+                   "maxResults":  8
+               },
+    "hunter":  {
+                   "apiKey":  "",
+                   "enabled":  false
+               },
+    "email":  {
+                  "provider":  "manual",
+                  "resendKey":  "",
+                  "from":  "",
+                  "replyTo":  "",
+                  "footer":  "",
+                  "dailyLimit":  20,
+                  "warmup":  true,
+                  "webhookUrl":  "",
+                  "webhookToken":  ""
+              },
+    "notify":  {
+                   "paused":  false,
+                   "telegram":  {
+                                    "enabled":  false,
+                                    "token":  "",
+                                    "chatId":  "",
+                                    "digestHour":  9
+                                },
+                   "whatsapp":  {
+                                    "enabled":  false,
+                                    "token":  "",
+                                    "phoneNumberId":  "",
+                                    "to":  "",
+                                    "verifyToken":  "lumbre",
+                                    "apiVersion":  "v23.0"
+                                },
+                   "events":  {
+                                  "missionDone":  true,
+                                  "missionError":  true,
+                                  "missionWarning":  true,
+                                  "hotReply":  true,
+                                  "optOut":  true,
+                                  "digest":  true
+                              }
+               },
+    "mission":  {
+                    "depth":  "estandar",
+                    "markets":  [
+                                    "EspaÃ±a",
+                                    "MÃ©xico",
+                                    "Estados Unidos"
+                                ],
+                    "tone":  "cercano, experto, sin presiÃ³n",
+                    "currency":  "USD",
+                    "maxProspects":  12,
+                    "autoCreateThreads":  true,
+                    "researchPages":  true
+                }
+}

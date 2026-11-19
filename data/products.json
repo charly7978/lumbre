@@ -1,0 +1,98 @@
+[
+  {
+    "id": "prod_demo_aurora",
+    "demo": true,
+    "code": "AUR-01",
+    "name": "Aurora 01",
+    "category": "Lámpara colgante",
+    "price": 240,
+    "currency": "USD",
+    "cost": 58,
+    "weightGrams": 1400,
+    "dimensions": "Ø 32 cm × 28 cm, cable 180 cm",
+    "materials": "PLA+ de proveedor local, portalámpara E27, cable textil",
+    "description": "Colgante de geometría orgánica impreso en 3D. La pantalla proyecta una sombra en abanico sobre la pared. Luz cálida, ideal para comedores chicos y rincones de lectura.",
+    "notes": "Se produce a pedido en 2 a 3 semanas. Colores disponibles: hueso, terracota y verde oliva.",
+    "photos": [
+      {
+        "file": "demo/img_5fe3eb02ee7b.svg",
+        "alt": "Aurora 01, lámpara colgante de ejemplo"
+      }
+    ],
+    "status": "listo",
+    "createdAt": "2026-11-15T02:29:04.359Z",
+    "updatedAt": "2026-11-15T02:29:04.359Z"
+  },
+  {
+    "id": "prod_demo_nube",
+    "demo": true,
+    "code": "NUB-02",
+    "name": "Nube",
+    "category": "Lámpara de mesa",
+    "price": 145,
+    "currency": "USD",
+    "cost": 34,
+    "weightGrams": 900,
+    "dimensions": "Ø 24 cm × 38 cm",
+    "materials": "PLA mate, difusor opalino, base estable",
+    "description": "Lámpara de mesa esférica con difusor suave. Pensada para veladores y escritorios donde la luz directa molesta.",
+    "notes": "Stock inmediato en hueso. Otros colores, 10 días.",
+    "photos": [
+      {
+        "file": "demo/img_183e9c817d20.svg",
+        "alt": "Nube, lámpara de mesa de ejemplo"
+      }
+    ],
+    "status": "listo",
+    "createdAt": "2026-11-15T02:29:04.359Z",
+    "updatedAt": "2026-11-15T02:29:04.359Z"
+  },
+  {
+    "id": "prod_demo_filo",
+    "demo": true,
+    "code": "FIL-03",
+    "name": "Filo",
+    "category": "Lámpara colgante",
+    "price": 320,
+    "currency": "USD",
+    "cost": 76,
+    "weightGrams": 1800,
+    "dimensions": "40 × 40 × 60 cm, cable 200 cm",
+    "materials": "PLA+ reforzado, estructura interna de aluminio, cable textil",
+    "description": "Colgante geométrico de gran formato para halls y escaleras. La estructura de aluminio permite una pantalla de 40 cm sin deformación.",
+    "notes": "Requiere punto de luz central. Producción de 3 semanas.",
+    "photos": [
+      {
+        "file": "demo/img_13d4e8f50ca0.svg",
+        "alt": "Filo, lámpara colgante geométrica de ejemplo"
+      }
+    ],
+    "status": "borrador",
+    "createdAt": "2026-11-15T02:29:04.359Z",
+    "updatedAt": "2026-11-15T02:29:04.359Z"
+  },
+  {
+    "id": "prd_8ecb7702a6de",
+    "name": "SIRI Velador (base alta)",
+    "code": "LUM-A6DE",
+    "category": "Lámpara",
+    "price": 35,
+    "currency": "USD",
+    "cost": 9,
+    "weightGrams": 0,
+    "dimensions": "Alto: 35 cm. Ancho:20 cm.",
+    "materials": "Velador moderno y ecológico. Fabricado en PLA (Polímero Vegetal Eco-Amigable).",
+    "description": "Portalámpara E27 (apto para cualquier tipo de lamparita) + tecla + tomacorriente.\nExcelente calidad y terminaciones.\nBase alta o chata a elección.\nColor a elección: blanco, crema, beige, durazno, negro, bronce, otros",
+    "notes": "",
+    "status": "listo",
+    "photos": [
+      {
+        "file": "products/img_ee8c03a7c9fa.jpg",
+        "alt": "whatsapp-image-2026-06-08-at-12-10-57-pm-cc96b74008d101c86217809315375693-1024-1024"
+      }
+    ],
+    "demo": false,
+    "createdAt": "2026-11-19T00:25:17.381Z",
+    "updatedAt": "2026-11-19T00:28:14.042Z"
+  }
+]

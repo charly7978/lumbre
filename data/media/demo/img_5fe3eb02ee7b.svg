@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" role="img" aria-label="Lámpara de ejemplo">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f3e8d8"/><stop offset="1" stop-color="#e8d5bb"/>
+    </linearGradient>
+    <radialGradient id="shade" cx="42%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#e9a54b" stop-opacity=".95"/>
+      <stop offset=".55" stop-color="#c46b3d" stop-opacity=".9"/>
+      <stop offset="1" stop-color="#3b2f26" stop-opacity=".95"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#e9a54b" stop-opacity=".35"/>
+      <stop offset="1" stop-color="#e9a54b" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope=".08"/></feComponentTransfer>
+      <feComposite operator="over" in2="SourceGraphic"/>
+    </filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="18"/></filter>
+  </defs>
+  <rect width="1200" height="1200" fill="url(#bg)"/>
+  <circle cx="600" cy="560" r="330" fill="url(#halo)" filter="url(#soft)"/>
+  <g filter="url(#grain)">
+    <line x1="600" y1="100" x2="600" y2="300" stroke="#3b2f26" stroke-width="5"/>
+         <path d="M330 520 Q600 250 870 520 Q600 640 330 520 Z" fill="url(#shade)" stroke="#3b2f26" stroke-width="3"/>
+         <path d="M390 505 Q600 330 810 505" fill="none" stroke="#e9a54b" stroke-width="6" opacity=".8"/>
+         <path d="M450 520 Q600 420 750 520" fill="none" stroke="#c46b3d" stroke-width="3" opacity=".6"/>
+         <ellipse cx="600" cy="600" rx="230" ry="40" fill="#e9a54b" opacity=".35"/>
+  </g>
+  <text x="72" y="1110" fill="#3b2f26" opacity=".55" font-family="Georgia, serif" font-size="26" letter-spacing="8">LUMBRE · EJEMPLO</text>
+</svg>

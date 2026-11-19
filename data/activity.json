@@ -1,0 +1,622 @@
+[
+  {
+    "id": "act_91a437ed77d3",
+    "type": "mission",
+    "text": "Misión con error: SIRI Velador (base alta) · España. El proveedor de IA no tiene saldo suficiente. Cargá crédito o cambiá de proveedor.",
+    "meta": {
+      "missionId": "mis_3bfb16705719",
+      "demo": false
+    },
+    "at": "2026-11-19T02:30:03.882Z"
+  },
+  {
+    "id": "act_a500a8dd2faf",
+    "type": "mission",
+    "text": "Misión iniciada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_3bfb16705719",
+      "demo": false
+    },
+    "at": "2026-11-19T02:25:26.660Z"
+  },
+  {
+    "id": "act_1f555e8f60db",
+    "type": "mission",
+    "text": "Misión creada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_3bfb16705719",
+      "demo": false
+    },
+    "at": "2026-11-19T02:25:26.569Z"
+  },
+  {
+    "id": "act_3c0de2c45cfe",
+    "type": "mission",
+    "text": "Misión con error: SIRI Velador (base alta) · España. El proveedor de IA no tiene saldo suficiente. Cargá crédito o cambiá de proveedor.",
+    "meta": {
+      "missionId": "mis_b9bb8cf85ee7",
+      "demo": false
+    },
+    "at": "2026-11-19T02:20:53.486Z"
+  },
+  {
+    "id": "act_c4167786641d",
+    "type": "mission",
+    "text": "Misión iniciada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_b9bb8cf85ee7",
+      "demo": false
+    },
+    "at": "2026-11-19T02:20:52.433Z"
+  },
+  {
+    "id": "act_e9d4f8ae4b79",
+    "type": "mission",
+    "text": "Misión creada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_b9bb8cf85ee7",
+      "demo": false
+    },
+    "at": "2026-11-19T02:20:52.343Z"
+  },
+  {
+    "id": "act_404fc29223ac",
+    "type": "mission",
+    "text": "Misión con error: SIRI Velador (base alta) · Argentina. El proveedor de IA no tiene saldo suficiente. Cargá crédito o cambiá de proveedor.",
+    "meta": {
+      "missionId": "mis_8e389ee8aa48",
+      "demo": false
+    },
+    "at": "2026-11-19T02:05:14.828Z"
+  },
+  {
+    "id": "act_c758f419be07",
+    "type": "mission",
+    "text": "Misión iniciada: SIRI Velador (base alta) · Argentina.",
+    "meta": {
+      "missionId": "mis_8e389ee8aa48",
+      "demo": false
+    },
+    "at": "2026-11-19T02:05:13.917Z"
+  },
+  {
+    "id": "act_4602c673998c",
+    "type": "mission",
+    "text": "Misión creada: SIRI Velador (base alta) · Argentina.",
+    "meta": {
+      "missionId": "mis_8e389ee8aa48",
+      "demo": false
+    },
+    "at": "2026-11-19T02:05:13.823Z"
+  },
+  {
+    "id": "act_3c8ebac6f232",
+    "type": "mission",
+    "text": "Misión terminada con avisos: SIRI Velador (base alta) · España. 12 compradores verificados. 12 hilos en la bandeja.",
+    "meta": {
+      "missionId": "mis_6db79905b862",
+      "demo": false,
+      "warnings": 1,
+      "prospects": 12
+    },
+    "at": "2026-11-19T01:38:51.750Z"
+  },
+  {
+    "id": "act_498c6826213b",
+    "type": "mission",
+    "text": "Misión iniciada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_6db79905b862",
+      "demo": false
+    },
+    "at": "2026-11-19T01:33:13.983Z"
+  },
+  {
+    "id": "act_fa2d8e9a33bf",
+    "type": "mission",
+    "text": "Misión reintentada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_6db79905b862"
+    },
+    "at": "2026-11-19T01:33:13.889Z"
+  },
+  {
+    "id": "act_a4494ce58568",
+    "type": "system",
+    "text": "Verificación de hilos históricos: 8 conversación(es) marcada(s) sin verificar; 7 borrador(es) descartado(s).",
+    "meta": {
+      "changed": 8,
+      "discarded": 7
+    },
+    "at": "2026-11-19T01:31:13.024Z"
+  },
+  {
+    "id": "act_56f5dbb3b0a0",
+    "type": "mission",
+    "text": "Misión terminada con avisos: SIRI Velador (base alta) · España. 0 hilos en la bandeja.",
+    "meta": {
+      "missionId": "mis_6db79905b862",
+      "demo": false,
+      "warnings": 1
+    },
+    "at": "2026-11-19T00:38:17.887Z"
+  },
+  {
+    "id": "act_9a0365fb3f73",
+    "type": "mission",
+    "text": "Misión terminada con avisos: SIRI Velador (base alta) · España. 0 hilos en la bandeja.",
+    "meta": {
+      "missionId": "mis_683b205a3a45",
+      "demo": false,
+      "warnings": 1
+    },
+    "at": "2026-11-19T00:35:56.333Z"
+  },
+  {
+    "id": "act_722049aadc82",
+    "type": "settings",
+    "text": "Ajustes actualizados.",
+    "meta": {},
+    "at": "2026-11-19T00:35:24.993Z"
+  },
+  {
+    "id": "act_71fdbd31dae8",
+    "type": "mission",
+    "text": "Misión iniciada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_6db79905b862",
+      "demo": false
+    },
+    "at": "2026-11-19T00:32:57.990Z"
+  },
+  {
+    "id": "act_8c850ffe7e6a",
+    "type": "mission",
+    "text": "Misión creada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_6db79905b862",
+      "demo": false
+    },
+    "at": "2026-11-19T00:32:57.895Z"
+  },
+  {
+    "id": "act_6131810c3698",
+    "type": "product",
+    "text": "Producto eliminado: Aurora 01.",
+    "meta": {
+      "productId": "prod_demo_aurora"
+    },
+    "at": "2026-11-19T00:31:18.846Z"
+  },
+  {
+    "id": "act_437796db1337",
+    "type": "product",
+    "text": "Producto eliminado: Filo.",
+    "meta": {
+      "productId": "prod_demo_filo"
+    },
+    "at": "2026-11-19T00:31:11.333Z"
+  },
+  {
+    "id": "act_9f78701f6592",
+    "type": "product",
+    "text": "Producto eliminado: Nube.",
+    "meta": {
+      "productId": "prod_demo_nube"
+    },
+    "at": "2026-11-19T00:31:04.753Z"
+  },
+  {
+    "id": "act_753023156d18",
+    "type": "mission",
+    "text": "Misión iniciada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_683b205a3a45",
+      "demo": false
+    },
+    "at": "2026-11-19T00:29:31.866Z"
+  },
+  {
+    "id": "act_97536b6c7b80",
+    "type": "mission",
+    "text": "Misión creada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_683b205a3a45",
+      "demo": false
+    },
+    "at": "2026-11-19T00:29:31.763Z"
+  },
+  {
+    "id": "act_2d56b5954ec7",
+    "type": "product",
+    "text": "Producto actualizado: SIRI Velador (base alta).",
+    "meta": {
+      "productId": "prd_8ecb7702a6de"
+    },
+    "at": "2026-11-19T00:28:14.044Z"
+  },
+  {
+    "id": "act_2c47595a0c11",
+    "type": "product",
+    "text": "Producto creado: Lucian.",
+    "meta": {
+      "productId": "prd_8ecb7702a6de"
+    },
+    "at": "2026-11-19T00:25:17.382Z"
+  },
+  {
+    "id": "act_a2ce67711a2c",
+    "type": "product",
+    "text": "Producto eliminado: Mazoma.",
+    "meta": {
+      "productId": "prd_662a52367e72"
+    },
+    "at": "2026-11-19T00:20:25.592Z"
+  },
+  {
+    "id": "act_1eb5d5b3b0b4",
+    "type": "mission",
+    "text": "Misión con error: Mazoma · España. Mensajes de apertura: El modelo no devolvió JSON válido después de varios intentos",
+    "meta": {
+      "missionId": "mis_75e371da513c",
+      "demo": false
+    },
+    "at": "2026-11-19T00:15:09.911Z"
+  },
+  {
+    "id": "act_1317edf6439d",
+    "type": "mission",
+    "text": "Misión terminada con avisos: Mazoma · España. 6 hilos en la bandeja.",
+    "meta": {
+      "missionId": "mis_0e02b63a3658",
+      "demo": false,
+      "warnings": 1
+    },
+    "at": "2026-11-19T00:12:40.194Z"
+  },
+  {
+    "id": "act_5042a3550f26",
+    "type": "mission",
+    "text": "Misión completada: Mazoma · España. 0 hilos en la bandeja.",
+    "meta": {
+      "missionId": "mis_31c5b02ed803",
+      "demo": false,
+      "warnings": 0
+    },
+    "at": "2026-11-19T00:12:04.191Z"
+  },
+  {
+    "id": "act_e60f5e477266",
+    "type": "mission",
+    "text": "Misión iniciada: Mazoma · España.",
+    "meta": {
+      "missionId": "mis_75e371da513c",
+      "demo": false
+    },
+    "at": "2026-11-19T00:11:51.316Z"
+  },
+  {
+    "id": "act_be335d10d08d",
+    "type": "mission",
+    "text": "Misión creada: Mazoma · España.",
+    "meta": {
+      "missionId": "mis_75e371da513c",
+      "demo": false
+    },
+    "at": "2026-11-19T00:11:51.224Z"
+  },
+  {
+    "id": "act_ae9505b188cd",
+    "type": "mission",
+    "text": "Misión iniciada: Mazoma · España.",
+    "meta": {
+      "missionId": "mis_31c5b02ed803",
+      "demo": false
+    },
+    "at": "2026-11-19T00:09:43.603Z"
+  },
+  {
+    "id": "act_e7bd7ae35d68",
+    "type": "mission",
+    "text": "Misión creada: Mazoma · España.",
+    "meta": {
+      "missionId": "mis_31c5b02ed803",
+      "demo": false
+    },
+    "at": "2026-11-19T00:09:43.511Z"
+  },
+  {
+    "id": "act_47127f4553e0",
+    "type": "mission",
+    "text": "Misión completada: Mazoma · España. 0 hilos en la bandeja.",
+    "meta": {
+      "missionId": "mis_9a29d34e94c8",
+      "demo": false,
+      "warnings": 0
+    },
+    "at": "2026-11-19T00:07:36.004Z"
+  },
+  {
+    "id": "act_bb7b6f5ad6b5",
+    "type": "product",
+    "text": "Producto actualizado: Mazoma.",
+    "meta": {
+      "productId": "prd_662a52367e72"
+    },
+    "at": "2026-11-19T00:07:03.161Z"
+  },
+  {
+    "id": "act_13c20e346f0c",
+    "type": "mission",
+    "text": "Misión iniciada: Mazoma · España.",
+    "meta": {
+      "missionId": "mis_0e02b63a3658",
+      "demo": false
+    },
+    "at": "2026-11-19T00:05:26.132Z"
+  },
+  {
+    "id": "act_5ede86fc3fd3",
+    "type": "mission",
+    "text": "Misión creada: Mazoma · España.",
+    "meta": {
+      "missionId": "mis_0e02b63a3658",
+      "demo": false
+    },
+    "at": "2026-11-19T00:05:26.033Z"
+  },
+  {
+    "id": "act_034b5cfcaed0",
+    "type": "mission",
+    "text": "Misión completada: Mazoma · España. 2 hilos en la bandeja.",
+    "meta": {
+      "missionId": "mis_fd976e97ac32",
+      "demo": false,
+      "warnings": 0
+    },
+    "at": "2026-11-19T00:04:31.919Z"
+  },
+  {
+    "id": "act_cf6bb1d94f9f",
+    "type": "mission",
+    "text": "Misión iniciada: Mazoma · España.",
+    "meta": {
+      "missionId": "mis_9a29d34e94c8",
+      "demo": false
+    },
+    "at": "2026-11-19T00:01:49.968Z"
+  },
+  {
+    "id": "act_e34bf226ea46",
+    "type": "mission",
+    "text": "Misión creada: Mazoma · España.",
+    "meta": {
+      "missionId": "mis_9a29d34e94c8",
+      "demo": false
+    },
+    "at": "2026-11-19T00:01:49.880Z"
+  },
+  {
+    "id": "act_b96f33421c10",
+    "type": "mission",
+    "text": "Misión iniciada: Mazoma · España.",
+    "meta": {
+      "missionId": "mis_fd976e97ac32",
+      "demo": false
+    },
+    "at": "2026-11-18T23:59:46.904Z"
+  },
+  {
+    "id": "act_816fea0f0505",
+    "type": "mission",
+    "text": "Misión creada: Mazoma · España.",
+    "meta": {
+      "missionId": "mis_fd976e97ac32",
+      "demo": false
+    },
+    "at": "2026-11-18T23:59:46.812Z"
+  },
+  {
+    "id": "act_da7dcac75d47",
+    "type": "system",
+    "text": "Se cargaron datos de ejemplo.",
+    "meta": {
+      "demo": true
+    },
+    "at": "2026-11-18T23:57:39.418Z"
+  },
+  {
+    "id": "act_ccd5add4fdb0",
+    "type": "settings",
+    "text": "Ajustes actualizados.",
+    "meta": {},
+    "at": "2026-11-18T23:57:39.412Z"
+  },
+  {
+    "id": "act_afc54146f9f6",
+    "type": "system",
+    "text": "Migración de guardas: 20 borradores revisados.",
+    "meta": {},
+    "at": "2026-11-18T23:55:45.796Z"
+  },
+  {
+    "id": "act_6dc6746588ee",
+    "type": "settings",
+    "text": "Ajustes actualizados.",
+    "meta": {},
+    "at": "2026-11-15T13:27:14.430Z"
+  },
+  {
+    "id": "act_a7a99320f2bd",
+    "type": "settings",
+    "text": "Ajustes actualizados.",
+    "meta": {},
+    "at": "2026-11-15T13:27:06.165Z"
+  },
+  {
+    "id": "act_dec8aaa3de01",
+    "type": "settings",
+    "text": "Ajustes actualizados.",
+    "meta": {},
+    "at": "2026-11-15T13:26:55.122Z"
+  },
+  {
+    "id": "act_0c36d743aeb2",
+    "type": "settings",
+    "text": "Ajustes actualizados.",
+    "meta": {},
+    "at": "2026-11-15T13:26:29.630Z"
+  },
+  {
+    "id": "act_de939765757b",
+    "type": "reply",
+    "text": "Respuesta analizada: Atelier Bruma (interesado).",
+    "meta": {
+      "threadId": "thr_48889e0941a3",
+      "score": 64
+    },
+    "at": "2026-11-15T13:25:53.159Z"
+  },
+  {
+    "id": "act_f7f7688a38f4",
+    "type": "product",
+    "text": "Producto creado: Mazoma.",
+    "meta": {
+      "productId": "prd_662a52367e72"
+    },
+    "at": "2026-11-15T13:25:10.196Z"
+  },
+  {
+    "id": "act_a0d95453a5f9",
+    "type": "settings",
+    "text": "Ajustes actualizados.",
+    "meta": {},
+    "at": "2026-11-15T13:20:27.823Z"
+  },
+  {
+    "id": "act_ad26f3067ad2",
+    "type": "system",
+    "text": "Se cargaron datos de ejemplo.",
+    "meta": {
+      "demo": true
+    },
+    "at": "2026-11-15T13:08:54.682Z"
+  },
+  {
+    "id": "act_9b6d25bb8c9c",
+    "type": "settings",
+    "text": "Ajustes actualizados.",
+    "meta": {},
+    "at": "2026-11-15T13:08:54.667Z"
+  },
+  {
+    "id": "act_79804278b266",
+    "type": "mission",
+    "text": "Misión completada: Aurora 01 · España. 12 hilos creados.",
+    "meta": {
+      "missionId": "mis_833ed7d79da5",
+      "demo": true
+    },
+    "at": "2026-11-15T13:06:55.231Z"
+  },
+  {
+    "id": "act_e5967f3ff6c9",
+    "type": "mission",
+    "text": "Misión iniciada: Aurora 01 · España.",
+    "meta": {
+      "missionId": "mis_833ed7d79da5",
+      "demo": true
+    },
+    "at": "2026-11-15T13:06:43.638Z"
+  },
+  {
+    "id": "act_e365a5af9a9f",
+    "type": "mission",
+    "text": "Misión creada: Aurora 01 · España (demo).",
+    "meta": {
+      "missionId": "mis_833ed7d79da5",
+      "demo": true
+    },
+    "at": "2026-11-15T13:06:43.547Z"
+  },
+  {
+    "id": "act_4948c23d7427",
+    "type": "reply",
+    "text": "Respuesta analizada: Luz de Autor (interesado).",
+    "meta": {
+      "threadId": "thr_demo_1",
+      "score": 82
+    },
+    "at": "2026-11-15T13:05:34.285Z"
+  },
+  {
+    "id": "act_34e1040e97db",
+    "type": "system",
+    "text": "Se cargaron datos de ejemplo.",
+    "meta": {
+      "demo": true
+    },
+    "at": "2026-11-15T13:05:07.895Z"
+  },
+  {
+    "id": "act_97aca454abd5",
+    "type": "system",
+    "text": "Datos de ejemplo cargados.",
+    "meta": {
+      "demo": true
+    },
+    "at": "2026-11-15T13:05:07.894Z"
+  },
+  {
+    "id": "act_a71de407c738",
+    "type": "reply",
+    "text": "Luz de Autor respondió: pidió ficha y plazo para 4 unidades.",
+    "meta": {
+      "threadId": "thr_demo_1"
+    },
+    "at": "2026-11-13T13:05:07.882Z"
+  },
+  {
+    "id": "act_d4febcb2f1d0",
+    "type": "mission",
+    "text": "Misión Aurora 01 completada: 12 compradores y 6 mensajes listos.",
+    "meta": {
+      "missionId": "mis_demo_aurora",
+      "demo": true
+    },
+    "at": "2026-11-11T13:17:07.882Z"
+  },
+  {
+    "id": "act_01e302597bd8",
+    "type": "content",
+    "text": "7 piezas de contenido listas para revisar.",
+    "meta": {
+      "missionId": "mis_demo_aurora",
+      "demo": true
+    },
+    "at": "2026-11-11T13:18:07.882Z"
+  },
+  {
+    "id": "act_98e551585c76",
+    "type": "system",
+    "text": "Se cargaron datos de ejemplo. Podés borrarlos desde Ajustes.",
+    "meta": {
+      "demo": true
+    },
+    "at": "2026-11-11T13:05:07.874Z"
+  },
+  {
+    "id": "act_e10cf809bdde",
+    "type": "settings",
+    "text": "Ajustes actualizados.",
+    "meta": {},
+    "at": "2026-11-15T13:05:07.861Z"
+  },
+  {
+    "id": "act_4c52dfab8c8a",
+    "type": "settings",
+    "text": "Ajustes actualizados.",
+    "meta": {},
+    "at": "2026-11-15T13:04:11.848Z"
+  }
+]

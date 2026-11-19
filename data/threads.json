@@ -1,0 +1,2140 @@
+[
+  {
+    "id": "thr_demo_1",
+    "demo": true,
+    "missionId": "mis_demo_aurora",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "concept store",
+      "company": "Luz de Autor",
+      "role": "concept store",
+      "email": "compras@luz-de-autor.example.com",
+      "emailStatus": "publico",
+      "country": "España",
+      "city": "Madrid",
+      "website": "https://example.com/luz-de-autor",
+      "type": "tienda"
+    },
+    "stage": "interesado",
+    "score": 84,
+    "source": "Misión Aurora 01",
+    "notes": "Pidió ver la ficha y preguntó por el plazo de producción. Buena señal.",
+    "drafts": [
+      {
+        "id": "drf_396d41587f6c",
+        "channel": "email",
+        "language": "es",
+        "subject": "Aurora 01: una serie corta para Luz de Autor",
+        "body": "Hola,\n\nVi la selección de Luz de Autor y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Gabriel and company\nhttps://galapa.com.ar/productos/siri-velador-1s63t/\nSi preferís no recibir más mensajes, respondé BAJA.",
+        "status": "enviado",
+        "guardVersion": 2,
+        "createdAt": "2026-11-15T02:29:04.359Z",
+        "updatedAt": "2026-11-19T02:29:12.668Z",
+        "approvedAt": "2026-11-19T02:29:12.668Z",
+        "approvedBy": "dueño",
+        "approvedReviewKind": "",
+        "sentAt": "2026-11-19T02:29:12.684Z",
+        "sentChannel": "manual"
+      },
+      {
+        "id": "drf_fea24a8e1000",
+        "channel": "email",
+        "language": "es",
+        "subject": "Re: Aurora 01 — ficha y plazos",
+        "body": "Hola Marta,\n\nGracias por responder. Te paso los datos concretos: la pantalla mide 32 cm de diámetro, el cable es de 180 cm y el plazo para 4 unidades es de 3 semanas desde la confirmación.\n\nEl precio mayorista es USD 156 por unidad, sin envío, con un mínimo de 4. La pantalla se puede personalizar en hueso, terracota o verde oliva sin costo adicional; un color fuera de esa paleta tiene un extra del 12%.\n\nTe adjunto la ficha completa. Si te sirve, puedo reservar la producción de la primera serie para la semana que viene.\n\n— Gabriel and company\nSi preferís no recibir más mensajes, respondé BAJA.",
+        "status": "listo",
+        "guardVersion": 2,
+        "createdAt": "2026-11-18T02:29:04.364Z"
+      }
+    ],
+    "messages": [
+      {
+        "id": "msg_e023bd34b641",
+        "direction": "out",
+        "channel": "email",
+        "subject": "Aurora 01: una serie corta para Luz de Autor",
+        "body": "Hola,\n\nVi la selección de Luz de Autor y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Gabriel and company\nhttps://galapa.com.ar/productos/siri-velador-1s63t/",
+        "at": "2026-11-16T02:29:04.364Z",
+        "status": "enviado"
+      },
+      {
+        "id": "msg_bb866aac4c6d",
+        "direction": "in",
+        "channel": "email",
+        "subject": "Re: Aurora 01",
+        "body": "Hola, gracias por escribir. Nos interesa ver la ficha y saber el plazo de producción para 4 unidades. También nos gustaría saber si se puede personalizar el color de la pantalla. Saludos, Marta.",
+        "at": "2026-11-17T02:29:04.364Z",
+        "status": "recibido"
+      },
+      {
+        "id": "msg_1c6ab96b1a81",
+        "direction": "in",
+        "channel": "email",
+        "subject": "Consulta",
+        "body": "Hola, me interesa la lámpara.\n\n> Si preferís no recibir más mensajes, respondé BAJA y no vuelvo a escribirte.",
+        "at": "2026-11-19T02:29:12.428Z",
+        "status": "recibido"
+      },
+      {
+        "id": "msg_13382d531bbe",
+        "direction": "out",
+        "channel": "email",
+        "subject": "Aurora 01: una serie corta para Luz de Autor",
+        "body": "Hola,\n\nVi la selección de Luz de Autor y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Gabriel and company\nhttps://galapa.com.ar/productos/siri-velador-1s63t/\nSi preferís no recibir más mensajes, respondé BAJA.\n\nGabriel and company · Buenos aires · https://galapa.com.ar/productos/siri-velador-1s63t/",
+        "at": "2026-11-19T02:29:12.684Z",
+        "status": "enviado_manual",
+        "provider": "manual"
+      }
+    ],
+    "nextStep": "Seguimiento con valor en 4 días.",
+    "nextFollowUp": "2026-11-23T02:29:12.684Z",
+    "lastActivityAt": "2026-11-19T02:29:12.684Z",
+    "createdAt": "2026-11-15T02:29:04.359Z",
+    "updatedAt": "2026-11-19T02:29:12.684Z",
+    "lastInboundAt": "2026-11-19T02:29:12.428Z"
+  },
+  {
+    "id": "thr_demo_2",
+    "demo": true,
+    "missionId": "mis_demo_aurora",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "diseño de interiores",
+      "company": "Casa Nórdica",
+      "role": "diseño de interiores",
+      "email": "hola@casa-nordica.example.com",
+      "emailStatus": "publico",
+      "country": "México",
+      "city": "Ciudad de México",
+      "website": "https://example.com/casa-nordica",
+      "type": "tienda"
+    },
+    "stage": "respondio",
+    "score": 51,
+    "source": "Misión Aurora 01",
+    "notes": "",
+    "drafts": [
+      {
+        "id": "drf_cadff0daa67e",
+        "channel": "email",
+        "language": "es",
+        "subject": "Aurora 01: una serie corta para Casa Nórdica",
+        "body": "Hola,\n\nVi la selección de Casa Nórdica y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Gabriel and company\nhttps://galapa.com.ar/productos/siri-velador-1s63t/\nSi preferís no recibir más mensajes, respondé BAJA.",
+        "status": "enviado",
+        "guardVersion": 2,
+        "createdAt": "2026-11-15T02:29:04.359Z",
+        "sentAt": "2026-11-19T02:29:12.558Z",
+        "sentChannel": "manual"
+      }
+    ],
+    "messages": [
+      {
+        "id": "msg_5a8a680c25fc",
+        "direction": "out",
+        "channel": "email",
+        "subject": "Aurora 01: una serie corta para Casa Nórdica",
+        "body": "Hola,\n\nVi la selección de Casa Nórdica y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Gabriel and company\nhttps://galapa.com.ar/productos/siri-velador-1s63t/",
+        "at": "2026-11-16T02:29:04.364Z",
+        "status": "enviado"
+      },
+      {
+        "id": "msg_a8b36f3cfbe8",
+        "direction": "in",
+        "channel": "email",
+        "subject": "Re",
+        "body": "BAJA",
+        "at": "2026-11-19T02:29:12.474Z",
+        "status": "recibido"
+      },
+      {
+        "id": "msg_2f3e0b04f9f5",
+        "direction": "out",
+        "channel": "email",
+        "subject": "Aurora 01: una serie corta para Casa Nórdica",
+        "body": "Hola,\n\nVi la selección de Casa Nórdica y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Gabriel and company\nhttps://galapa.com.ar/productos/siri-velador-1s63t/\nSi preferís no recibir más mensajes, respondé BAJA.\n\nGabriel and company · Buenos aires · https://galapa.com.ar/productos/siri-velador-1s63t/",
+        "at": "2026-11-19T02:29:12.558Z",
+        "status": "enviado_manual",
+        "provider": "manual"
+      }
+    ],
+    "nextStep": "Seguimiento con valor en 4 días.",
+    "nextFollowUp": "2026-11-23T02:29:12.558Z",
+    "lastActivityAt": "2026-11-19T02:29:12.558Z",
+    "createdAt": "2026-11-15T02:29:04.359Z",
+    "updatedAt": "2026-11-19T02:29:12.558Z",
+    "lastInboundAt": "2026-11-19T02:29:12.474Z"
+  },
+  {
+    "id": "thr_demo_3",
+    "demo": true,
+    "missionId": "mis_demo_aurora",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "estudio de interiorismo",
+      "company": "Studio Lumen",
+      "role": "estudio de interiorismo",
+      "email": "hello@studio-lumen.example.com",
+      "emailStatus": "publico",
+      "country": "Estados Unidos",
+      "city": "Nueva York",
+      "website": "https://example.com/studio-lumen",
+      "type": "interiorista"
+    },
+    "stage": "respondio",
+    "score": 72,
+    "source": "Misión Aurora 01",
+    "notes": "Pregunta por certificación UL. No prometer nada hasta confirmar.",
+    "drafts": [
+      {
+        "id": "drf_a05b3dd17989",
+        "channel": "email",
+        "language": "en",
+        "subject": "Aurora 01: a small series for Studio Lumen",
+        "body": "Hi Studio Lumen team,\n\nI saw your selection of sculptural lighting and small-series objects and thought Aurora 01 might fit.\n\nIt is a 3D-printed pendant lamp with a warm, dimmable light and a geometric shade that casts a distinct shadow. Each piece is made to order in a small series and can be finished in a custom color.\n\nRetail is USD 240; wholesale starts at 4 units. I can send a one-page spec sheet with dimensions, materials and lead time.\n\nWould it make sense to send it over?\n\n— Gabriel and company\nhttps://galapa.com.ar/productos/siri-velador-1s63t/\nSi preferís no recibir más mensajes, respondé BAJA.",
+        "status": "listo",
+        "guardVersion": 2,
+        "createdAt": "2026-11-15T02:29:04.359Z"
+      }
+    ],
+    "messages": [
+      {
+        "id": "msg_1da861a4be86",
+        "direction": "out",
+        "channel": "email",
+        "subject": "Aurora 01: a small series for Studio Lumen",
+        "body": "Hi Studio Lumen team,\n\nI saw your selection of sculptural lighting and small-series objects and thought Aurora 01 might fit.\n\nIt is a 3D-printed pendant lamp with a warm, dimmable light and a geometric shade that casts a distinct shadow. Each piece is made to order in a small series and can be finished in a custom color.\n\nRetail is USD 240; wholesale starts at 4 units. I can send a one-page spec sheet with dimensions, materials and lead time.\n\nWould it make sense to send it over?\n\n— Gabriel and company\nhttps://galapa.com.ar/productos/siri-velador-1s63t/",
+        "at": "2026-11-16T02:29:04.364Z",
+        "status": "enviado"
+      },
+      {
+        "id": "msg_0645b6e86234",
+        "direction": "in",
+        "channel": "email",
+        "subject": "Re: Aurora 01",
+        "body": "Thanks for reaching out. We like the shade. What would shipping to New York cost for one sample, and do you have UL certification? We cannot specify a fixture without it.",
+        "at": "2026-11-18T02:29:04.364Z",
+        "status": "recibido"
+      }
+    ],
+    "nextStep": "Responder la consulta de envío.",
+    "nextFollowUp": "2026-11-23T02:29:04.364Z",
+    "lastActivityAt": "2026-11-15T02:29:04.359Z",
+    "createdAt": "2026-11-15T02:29:04.359Z",
+    "updatedAt": "2026-11-15T02:29:04.359Z"
+  },
+  {
+    "id": "thr_demo_4",
+    "demo": true,
+    "missionId": "mis_demo_aurora",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "galería de objetos",
+      "company": "Atelier Bruma",
+      "role": "galería de objetos",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "España",
+      "city": "París",
+      "website": "https://example.com/atelier-bruma",
+      "type": "galeria"
+    },
+    "stage": "contactado",
+    "score": 38,
+    "source": "Misión Aurora 01",
+    "notes": "",
+    "drafts": [
+      {
+        "id": "drf_0b57aa002d7a",
+        "channel": "email",
+        "language": "es",
+        "subject": "Aurora 01: una serie corta para Atelier Bruma",
+        "body": "Hola,\n\nVi la selección de Atelier Bruma y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Gabriel and company\nhttps://galapa.com.ar/productos/siri-velador-1s63t/\nSi preferís no recibir más mensajes, respondé BAJA.",
+        "status": "enviado",
+        "guardVersion": 2,
+        "createdAt": "2026-11-15T02:29:04.359Z",
+        "sentAt": "2026-11-19T02:29:12.605Z",
+        "sentChannel": "manual"
+      }
+    ],
+    "messages": [
+      {
+        "id": "msg_b47dc48c5270",
+        "direction": "out",
+        "channel": "email",
+        "subject": "Aurora 01: una serie corta para Atelier Bruma",
+        "body": "Hola,\n\nVi la selección de Atelier Bruma y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Gabriel and company\nhttps://galapa.com.ar/productos/siri-velador-1s63t/\nSi preferís no recibir más mensajes, respondé BAJA.\n\nGabriel and company · Buenos aires · https://galapa.com.ar/productos/siri-velador-1s63t/",
+        "at": "2026-11-19T02:29:12.605Z",
+        "status": "enviado_manual",
+        "provider": "manual"
+      }
+    ],
+    "nextStep": "Seguimiento con valor en 4 días.",
+    "nextFollowUp": "2026-11-23T02:29:12.605Z",
+    "lastActivityAt": "2026-11-19T02:29:12.605Z",
+    "createdAt": "2026-11-15T02:29:04.359Z",
+    "updatedAt": "2026-11-19T02:29:12.605Z"
+  },
+  {
+    "id": "thr_demo_5",
+    "demo": true,
+    "missionId": "mis_demo_aurora",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "mobiliario y luz",
+      "company": "Forma Living",
+      "role": "mobiliario y luz",
+      "email": "info@forma-living.example.com",
+      "emailStatus": "publico",
+      "country": "España",
+      "city": "Barcelona",
+      "website": "https://example.com/forma-living",
+      "type": "tienda"
+    },
+    "stage": "nuevo",
+    "score": 38,
+    "source": "Misión Aurora 01",
+    "notes": "",
+    "drafts": [
+      {
+        "id": "drf_b38317efdbc4",
+        "channel": "email",
+        "language": "es",
+        "subject": "Aurora 01: una serie corta para Forma Living",
+        "body": "Hola,\n\nVi la selección de Forma Living y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Gabriel and company\nhttps://galapa.com.ar/productos/siri-velador-1s63t/\nSi preferís no recibir más mensajes, respondé BAJA.",
+        "status": "listo",
+        "guardVersion": 2,
+        "createdAt": "2026-11-15T02:29:04.359Z"
+      }
+    ],
+    "messages": [],
+    "nextStep": "Revisar el borrador y enviar.",
+    "nextFollowUp": "2026-11-20T02:29:04.364Z",
+    "lastActivityAt": "2026-11-15T02:29:04.359Z",
+    "createdAt": "2026-11-15T02:29:04.359Z",
+    "updatedAt": "2026-11-15T02:29:04.359Z"
+  },
+  {
+    "id": "thr_6cb0ef4b803c",
+    "demo": false,
+    "missionId": "mis_6db79905b862",
+    "productId": "prd_8ecb7702a6de",
+    "contact": {
+      "name": "Equipo de compras",
+      "company": "MINIM",
+      "role": "",
+      "email": "info@minim.es",
+      "emailStatus": "publico",
+      "country": "España",
+      "city": "Barcelona",
+      "website": "https://www.minim.es",
+      "type": "tienda"
+    },
+    "verification": {
+      "webEstado": "activo",
+      "webTitulo": "MINIM – mobiliario e iluminación de diseño contemporáneo en Barcelona y Madrid",
+      "webUrl": "https://www.minim.es/es",
+      "emailEstado": "publico",
+      "emailFuente": "https://www.minim.es/es/contacto-minim-barcelona-madrid",
+      "origen": "directorio",
+      "fuente": "directorio semilla de Lumbre (sitios verificados en 2026-11-19)",
+      "at": "2026-11-19T01:38:51.728Z"
+    },
+    "unverified": false,
+    "stage": "nuevo",
+    "score": 86,
+    "source": "Misión SIRI Velador (base alta) · España",
+    "notes": "Retailer de mobiliario e iluminación de diseño contemporáneo con tiendas en Barcelona y Madrid.",
+    "drafts": [
+      {
+        "id": "drf_3519a3bcea93",
+        "channel": "email",
+        "language": "es",
+        "subject": "SIRI, velador de autor para MINIM",
+        "body": "Hola: vi que MINIM es un retailer de mobiliario e iluminación de diseño contemporáneo con tiendas en Barcelona y Madrid. SIRI es un velador de 35 cm impreso en PLA vegetal, con portalámpara E27 universal y color a elección. Precio mayorista USD 45 por unidad, FOB Buenos Aires; flete internacional a cotizar y a cargo del comprador. ¿Te interesa que te envíe la ficha técnica y una foto del proceso?",
+        "status": "revisar",
+        "createdAt": "2026-11-19T01:38:51.728Z",
+        "source": "mision",
+        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewKind": "redteam",
+        "complianceCorrections": 1,
+        "guardVersion": 2
+      }
+    ],
+    "messages": [],
+    "nextStep": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T01:38:51.728Z",
+    "createdAt": "2026-11-19T01:38:51.728Z",
+    "updatedAt": "2026-11-19T01:38:51.728Z"
+  },
+  {
+    "id": "thr_8de785de437b",
+    "demo": false,
+    "missionId": "mis_6db79905b862",
+    "productId": "prd_8ecb7702a6de",
+    "contact": {
+      "name": "Equipo de compras",
+      "company": "Pilight Shop",
+      "role": "",
+      "email": "info@pilight.es",
+      "emailStatus": "publico",
+      "country": "España",
+      "city": "Barcelona",
+      "website": "https://www.pilight.es",
+      "type": "tienda"
+    },
+    "verification": {
+      "webEstado": "activo",
+      "webTitulo": "Pilight Shop - Iluminación de Diseño de Alta Calidad para Tu Hogar",
+      "webUrl": "https://www.pilight.es/",
+      "emailEstado": "publico",
+      "emailFuente": "https://www.pilight.es/",
+      "origen": "directorio",
+      "fuente": "directorio semilla de Lumbre (sitios verificados en 2026-11-19)",
+      "at": "2026-11-19T01:38:51.728Z"
+    },
+    "unverified": false,
+    "stage": "nuevo",
+    "score": 86,
+    "source": "Misión SIRI Velador (base alta) · España",
+    "notes": "Tienda de iluminación de diseño con venta online y atención a proyectos.",
+    "drafts": [
+      {
+        "id": "drf_3fdd67aecb3a",
+        "channel": "email",
+        "language": "es",
+        "subject": "SIRI, velador de autor para Pilight Shop",
+        "body": "Hola: vi que Pilight Shop vende iluminación de diseño online y atiende proyectos. SIRI es un velador de 35 cm impreso en PLA vegetal, con portalámpara E27 universal y color a elección. Precio mayorista USD 45 por unidad, FOB Buenos Aires; flete internacional a cotizar y a cargo del comprador. ¿Te interesa que te envíe la ficha técnica y una foto del proceso?",
+        "status": "revisar",
+        "createdAt": "2026-11-19T01:38:51.728Z",
+        "source": "mision",
+        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewKind": "redteam",
+        "complianceCorrections": 1,
+        "guardVersion": 2
+      }
+    ],
+    "messages": [],
+    "nextStep": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T01:38:51.728Z",
+    "createdAt": "2026-11-19T01:38:51.728Z",
+    "updatedAt": "2026-11-19T01:38:51.728Z"
+  },
+  {
+    "id": "thr_cc60c0fa8ed8",
+    "demo": false,
+    "missionId": "mis_6db79905b862",
+    "productId": "prd_8ecb7702a6de",
+    "contact": {
+      "name": "Equipo de compras",
+      "company": "Mar de Cava",
+      "role": "",
+      "email": "contact@mardecava.com",
+      "emailStatus": "publico",
+      "country": "España",
+      "city": "Barcelona",
+      "website": "https://mardecava.com",
+      "type": "tienda"
+    },
+    "verification": {
+      "webEstado": "activo",
+      "webTitulo": "Mar de Cava | Muebles y decoración de diseño en Barcelona",
+      "webUrl": "https://mardecava.com/",
+      "emailEstado": "publico",
+      "emailFuente": "https://mardecava.com/",
+      "origen": "directorio",
+      "fuente": "directorio semilla de Lumbre (sitios verificados en 2026-11-19)",
+      "at": "2026-11-19T01:38:51.728Z"
+    },
+    "unverified": false,
+    "stage": "nuevo",
+    "score": 68,
+    "source": "Misión SIRI Velador (base alta) · España",
+    "notes": "Muebles y decoración de diseño en Barcelona; incluye iluminación en su selección.",
+    "drafts": [
+      {
+        "id": "drf_7ad1e77d9534",
+        "channel": "email",
+        "language": "es",
+        "subject": "SIRI, velador de autor para Mar de Cava",
+        "body": "Hola: vi que Mar de Cava incluye iluminación en su selección de muebles y decoración de diseño en Barcelona. SIRI es un velador de 35 cm impreso en PLA vegetal, con portalámpara E27 universal y color a elección. Precio mayorista USD 45 por unidad, FOB Buenos Aires; flete internacional a cotizar y a cargo del comprador. ¿Te interesa que te envíe la ficha técnica y una foto del proceso?",
+        "status": "revisar",
+        "createdAt": "2026-11-19T01:38:51.728Z",
+        "source": "mision",
+        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewKind": "redteam",
+        "complianceCorrections": 1,
+        "guardVersion": 2
+      }
+    ],
+    "messages": [],
+    "nextStep": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T01:38:51.728Z",
+    "createdAt": "2026-11-19T01:38:51.728Z",
+    "updatedAt": "2026-11-19T01:38:51.728Z"
+  },
+  {
+    "id": "thr_aea3518a1e80",
+    "demo": false,
+    "missionId": "mis_6db79905b862",
+    "productId": "prd_8ecb7702a6de",
+    "contact": {
+      "name": "Equipo de compras",
+      "company": "La Maison Barcelona",
+      "role": "",
+      "email": "hola@lamaisonbarcelona.com",
+      "emailStatus": "publico",
+      "country": "España",
+      "city": "Barcelona",
+      "website": "https://lamaisonbarcelona.com",
+      "type": "concept store"
+    },
+    "verification": {
+      "webEstado": "activo",
+      "webTitulo": "Concept Store de decoración y proyectos de interiorismo",
+      "webUrl": "https://lamaisonbarcelona.com/",
+      "emailEstado": "publico",
+      "emailFuente": "https://lamaisonbarcelona.com/contacto/",
+      "origen": "directorio",
+      "fuente": "directorio semilla de Lumbre (sitios verificados en 2026-11-19)",
+      "at": "2026-11-19T01:38:51.728Z"
+    },
+    "unverified": false,
+    "stage": "nuevo",
+    "score": 68,
+    "source": "Misión SIRI Velador (base alta) · España",
+    "notes": "Concept store de decoración y proyectos de interiorismo; mezcla mobiliario, objetos e iluminación.",
+    "drafts": [
+      {
+        "id": "drf_2bd9aa1fe9e7",
+        "channel": "email",
+        "language": "es",
+        "subject": "SIRI, velador de autor para La Maison Barcelona",
+        "body": "Hola: vi que La Maison Barcelona mezcla mobiliario, objetos e iluminación en su concept store y en proyectos de interiorismo. SIRI es un velador de 35 cm impreso en PLA de origen vegetal, con portalámpara E27 universal y color a elección. Precio mayorista USD 45 por unidad, FOB Buenos Aires, flete a cargo del comprador. ¿Te interesa que te pase la ficha técnica y una foto del proceso? Si preferís no recibir más correos, respondé BAJA y no te escribo más. Gabriel, Galapa, Buenos Aires.",
+        "status": "revisar",
+        "createdAt": "2026-11-19T01:38:51.728Z",
+        "source": "mision",
+        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewKind": "redteam",
+        "guardVersion": 2
+      }
+    ],
+    "messages": [],
+    "nextStep": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T01:38:51.728Z",
+    "createdAt": "2026-11-19T01:38:51.728Z",
+    "updatedAt": "2026-11-19T01:38:51.728Z"
+  },
+  {
+    "id": "thr_dea1a0ab0e1f",
+    "demo": false,
+    "missionId": "mis_6db79905b862",
+    "productId": "prd_8ecb7702a6de",
+    "contact": {
+      "name": "Equipo de compras",
+      "company": "Lámparas Barcelona",
+      "role": "",
+      "email": "info@lamparasbarcelona.com",
+      "emailStatus": "publico",
+      "country": "España",
+      "city": "Barcelona",
+      "website": "https://lamparasbarcelona.com",
+      "type": "tienda"
+    },
+    "verification": {
+      "webEstado": "activo",
+      "webTitulo": "Lámparas Barcelona | Tienda de Lámparas Online",
+      "webUrl": "https://lamparasbarcelona.com/",
+      "emailEstado": "publico",
+      "emailFuente": "https://lamparasbarcelona.com/",
+      "origen": "directorio",
+      "fuente": "directorio semilla de Lumbre (sitios verificados en 2026-11-19)",
+      "at": "2026-11-19T01:38:51.728Z"
+    },
+    "unverified": false,
+    "stage": "nuevo",
+    "score": 86,
+    "source": "Misión SIRI Velador (base alta) · España",
+    "notes": "Tienda online y showroom de lámparas de diseño en Barcelona.",
+    "drafts": [
+      {
+        "id": "drf_bfaea4dfbf2e",
+        "channel": "email",
+        "language": "es",
+        "subject": "SIRI, velador de autor para Lámparas Barcelona",
+        "body": "Hola: vi la tienda online y el showroom de Lámparas Barcelona, con foco en lámparas de diseño. SIRI es un velador de 35 cm impreso en PLA vegetal, con portalámpara E27 universal y color a elección. Precio mayorista USD 45 por unidad, FOB Buenos Aires; flete internacional a cotizar y a cargo del comprador. ¿Te interesa que te envíe la ficha técnica y una foto del proceso?",
+        "status": "revisar",
+        "createdAt": "2026-11-19T01:38:51.728Z",
+        "source": "mision",
+        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewKind": "redteam",
+        "complianceCorrections": 1,
+        "guardVersion": 2
+      }
+    ],
+    "messages": [],
+    "nextStep": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T01:38:51.728Z",
+    "createdAt": "2026-11-19T01:38:51.728Z",
+    "updatedAt": "2026-11-19T01:38:51.728Z"
+  },
+  {
+    "id": "thr_5394977baa51",
+    "demo": false,
+    "missionId": "mis_6db79905b862",
+    "productId": "prd_8ecb7702a6de",
+    "contact": {
+      "name": "Equipo de compras",
+      "company": "Insolit BCN",
+      "role": "",
+      "email": "admin@insolitbcn.com",
+      "emailStatus": "publico",
+      "country": "España",
+      "city": "Barcelona",
+      "website": "https://www.insolitbcn.com",
+      "type": "tienda"
+    },
+    "verification": {
+      "webEstado": "activo",
+      "webTitulo": "Lámparas de diseño en Barcelona | Insolit BCN",
+      "webUrl": "https://www.insolitbcn.com/",
+      "emailEstado": "publico",
+      "emailFuente": "https://www.insolitbcn.com/contacto/",
+      "origen": "directorio",
+      "fuente": "directorio semilla de Lumbre (sitios verificados en 2026-11-19)",
+      "at": "2026-11-19T01:38:51.728Z"
+    },
+    "unverified": false,
+    "stage": "nuevo",
+    "score": 86,
+    "source": "Misión SIRI Velador (base alta) · España",
+    "notes": "Tienda especializada en lámparas de diseño en Barcelona, con marcas de autor y ediciones.",
+    "drafts": [
+      {
+        "id": "drf_f4d8132011c2",
+        "channel": "email",
+        "language": "es",
+        "subject": "SIRI, edición de autor para Insolit BCN",
+        "body": "Hola: vi que Insolit BCN está especializada en lámparas de diseño con marcas de autor y ediciones. SIRI es un velador de 35 cm impreso en PLA vegetal, con portalámpara E27 universal y color a elección. Precio mayorista USD 45 por unidad, FOB Buenos Aires; flete internacional a cotizar y a cargo del comprador. ¿Te interesa que te envíe la ficha técnica y una foto del proceso?",
+        "status": "revisar",
+        "createdAt": "2026-11-19T01:38:51.728Z",
+        "source": "mision",
+        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewKind": "redteam",
+        "complianceCorrections": 1,
+        "guardVersion": 2
+      }
+    ],
+    "messages": [],
+    "nextStep": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T01:38:51.728Z",
+    "createdAt": "2026-11-19T01:38:51.728Z",
+    "updatedAt": "2026-11-19T01:38:51.728Z"
+  },
+  {
+    "id": "thr_9df3775fa6d2",
+    "demo": false,
+    "missionId": "mis_6db79905b862",
+    "productId": "prd_8ecb7702a6de",
+    "contact": {
+      "name": "Equipo de compras",
+      "company": "Avanluce",
+      "role": "",
+      "email": "info@avanluce.com",
+      "emailStatus": "publico",
+      "country": "España",
+      "city": "Barcelona",
+      "website": "https://www.avanluce.com",
+      "type": "tienda"
+    },
+    "verification": {
+      "webEstado": "activo",
+      "webTitulo": "Avanluce – Tienda de iluminación en Barcelona",
+      "webUrl": "https://www.avanluce.com/",
+      "emailEstado": "publico",
+      "emailFuente": "https://www.avanluce.com/contacto/",
+      "origen": "directorio",
+      "fuente": "directorio semilla de Lumbre (sitios verificados en 2026-11-19)",
+      "at": "2026-11-19T01:38:51.728Z"
+    },
+    "unverified": false,
+    "stage": "nuevo",
+    "score": 86,
+    "source": "Misión SIRI Velador (base alta) · España",
+    "notes": "Tienda de iluminación de diseño con showroom en Barcelona y catálogo multimarca.",
+    "drafts": [
+      {
+        "id": "drf_d16e7dedd0ff",
+        "channel": "email",
+        "language": "es",
+        "subject": "SIRI, velador de autor para Avanluce",
+        "body": "Hola: vi el showroom y el catálogo multimarca de iluminación de diseño de Avanluce en Barcelona. SIRI es un velador de 35 cm impreso en PLA de origen vegetal, con portalámpara E27 universal y color a elección. Precio mayorista USD 45 por unidad, FOB Buenos Aires, flete a cargo del comprador. ¿Te interesa que te envíe la ficha técnica y una foto del proceso? Si preferís no recibir más correos, respondé BAJA y no te escribo más. Gabriel, Galapa, Buenos Aires.",
+        "status": "revisar",
+        "createdAt": "2026-11-19T01:38:51.728Z",
+        "source": "mision",
+        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewKind": "redteam",
+        "guardVersion": 2
+      }
+    ],
+    "messages": [],
+    "nextStep": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T01:38:51.728Z",
+    "createdAt": "2026-11-19T01:38:51.728Z",
+    "updatedAt": "2026-11-19T01:38:51.728Z"
+  },
+  {
+    "id": "thr_3ee3df7fb9c6",
+    "demo": false,
+    "missionId": "mis_6db79905b862",
+    "productId": "prd_8ecb7702a6de",
+    "contact": {
+      "name": "Equipo de compras",
+      "company": "Años Luz",
+      "role": "",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "España",
+      "city": "Madrid",
+      "website": "https://www.anosluz.com",
+      "type": "tienda"
+    },
+    "verification": {
+      "webEstado": "activo",
+      "webTitulo": "Anos Luz",
+      "webUrl": "https://anosluz.com/",
+      "emailEstado": "desconocido",
+      "emailFuente": "",
+      "origen": "directorio",
+      "fuente": "directorio semilla de Lumbre (sitios verificados en 2026-11-19)",
+      "at": "2026-11-19T01:38:51.728Z"
+    },
+    "unverified": false,
+    "stage": "nuevo",
+    "score": 78,
+    "source": "Misión SIRI Velador (base alta) · España",
+    "notes": "Referente de iluminación de diseño en Madrid (Serrano); asesora proyectos residenciales y comerciales.",
+    "drafts": [
+      {
+        "id": "drf_2f85ac3a60f0",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "SIRI, velador de autor para Años Luz",
+        "body": "Hola: vi que Años Luz asesora proyectos residenciales y comerciales desde su local de Serrano. SIRI es un velador de 35 cm impreso en PLA de origen vegetal, con portalámpara E27 universal y color a elección; puede funcionar como pieza de acento en proyectos pequeños. Precio mayorista USD 45 por unidad, FOB Buenos Aires, flete a cargo del comprador. ¿Te interesa que te pase la ficha técnica? Si preferís no recibir más correos, respondé BAJA y no te escribo más. Gabriel, Galapa, Buenos Aires.",
+        "status": "revisar",
+        "createdAt": "2026-11-19T01:38:51.728Z",
+        "source": "mision",
+        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewKind": "redteam",
+        "guardVersion": 2
+      }
+    ],
+    "messages": [],
+    "nextStep": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T01:38:51.728Z",
+    "createdAt": "2026-11-19T01:38:51.728Z",
+    "updatedAt": "2026-11-19T01:38:51.728Z"
+  },
+  {
+    "id": "thr_751d7d70c30b",
+    "demo": false,
+    "missionId": "mis_6db79905b862",
+    "productId": "prd_8ecb7702a6de",
+    "contact": {
+      "name": "Equipo de compras",
+      "company": "Ideas Luz",
+      "role": "",
+      "email": "ventas@ideasluz.com",
+      "emailStatus": "publico",
+      "country": "España",
+      "city": "Madrid",
+      "website": "https://www.ideasluz.com",
+      "type": "tienda"
+    },
+    "verification": {
+      "webEstado": "activo",
+      "webTitulo": "Tienda de Iluminación en Madrid | Lamparas de diseño",
+      "webUrl": "https://www.ideasluz.com/",
+      "emailEstado": "publico",
+      "emailFuente": "https://www.ideasluz.com/",
+      "origen": "directorio",
+      "fuente": "directorio semilla de Lumbre (sitios verificados en 2026-11-19)",
+      "at": "2026-11-19T01:38:51.728Z"
+    },
+    "unverified": false,
+    "stage": "nuevo",
+    "score": 86,
+    "source": "Misión SIRI Velador (base alta) · España",
+    "notes": "Tienda de iluminación y lámparas de diseño con local en Madrid; trabaja varias marcas y piezas de autor.",
+    "drafts": [
+      {
+        "id": "drf_1639ecafe037",
+        "channel": "email",
+        "language": "es",
+        "subject": "SIRI, velador de autor para Ideas Luz",
+        "body": "Hola: vi en Ideas Luz su catálogo de lámparas de diseño con varias marcas y piezas de autor. SIRI es un velador de 35 cm impreso en PLA de origen vegetal, con portalámpara E27 universal y color a elección. Precio mayorista USD 45 por unidad, FOB Buenos Aires, flete a cargo del comprador. ¿Te interesa que te envíe la ficha técnica y una foto del proceso? Si preferís no recibir más correos, respondé BAJA y no te escribo más. Gabriel, Galapa, Buenos Aires.",
+        "status": "revisar",
+        "createdAt": "2026-11-19T01:38:51.728Z",
+        "source": "mision",
+        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewKind": "redteam",
+        "guardVersion": 2
+      }
+    ],
+    "messages": [],
+    "nextStep": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T01:38:51.728Z",
+    "createdAt": "2026-11-19T01:38:51.728Z",
+    "updatedAt": "2026-11-19T01:38:51.728Z"
+  },
+  {
+    "id": "thr_793132295e84",
+    "demo": false,
+    "missionId": "mis_6db79905b862",
+    "productId": "prd_8ecb7702a6de",
+    "contact": {
+      "name": "curador de diseño",
+      "company": "Casa FOA",
+      "role": "curador de diseño",
+      "email": "secretaria@casafoa.com",
+      "emailStatus": "publico",
+      "country": "Argentina",
+      "city": "Buenos Aires",
+      "website": "https://www.casafoa.com",
+      "type": "galeria"
+    },
+    "verification": {
+      "webEstado": "activo",
+      "webTitulo": "Home",
+      "webUrl": "https://www.casafoa.com/",
+      "emailEstado": "publico",
+      "emailFuente": "https://www.casafoa.com/",
+      "origen": "conocimiento",
+      "fuente": "",
+      "at": "2026-11-19T01:38:51.728Z"
+    },
+    "unverified": false,
+    "stage": "nuevo",
+    "score": 68,
+    "source": "Misión SIRI Velador (base alta) · España",
+    "notes": "Plataforma de exhibición de diseño y decoración que convoca a estudios y marcas; puede ser canal de visibilidad y venta.",
+    "drafts": [
+      {
+        "id": "drf_bd2b74e15f49",
+        "channel": "email",
+        "language": "es",
+        "subject": "SIRI para una edición de Casa FOA",
+        "body": "Hola: vi que Casa FOA convoca a estudios y marcas en sus ediciones de diseño y decoración. SIRI es un velador de 35 cm impreso en PLA de origen vegetal, con portalámpara E27 universal y color a elección, pensado como pieza de acento. Precio mayorista USD 45 por unidad, sin flete internacional. ¿Te interesa evaluar SIRI para una edición futura? Si preferís no recibir más correos, respondé BAJA y no te escribo más. Gabriel, Galapa, Buenos Aires.",
+        "status": "revisar",
+        "createdAt": "2026-11-19T01:38:51.728Z",
+        "source": "mision",
+        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewKind": "redteam",
+        "guardVersion": 2
+      }
+    ],
+    "messages": [],
+    "nextStep": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T01:38:51.728Z",
+    "createdAt": "2026-11-19T01:38:51.728Z",
+    "updatedAt": "2026-11-19T01:38:51.728Z"
+  },
+  {
+    "id": "thr_f18b56d4bee7",
+    "demo": false,
+    "missionId": "mis_6db79905b862",
+    "productId": "prd_8ecb7702a6de",
+    "contact": {
+      "name": "comprador de diseño mexicano",
+      "company": "Chic by Accident",
+      "role": "comprador de diseño mexicano",
+      "email": "hello@chicbyaccident.com",
+      "emailStatus": "publico",
+      "country": "México",
+      "city": "CDMX",
+      "website": "https://www.chicbyaccident.com",
+      "type": "concept store"
+    },
+    "verification": {
+      "webEstado": "activo",
+      "webTitulo": "Chic By Accident",
+      "webUrl": "https://www.chicbyaccident.com/",
+      "emailEstado": "publico",
+      "emailFuente": "https://www.chicbyaccident.com/",
+      "origen": "conocimiento",
+      "fuente": "",
+      "at": "2026-11-19T01:38:51.728Z"
+    },
+    "unverified": false,
+    "stage": "nuevo",
+    "score": 86,
+    "source": "Misión SIRI Velador (base alta) · España",
+    "notes": "Tienda enfocada en diseño mexicano contemporáneo; busca piezas de autor y series cortas.",
+    "drafts": [
+      {
+        "id": "drf_b63dcac6c21f",
+        "channel": "email",
+        "language": "es",
+        "subject": "SIRI, velador de autor para Chic by Accident",
+        "body": "Hola: vi que en Chic by Accident trabajan diseño mexicano contemporáneo y piezas de autor en series cortas. SIRI es un velador de 35 cm impreso en PLA de origen vegetal, con portalámpara E27 universal y color a elección; podemos ajustar la tonalidad a tu paleta de temporada. Precio mayorista USD 45 por unidad, FOB Buenos Aires, flete a cargo del comprador. ¿Querés que te pase la ficha técnica y una foto del proceso? Si preferís no recibir más correos, respondé BAJA y no te escribo más. Gabriel, Galapa, Buenos Aires.",
+        "status": "revisar",
+        "createdAt": "2026-11-19T01:38:51.728Z",
+        "source": "mision",
+        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewKind": "redteam",
+        "guardVersion": 2
+      }
+    ],
+    "messages": [],
+    "nextStep": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T01:38:51.728Z",
+    "createdAt": "2026-11-19T01:38:51.728Z",
+    "updatedAt": "2026-11-19T01:38:51.728Z"
+  },
+  {
+    "id": "thr_7c0d3168115e",
+    "demo": false,
+    "missionId": "mis_6db79905b862",
+    "productId": "prd_8ecb7702a6de",
+    "contact": {
+      "name": "comprador de diseño y libros",
+      "company": "Casa Bosques",
+      "role": "comprador de diseño y libros",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "México",
+      "city": "CDMX",
+      "website": "https://www.casabosques.com",
+      "type": "concept store"
+    },
+    "verification": {
+      "webEstado": "activo",
+      "webTitulo": "Discover Casa Bosques hand crafted, bean to bar chocolate.",
+      "webUrl": "https://www.casabosques.com/",
+      "emailEstado": "desconocido",
+      "emailFuente": "",
+      "origen": "conocimiento",
+      "fuente": "",
+      "at": "2026-11-19T01:38:51.728Z"
+    },
+    "unverified": false,
+    "stage": "nuevo",
+    "score": 78,
+    "source": "Misión SIRI Velador (base alta) · España",
+    "notes": "Concept store de referencia en CDMX con mezcla de diseño, arte y objetos; público afín al diseño de autor.",
+    "drafts": [
+      {
+        "id": "drf_3b11ce8b99f5",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "SIRI, velador de autor para Casa Bosques",
+        "body": "Hola: vi en la web de Casa Bosques la mezcla de libros de diseño, arte y objetos, y creo que SIRI puede dialogar con esa selección. Es un velador de 35 cm impreso en PLA vegetal, con portalámpara E27 universal y color a elección. Precio mayorista USD 45 por unidad, FOB Buenos Aires; flete internacional a cotizar y a cargo del comprador. ¿Te interesa que te envíe la ficha técnica y una foto del proceso?",
+        "status": "revisar",
+        "createdAt": "2026-11-19T01:38:51.728Z",
+        "source": "mision",
+        "reviewNote": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+        "reviewKind": "redteam",
+        "complianceCorrections": 1,
+        "guardVersion": 2
+      }
+    ],
+    "messages": [],
+    "nextStep": "El red team pidió detener la misión. Revisá sus objeciones antes de enviar: si asumís el riesgo, aprobá el borrador; si no, corregí el plan y reintentá.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T01:38:51.728Z",
+    "createdAt": "2026-11-19T01:38:51.728Z",
+    "updatedAt": "2026-11-19T01:38:51.728Z"
+  },
+  {
+    "id": "thr_c9c7eab11475",
+    "demo": false,
+    "missionId": "mis_0e02b63a3658",
+    "productId": "prd_662a52367e72",
+    "contact": {
+      "name": "director o responsable de compras",
+      "company": "Hotel boutique (ejemplo genérico, sin nombre verificable)",
+      "role": "director o responsable de compras",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "España",
+      "city": "Barcelona",
+      "website": "",
+      "type": "hotel"
+    },
+    "stage": "perdido",
+    "score": 42,
+    "source": "Misión Mazoma · España",
+    "notes": "Busca piezas de iluminación con identidad para áreas comunes o habitaciones; compra en series cortas.",
+    "drafts": [
+      {
+        "id": "drf_e3cb40ef50e4",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Iluminación de autor para tu hotel",
+        "body": "Hola, vi que en tu hotel cuidan el diseño de interiores y buscan piezas con identidad. Soy maker y hago Mazoma, una lámpara impresa en 3D en series cortas, con geometría y luz propias. Para áreas comunes o habitaciones, puedo adaptar acabados en series muy cortas. Si te interesa, te paso fotos del proceso y la ficha técnica. ¿Te escribo la semana que viene?",
+        "status": "descartado",
+        "createdAt": "2026-11-19T00:12:40.176Z",
+        "source": "mision",
+        "reviewNote": "Falta la revisión de cumplimiento o red team. Revisá el borrador antes de enviarlo.",
+        "guardVersion": 2,
+        "discardedAt": "2026-11-19T01:31:13.020Z",
+        "discardReason": "Prospecto no verificable (migración de honestidad)."
+      }
+    ],
+    "messages": [],
+    "nextStep": "Hilo descartado: no hay una tienda compradora verificable. No contactar.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T00:12:40.176Z",
+    "createdAt": "2026-11-19T00:12:40.176Z",
+    "updatedAt": "2026-11-19T01:31:13.021Z",
+    "unverified": true,
+    "unverifiedMigrated": true,
+    "unverifiedReason": "Se creó antes de la verificación obligatoria: era un nombre genérico sin sitio ni email reales."
+  },
+  {
+    "id": "thr_25108c0ee17a",
+    "demo": false,
+    "missionId": "mis_0e02b63a3658",
+    "productId": "prd_662a52367e72",
+    "contact": {
+      "name": "comprador de tienda",
+      "company": "Museo-tienda (ejemplo genérico, sin nombre verificable)",
+      "role": "comprador de tienda",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "Estados Unidos",
+      "city": "Nueva York",
+      "website": "",
+      "type": "tienda"
+    },
+    "stage": "perdido",
+    "score": 60,
+    "source": "Misión Mazoma · España",
+    "notes": "Cura diseño latinoamericano e internacional; busca objetos de serie corta con autoría.",
+    "drafts": [
+      {
+        "id": "drf_1d2e1acd4535",
+        "channel": "formulario",
+        "language": "en",
+        "subject": "Mazoma lamp for your museum shop",
+        "body": "Hi, I saw that your museum shop curates Latin American design and objects with a story. I'm a maker and I create Mazoma, a 3D-printed lamp in short series, with its own geometry and texture. I'd love to send you photos of the process and a technical sheet. Would you be open to taking a look?",
+        "status": "descartado",
+        "createdAt": "2026-11-19T00:12:40.176Z",
+        "source": "mision",
+        "reviewNote": "Falta la revisión de cumplimiento o red team. Revisá el borrador antes de enviarlo.",
+        "guardVersion": 2,
+        "discardedAt": "2026-11-19T01:31:13.021Z",
+        "discardReason": "Prospecto no verificable (migración de honestidad)."
+      }
+    ],
+    "messages": [],
+    "nextStep": "Hilo descartado: no hay una tienda compradora verificable. No contactar.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T00:12:40.176Z",
+    "createdAt": "2026-11-19T00:12:40.176Z",
+    "updatedAt": "2026-11-19T01:31:13.021Z",
+    "unverified": true,
+    "unverifiedMigrated": true,
+    "unverifiedReason": "Se creó antes de la verificación obligatoria: era un nombre genérico sin sitio ni email reales."
+  },
+  {
+    "id": "thr_658d08299f5d",
+    "demo": false,
+    "missionId": "mis_0e02b63a3658",
+    "productId": "prd_662a52367e72",
+    "contact": {
+      "name": "director o curador",
+      "company": "Galería de diseño (ejemplo genérico, sin nombre verificable)",
+      "role": "director o curador",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "México",
+      "city": "Guadalajara",
+      "website": "",
+      "type": "galeria"
+    },
+    "stage": "perdido",
+    "score": 60,
+    "source": "Misión Mazoma · España",
+    "notes": "Busca piezas de diseño con narrativa; la lámpara impresa en 3D puede integrarse en una muestra o venta de objetos de autor.",
+    "drafts": [
+      {
+        "id": "drf_acb9c8b8b885",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Pieza de autor para tu galería",
+        "body": "Hola, vi que en tu galería buscan piezas con narrativa y proceso. Soy maker y hago Mazoma, una lámpara impresa en 3D en series limitadas, con geometría y textura propias. Puede integrarse en una muestra o venta de objetos de autor. Si te interesa, te paso fotos del proceso y la ficha técnica. ¿Querés que te la envíe?",
+        "status": "descartado",
+        "createdAt": "2026-11-19T00:12:40.176Z",
+        "source": "mision",
+        "reviewNote": "Falta la revisión de cumplimiento o red team. Revisá el borrador antes de enviarlo.",
+        "guardVersion": 2,
+        "discardedAt": "2026-11-19T01:31:13.021Z",
+        "discardReason": "Prospecto no verificable (migración de honestidad)."
+      }
+    ],
+    "messages": [],
+    "nextStep": "Hilo descartado: no hay una tienda compradora verificable. No contactar.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T00:12:40.176Z",
+    "createdAt": "2026-11-19T00:12:40.176Z",
+    "updatedAt": "2026-11-19T01:31:13.021Z",
+    "unverified": true,
+    "unverifiedMigrated": true,
+    "unverifiedReason": "Se creó antes de la verificación obligatoria: era un nombre genérico sin sitio ni email reales."
+  },
+  {
+    "id": "thr_ac7a2756e9ff",
+    "demo": false,
+    "missionId": "mis_0e02b63a3658",
+    "productId": "prd_662a52367e72",
+    "contact": {
+      "name": "dueño o curador",
+      "company": "Tienda de concepto (ejemplo genérico, sin nombre verificable)",
+      "role": "dueño o curador",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "México",
+      "city": "CDMX",
+      "website": "",
+      "type": "concept store"
+    },
+    "stage": "perdido",
+    "score": 78,
+    "source": "Misión Mazoma · España",
+    "notes": "Escena de diseño activa, interés por diseño regional y menos competencia de lámparas 3D; el idioma facilita la conversación.",
+    "drafts": [
+      {
+        "id": "drf_72c17be78545",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Mazoma, lámpara de autor impresa en 3D",
+        "body": "Hola, vi que en tu tienda curan diseño de la región y les interesa el proceso. Soy maker y hago Mazoma, una lámpara impresa en 3D en series cortas, con geometría y textura que se ven en la impresión. Me interesa proponerte una colaboración en serie corta para el mercado mexicano. Si te sirve, te paso fotos del proceso y la ficha técnica. ¿Te escribo la semana que viene?",
+        "status": "descartado",
+        "createdAt": "2026-11-19T00:12:40.176Z",
+        "source": "mision",
+        "reviewNote": "Falta la revisión de cumplimiento o red team. Revisá el borrador antes de enviarlo.",
+        "guardVersion": 2,
+        "discardedAt": "2026-11-19T01:31:13.021Z",
+        "discardReason": "Prospecto no verificable (migración de honestidad)."
+      }
+    ],
+    "messages": [],
+    "nextStep": "Hilo descartado: no hay una tienda compradora verificable. No contactar.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T00:12:40.176Z",
+    "createdAt": "2026-11-19T00:12:40.176Z",
+    "updatedAt": "2026-11-19T01:31:13.021Z",
+    "unverified": true,
+    "unverifiedMigrated": true,
+    "unverifiedReason": "Se creó antes de la verificación obligatoria: era un nombre genérico sin sitio ni email reales."
+  },
+  {
+    "id": "thr_45c6dda03252",
+    "demo": false,
+    "missionId": "mis_0e02b63a3658",
+    "productId": "prd_662a52367e72",
+    "contact": {
+      "name": "socio o comprador de proyectos",
+      "company": "Estudio de interiorismo (ejemplo genérico, sin nombre verificable)",
+      "role": "socio o comprador de proyectos",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "España",
+      "city": "Madrid",
+      "website": "",
+      "type": "interiorista"
+    },
+    "stage": "perdido",
+    "score": 78,
+    "source": "Misión Mazoma · España",
+    "notes": "Equipa proyectos residenciales pequeños y valora piezas únicas o de serie corta con historia de maker.",
+    "drafts": [
+      {
+        "id": "drf_8239610c2406",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Mazoma para proyectos de interior",
+        "body": "Hola, vi que en tu estudio trabajan proyectos residenciales con criterio de diseño. Soy maker y hago Mazoma, una lámpara impresa en 3D en series cortas, con geometría y luz propias. Para proyectos de cliente, puedo adaptar dimensiones o acabados en series muy cortas. Si te interesa, te paso ficha técnica y fotos del proceso. ¿Querés que te la envíe?",
+        "status": "descartado",
+        "createdAt": "2026-11-19T00:12:40.176Z",
+        "source": "mision",
+        "reviewNote": "Falta la revisión de cumplimiento o red team. Revisá el borrador antes de enviarlo.",
+        "guardVersion": 2,
+        "discardedAt": "2026-11-19T01:31:13.021Z",
+        "discardReason": "Prospecto no verificable (migración de honestidad)."
+      }
+    ],
+    "messages": [],
+    "nextStep": "Hilo descartado: no hay una tienda compradora verificable. No contactar.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T00:12:40.176Z",
+    "createdAt": "2026-11-19T00:12:40.176Z",
+    "updatedAt": "2026-11-19T01:31:13.021Z",
+    "unverified": true,
+    "unverifiedMigrated": true,
+    "unverifiedReason": "Se creó antes de la verificación obligatoria: era un nombre genérico sin sitio ni email reales."
+  },
+  {
+    "id": "thr_89f02bbc54ac",
+    "demo": false,
+    "missionId": "mis_0e02b63a3658",
+    "productId": "prd_662a52367e72",
+    "contact": {
+      "name": "dueño o comprador",
+      "company": "Tienda de diseño independiente (ejemplo genérico, sin nombre verificable)",
+      "role": "dueño o comprador",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "España",
+      "city": "Barcelona",
+      "website": "",
+      "type": "tienda"
+    },
+    "stage": "perdido",
+    "score": 78,
+    "source": "Misión Mazoma · España",
+    "notes": "Vende objetos de autor y busca iluminación con historia de proceso; encaja con la propuesta de serie corta y trazabilidad.",
+    "drafts": [
+      {
+        "id": "drf_595ca7167cc5",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Lámpara Mazoma para tu tienda",
+        "body": "Hola, vi que en tu tienda tienen objetos de autor y cuidan el diseño de proceso. Soy maker y hago Mazoma, una lámpara impresa en 3D en series cortas, con geometría y textura propias. No te mando catálogo: si te interesa, te paso fotos del proceso y la ficha técnica. ¿Te sirve que te escriba la semana que viene para contarte más?",
+        "status": "descartado",
+        "createdAt": "2026-11-19T00:12:40.176Z",
+        "source": "mision",
+        "reviewNote": "Falta la revisión de cumplimiento o red team. Revisá el borrador antes de enviarlo.",
+        "guardVersion": 2,
+        "discardedAt": "2026-11-19T01:31:13.021Z",
+        "discardReason": "Prospecto no verificable (migración de honestidad)."
+      }
+    ],
+    "messages": [],
+    "nextStep": "Hilo descartado: no hay una tienda compradora verificable. No contactar.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T00:12:40.176Z",
+    "createdAt": "2026-11-19T00:12:40.176Z",
+    "updatedAt": "2026-11-19T01:31:13.021Z",
+    "unverified": true,
+    "unverifiedMigrated": true,
+    "unverifiedReason": "Se creó antes de la verificación obligatoria: era un nombre genérico sin sitio ni email reales."
+  },
+  {
+    "id": "thr_52fe820d3d3e",
+    "demo": false,
+    "missionId": "mis_fd976e97ac32",
+    "productId": "prd_662a52367e72",
+    "contact": {
+      "name": "sin dato",
+      "company": "idealo.es (marketplace de comparación)",
+      "role": "canal de visibilidad",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "España",
+      "city": "sin dato",
+      "website": "https://www.idealo.es",
+      "type": "marketplace"
+    },
+    "stage": "perdido",
+    "score": 42,
+    "source": "Misión Mazoma · España",
+    "notes": "Lista más de 1.500 ofertas de lámparas de mesa de diseño con tramo de hasta 200 € que concentra 404 productos; es termómetro de precio y vidriera para posicionar una pieza de autor.",
+    "drafts": [
+      {
+        "id": "drf_c44e9dc25351",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Mazoma: pieza de autor para su comparador",
+        "body": "Hola [Nombre],\n\nVi que en idealo.es listan más de 1.500 ofertas de lámparas de mesa de diseño, con un tramo de hasta 200 € que concentra 404 productos. Mazoma es una lámpara de autor impresa en 3D que se sale de ese tramo por proceso, no por precio: cada pieza muestra las capas de impresión y lleva número de serie.\n\nAdjunto una foto y una ficha de una página. No busco listarla como commodity, sino que las tiendas que ya comparan en su plataforma descubran una pieza con relato de fabricación.\n\n¿Le parece si le comparto la ficha para que la evalúe?\n\nSaludos,\n[Firma]",
+        "status": "descartado",
+        "createdAt": "2026-11-19T00:04:31.905Z",
+        "source": "mision",
+        "reviewNote": "El mensaje no menciona el nombre del comprador. Verificá que sea para esta tienda antes de enviarlo.",
+        "guardVersion": 2,
+        "discardedAt": "2026-11-19T01:31:13.021Z",
+        "discardReason": "Prospecto no verificable (migración de honestidad)."
+      }
+    ],
+    "messages": [],
+    "nextStep": "Hilo descartado: no hay una tienda compradora verificable. No contactar.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T00:04:31.905Z",
+    "createdAt": "2026-11-19T00:04:31.905Z",
+    "updatedAt": "2026-11-19T01:31:13.021Z",
+    "unverified": true,
+    "unverifiedMigrated": true,
+    "unverifiedReason": "Se creó antes de la verificación obligatoria: la web es un agregador, marca o gran cadena, no un comprador."
+  },
+  {
+    "id": "thr_d95b9e922d27",
+    "demo": false,
+    "missionId": "mis_fd976e97ac32",
+    "productId": "prd_662a52367e72",
+    "contact": {
+      "name": "sin dato",
+      "company": "Muebles Lluesma",
+      "role": "comprador de iluminación",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "España",
+      "city": "sin dato",
+      "website": "sin dato",
+      "type": "distribuidor"
+    },
+    "stage": "nuevo",
+    "score": 60,
+    "source": "Misión Mazoma · España",
+    "notes": "Showroom multimarca de diseño con catálogo amplio de lámparas de autor (Foscarini, Catellani & Smith); ya vende piezas de exhibición de ticket alto y podría sumar una pieza emergente con relato de fabricación.",
+    "drafts": [
+      {
+        "id": "drf_1853d352ccef",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Mazoma: pieza de autor impresa en 3D para su showroom",
+        "body": "Hola [Nombre],\n\nVi en su catálogo la Tilia de Foscarini y la Light Stick de Catellani & Smith. Mazoma es una lámpara de autor impresa en 3D que muestra las capas de impresión como textura. La produce un maker en series cortas, con número de serie y ficha técnica.\n\nAdjunto una foto y una ficha de una página con medidas y precio mayorista. La idea es que la evalúe como pieza de exhibición, no como surtido masivo.\n\n¿Le interesa que le envíe una muestra física? El costo de envío se cotiza según destino y disponibilidad.\n\nSaludos,\n[Firma]",
+        "status": "revisar",
+        "createdAt": "2026-11-19T00:04:31.905Z",
+        "source": "mision",
+        "reviewNote": "El mensaje no menciona el nombre del comprador. Verificá que sea para esta tienda antes de enviarlo.",
+        "complianceCorrections": 1,
+        "guardVersion": 2
+      }
+    ],
+    "messages": [],
+    "nextStep": "El mensaje no menciona el nombre del comprador. Verificá que sea para esta tienda antes de enviarlo.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T00:04:31.905Z",
+    "createdAt": "2026-11-19T00:04:31.905Z",
+    "updatedAt": "2026-11-19T01:31:13.022Z",
+    "unverified": true,
+    "unverifiedMigrated": true,
+    "unverifiedReason": "Sin email ni sitio verificable. Confirmá la tienda y el canal antes de contactarla."
+  },
+  {
+    "id": "thr_d23a283fdb72",
+    "demo": true,
+    "missionId": "mis_833ed7d79da5",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "concept store",
+      "company": "Luz de Autor",
+      "role": "concept store",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "España",
+      "city": "Madrid",
+      "website": "https://example.com/luz-de-autor",
+      "type": "tienda"
+    },
+    "stage": "nuevo",
+    "score": 78,
+    "source": "Misión Aurora 01 · España",
+    "notes": "Trabajan piezas de autor para departamentos pequeños; buscan lámparas con historia y buena luz.",
+    "drafts": [
+      {
+        "id": "drf_a463eb622d0b",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Aurora 01: una serie corta para Luz de Autor",
+        "body": "Hola,\n\nVi la selección de Luz de Autor y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Lumbre\n",
+        "status": "revisar",
+        "createdAt": "2026-11-15T13:06:55.224Z",
+        "source": "mision",
+        "guardVersion": 2,
+        "lockedReview": true,
+        "reviewNote": "Migración: este contacto ya tiene otro hilo en la bandeja. Verificá que no sea un envío duplicado."
+      }
+    ],
+    "messages": [],
+    "nextStep": "Buscar un contacto verificable (LinkedIn o formulario web).",
+    "nextFollowUp": "2026-11-17T13:06:55.224Z",
+    "lastActivityAt": "2026-11-15T13:06:55.224Z",
+    "createdAt": "2026-11-15T13:06:55.224Z",
+    "updatedAt": "2026-11-15T13:06:55.224Z"
+  },
+  {
+    "id": "thr_cf5d60e1ec50",
+    "demo": true,
+    "missionId": "mis_833ed7d79da5",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "diseño de interiores",
+      "company": "Casa Nórdica",
+      "role": "diseño de interiores",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "México",
+      "city": "Ciudad de México",
+      "website": "https://example.com/casa-nordica",
+      "type": "tienda"
+    },
+    "stage": "nuevo",
+    "score": 78,
+    "source": "Misión Aurora 01 · España",
+    "notes": "Su cliente compra diseño accesible; tienen vidriera en Roma Norte y venden online.",
+    "drafts": [
+      {
+        "id": "drf_63a396171a7a",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Aurora 01: una serie corta para Casa Nórdica",
+        "body": "Hola,\n\nVi la selección de Casa Nórdica y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Lumbre\n",
+        "status": "revisar",
+        "createdAt": "2026-11-15T13:06:55.224Z",
+        "source": "mision",
+        "guardVersion": 2,
+        "lockedReview": true,
+        "reviewNote": "Migración: este contacto ya tiene otro hilo en la bandeja. Verificá que no sea un envío duplicado."
+      }
+    ],
+    "messages": [],
+    "nextStep": "Buscar un contacto verificable (LinkedIn o formulario web).",
+    "nextFollowUp": "2026-11-17T13:06:55.224Z",
+    "lastActivityAt": "2026-11-15T13:06:55.224Z",
+    "createdAt": "2026-11-15T13:06:55.224Z",
+    "updatedAt": "2026-11-15T13:06:55.224Z"
+  },
+  {
+    "id": "thr_c69dcc3820b0",
+    "demo": true,
+    "missionId": "mis_833ed7d79da5",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "estudio de interiorismo",
+      "company": "Studio Lumen",
+      "role": "estudio de interiorismo",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "Estados Unidos",
+      "city": "Nueva York",
+      "website": "https://example.com/studio-lumen",
+      "type": "interiorista"
+    },
+    "stage": "nuevo",
+    "score": 78,
+    "source": "Misión Aurora 01 · España",
+    "notes": "Proyectos residenciales de alto ticket; necesitan piezas statement y cumplimiento UL.",
+    "drafts": [
+      {
+        "id": "drf_3c4656cc6a54",
+        "channel": "formulario",
+        "language": "en",
+        "subject": "Aurora 01: a small series for Studio Lumen",
+        "body": "Hi Studio Lumen team,\n\nI saw your selection of sculptural lighting and small-series objects and thought Aurora 01 might fit.\n\nIt is a 3D-printed pendant lamp with a warm, dimmable light and a geometric shade that casts a distinct shadow. Each piece is made to order in a small series and can be finished in a custom color.\n\nRetail is USD 240; wholesale starts at 4 units. I can send a one-page spec sheet with dimensions, materials and lead time.\n\nWould it make sense to send it over?\n\n— Lumbre\n",
+        "status": "revisar",
+        "createdAt": "2026-11-15T13:06:55.224Z",
+        "source": "mision",
+        "guardVersion": 2,
+        "lockedReview": true,
+        "reviewNote": "Migración: este contacto ya tiene otro hilo en la bandeja. Verificá que no sea un envío duplicado."
+      }
+    ],
+    "messages": [],
+    "nextStep": "Buscar un contacto verificable (LinkedIn o formulario web).",
+    "nextFollowUp": "2026-11-17T13:06:55.224Z",
+    "lastActivityAt": "2026-11-15T13:06:55.224Z",
+    "createdAt": "2026-11-15T13:06:55.224Z",
+    "updatedAt": "2026-11-15T13:06:55.224Z"
+  },
+  {
+    "id": "thr_48889e0941a3",
+    "demo": true,
+    "missionId": "mis_833ed7d79da5",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "galería de objetos",
+      "company": "Atelier Bruma",
+      "role": "galería de objetos",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "España",
+      "city": "París",
+      "website": "https://example.com/atelier-bruma",
+      "type": "galeria"
+    },
+    "stage": "interesado",
+    "score": 64,
+    "source": "Misión Aurora 01 · España",
+    "notes": "Mezclan objetos de autor con arte; el precio no es el primer filtro, la historia sí.\nAnálisis simulado del modo demo. Configurá una IA para analizar la respuesta real.",
+    "drafts": [
+      {
+        "id": "drf_4f77f594884f",
+        "channel": "email",
+        "language": "es",
+        "subject": "Re: tu consulta",
+        "body": "Hola,\n\nGracias por responder. Te paso el dato concreto: la pieza se produce a pedido en 3 semanas y el precio mayorista arranca en 4 unidades.\n\nTe adjunto la ficha con medidas y materiales. Si te sirve, te reservo un lugar en la próxima serie y te confirmo la fecha exacta.\n\n¿Querés que avancemos con una unidad de muestra?\n\n— Lumbre",
+        "status": "revisar",
+        "source": "ia",
+        "createdAt": "2026-11-15T13:25:53.157Z",
+        "guardVersion": 2,
+        "lockedReview": true,
+        "reviewNote": "Migración: este contacto ya tiene otro hilo en la bandeja. Verificá que no sea un envío duplicado."
+      },
+      {
+        "id": "drf_969d9b5d04cd",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Aurora 01: una serie corta para Atelier Bruma",
+        "body": "Hola,\n\nVi la selección de Atelier Bruma y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Lumbre\n",
+        "status": "revisar",
+        "createdAt": "2026-11-15T13:06:55.224Z",
+        "source": "mision",
+        "guardVersion": 2,
+        "lockedReview": true,
+        "reviewNote": "Migración: este contacto ya tiene otro hilo en la bandeja. Verificá que no sea un envío duplicado."
+      }
+    ],
+    "messages": [],
+    "nextStep": "Responder con el dato exacto, una prueba y un único siguiente paso.",
+    "nextFollowUp": "2026-11-17T13:06:55.224Z",
+    "lastActivityAt": "2026-11-15T13:06:55.224Z",
+    "createdAt": "2026-11-15T13:06:55.224Z",
+    "updatedAt": "2026-11-15T13:25:53.157Z",
+    "lastAnalysis": {
+      "intencion": "interesado",
+      "sentimiento": "positivo",
+      "score": 64,
+      "senales": [
+        "Pregunta concreta sobre producto o condiciones.",
+        "No pidió retirarse."
+      ],
+      "siguiente_paso": "Responder con el dato exacto, una prueba y un único siguiente paso.",
+      "etapa": "interesado",
+      "borrador": {
+        "asunto": "Re: tu consulta",
+        "cuerpo": "Hola,\n\nGracias por responder. Te paso el dato concreto: la pieza se produce a pedido en 3 semanas y el precio mayorista arranca en 4 unidades.\n\nTe adjunto la ficha con medidas y materiales. Si te sirve, te reservo un lugar en la próxima serie y te confirmo la fecha exacta.\n\n¿Querés que avancemos con una unidad de muestra?\n\n— Lumbre"
+      },
+      "nota": "Análisis simulado del modo demo. Configurá una IA para analizar la respuesta real.",
+      "demo": true,
+      "at": "2026-11-15T13:25:53.157Z"
+    }
+  },
+  {
+    "id": "thr_3ea550d89eea",
+    "demo": true,
+    "missionId": "mis_833ed7d79da5",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "mobiliario y luz",
+      "company": "Forma Living",
+      "role": "mobiliario y luz",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "España",
+      "city": "Barcelona",
+      "website": "https://example.com/forma-living",
+      "type": "tienda"
+    },
+    "stage": "nuevo",
+    "score": 78,
+    "source": "Misión Aurora 01 · España",
+    "notes": "Ya venden lámparas de diseñadores emergentes; buscan exclusividad por zona.",
+    "drafts": [
+      {
+        "id": "drf_9fdcc4d4c06f",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Aurora 01: una serie corta para Forma Living",
+        "body": "Hola,\n\nVi la selección de Forma Living y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Lumbre\n",
+        "status": "revisar",
+        "createdAt": "2026-11-15T13:06:55.224Z",
+        "source": "mision",
+        "guardVersion": 2,
+        "lockedReview": true,
+        "reviewNote": "Migración: este contacto ya tiene otro hilo en la bandeja. Verificá que no sea un envío duplicado."
+      }
+    ],
+    "messages": [],
+    "nextStep": "Buscar un contacto verificable (LinkedIn o formulario web).",
+    "nextFollowUp": "2026-11-17T13:06:55.224Z",
+    "lastActivityAt": "2026-11-15T13:06:55.224Z",
+    "createdAt": "2026-11-15T13:06:55.224Z",
+    "updatedAt": "2026-11-15T13:06:55.224Z"
+  },
+  {
+    "id": "thr_e8c315b0ab73",
+    "demo": true,
+    "missionId": "mis_833ed7d79da5",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "distribución de diseño",
+      "company": "Habitar",
+      "role": "distribución de diseño",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "Argentina",
+      "city": "Buenos Aires",
+      "website": "https://example.com/habitar",
+      "type": "distribuidor"
+    },
+    "stage": "nuevo",
+    "score": 60,
+    "source": "Misión Aurora 01 · España",
+    "notes": "Distribuyen marcas locales en tiendas de todo el país; pueden probar una serie corta.",
+    "drafts": [
+      {
+        "id": "drf_054dfa2bb1c6",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Aurora 01: una serie corta para Habitar",
+        "body": "Hola,\n\nVi la selección de Habitar y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Lumbre\n",
+        "status": "listo",
+        "createdAt": "2026-11-15T13:06:55.224Z",
+        "source": "mision",
+        "guardVersion": 2
+      }
+    ],
+    "messages": [],
+    "nextStep": "Buscar un contacto verificable (LinkedIn o formulario web).",
+    "nextFollowUp": "2026-11-17T13:06:55.224Z",
+    "lastActivityAt": "2026-11-15T13:06:55.224Z",
+    "createdAt": "2026-11-15T13:06:55.224Z",
+    "updatedAt": "2026-11-15T13:06:55.224Z"
+  },
+  {
+    "id": "thr_bd2b37ff040b",
+    "demo": true,
+    "missionId": "mis_833ed7d79da5",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "iluminación",
+      "company": "Nord & Light",
+      "role": "iluminación",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "Dinamarca",
+      "city": "Copenhague",
+      "website": "https://example.com/nord-light",
+      "type": "tienda"
+    },
+    "stage": "nuevo",
+    "score": 60,
+    "source": "Misión Aurora 01 · España",
+    "notes": "Surtido muy curado; exigen documentación de materiales y packaging sin plástico.",
+    "drafts": [
+      {
+        "id": "drf_ef4489dfbaf7",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Aurora 01: una serie corta para Luz de Autor",
+        "body": "Hola,\n\nVi la selección de Luz de Autor y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Lumbre\n",
+        "status": "revisar",
+        "createdAt": "2026-11-15T13:06:55.224Z",
+        "source": "mision",
+        "guardVersion": 2,
+        "lockedReview": true,
+        "reviewNote": "Migración: este mensaje coincide con otro borrador de la misma misión. Verificá que sea 1:1 antes de enviarlo."
+      }
+    ],
+    "messages": [],
+    "nextStep": "Buscar un contacto verificable (LinkedIn o formulario web).",
+    "nextFollowUp": "2026-11-17T13:06:55.224Z",
+    "lastActivityAt": "2026-11-15T13:06:55.224Z",
+    "createdAt": "2026-11-15T13:06:55.224Z",
+    "updatedAt": "2026-11-15T13:06:55.224Z"
+  },
+  {
+    "id": "thr_9337b271d8f1",
+    "demo": true,
+    "missionId": "mis_833ed7d79da5",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "concept store",
+      "company": "Objeto Casa",
+      "role": "concept store",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "Colombia",
+      "city": "Bogotá",
+      "website": "https://example.com/objeto-casa",
+      "type": "tienda"
+    },
+    "stage": "nuevo",
+    "score": 78,
+    "source": "Misión Aurora 01 · España",
+    "notes": "Público joven con interés en diseño latinoamericano; buen canal de entrada regional.",
+    "drafts": [
+      {
+        "id": "drf_604be094bb3f",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Aurora 01: una serie corta para Luz de Autor",
+        "body": "Hola,\n\nVi la selección de Luz de Autor y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Lumbre\n",
+        "status": "revisar",
+        "createdAt": "2026-11-15T13:06:55.224Z",
+        "source": "mision",
+        "guardVersion": 2,
+        "lockedReview": true,
+        "reviewNote": "Migración: este mensaje coincide con otro borrador de la misma misión. Verificá que sea 1:1 antes de enviarlo."
+      }
+    ],
+    "messages": [],
+    "nextStep": "Buscar un contacto verificable (LinkedIn o formulario web).",
+    "nextFollowUp": "2026-11-17T13:06:55.224Z",
+    "lastActivityAt": "2026-11-15T13:06:55.224Z",
+    "createdAt": "2026-11-15T13:06:55.224Z",
+    "updatedAt": "2026-11-15T13:06:55.224Z"
+  },
+  {
+    "id": "thr_cffdcbc636b1",
+    "demo": true,
+    "missionId": "mis_833ed7d79da5",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "marketplace de diseño",
+      "company": "The Design Edit",
+      "role": "marketplace de diseño",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "Reino Unido",
+      "city": "Londres",
+      "website": "https://example.com/the-design-edit",
+      "type": "marketplace"
+    },
+    "stage": "nuevo",
+    "score": 60,
+    "source": "Misión Aurora 01 · España",
+    "notes": "Curaduría editorial y venta online; piden fichas técnicas completas.",
+    "drafts": [
+      {
+        "id": "drf_aab2ab367c87",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Aurora 01: una serie corta para Luz de Autor",
+        "body": "Hola,\n\nVi la selección de Luz de Autor y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Lumbre\n",
+        "status": "revisar",
+        "createdAt": "2026-11-15T13:06:55.224Z",
+        "source": "mision",
+        "guardVersion": 2,
+        "lockedReview": true,
+        "reviewNote": "Migración: este mensaje coincide con otro borrador de la misma misión. Verificá que sea 1:1 antes de enviarlo."
+      }
+    ],
+    "messages": [],
+    "nextStep": "Buscar un contacto verificable (LinkedIn o formulario web).",
+    "nextFollowUp": "2026-11-17T13:06:55.224Z",
+    "lastActivityAt": "2026-11-15T13:06:55.224Z",
+    "createdAt": "2026-11-15T13:06:55.224Z",
+    "updatedAt": "2026-11-15T13:06:55.224Z"
+  },
+  {
+    "id": "thr_bf186993f510",
+    "demo": true,
+    "missionId": "mis_833ed7d79da5",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "estudio de arquitectura",
+      "company": "Mesa Alta",
+      "role": "estudio de arquitectura",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "Estados Unidos",
+      "city": "Miami",
+      "website": "https://example.com/mesa-alta",
+      "type": "interiorista"
+    },
+    "stage": "nuevo",
+    "score": 60,
+    "source": "Misión Aurora 01 · España",
+    "notes": "Proyectos de hospitality; pueden pedir 20 unidades para un hotel boutique.",
+    "drafts": [
+      {
+        "id": "drf_3cb4859a470e",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Aurora 01: una serie corta para Luz de Autor",
+        "body": "Hola,\n\nVi la selección de Luz de Autor y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Lumbre\n",
+        "status": "revisar",
+        "createdAt": "2026-11-15T13:06:55.224Z",
+        "source": "mision",
+        "guardVersion": 2,
+        "lockedReview": true,
+        "reviewNote": "Migración: este mensaje coincide con otro borrador de la misma misión. Verificá que sea 1:1 antes de enviarlo."
+      }
+    ],
+    "messages": [],
+    "nextStep": "Buscar un contacto verificable (LinkedIn o formulario web).",
+    "nextFollowUp": "2026-11-17T13:06:55.224Z",
+    "lastActivityAt": "2026-11-15T13:06:55.224Z",
+    "createdAt": "2026-11-15T13:06:55.224Z",
+    "updatedAt": "2026-11-15T13:06:55.224Z"
+  },
+  {
+    "id": "thr_1b1fcbec848d",
+    "demo": true,
+    "missionId": "mis_833ed7d79da5",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "concept store",
+      "company": "Casa Flora",
+      "role": "concept store",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "Portugal",
+      "city": "Lisboa",
+      "website": "https://example.com/casa-flora",
+      "type": "concept store"
+    },
+    "stage": "nuevo",
+    "score": 42,
+    "source": "Misión Aurora 01 · España",
+    "notes": "Mezcla cerámica, textiles y luz; entrada más lenta pero afinidad estética alta.",
+    "drafts": [
+      {
+        "id": "drf_cd84d1fb1ef7",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Aurora 01: una serie corta para Luz de Autor",
+        "body": "Hola,\n\nVi la selección de Luz de Autor y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Lumbre\n",
+        "status": "revisar",
+        "createdAt": "2026-11-15T13:06:55.224Z",
+        "source": "mision",
+        "guardVersion": 2,
+        "lockedReview": true,
+        "reviewNote": "Migración: este mensaje coincide con otro borrador de la misma misión. Verificá que sea 1:1 antes de enviarlo."
+      }
+    ],
+    "messages": [],
+    "nextStep": "Buscar un contacto verificable (LinkedIn o formulario web).",
+    "nextFollowUp": "2026-11-17T13:06:55.224Z",
+    "lastActivityAt": "2026-11-15T13:06:55.224Z",
+    "createdAt": "2026-11-15T13:06:55.224Z",
+    "updatedAt": "2026-11-15T13:06:55.224Z"
+  },
+  {
+    "id": "thr_6980962fbef9",
+    "demo": true,
+    "missionId": "mis_833ed7d79da5",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "hotel boutique",
+      "company": "Hotel Alba",
+      "role": "hotel boutique",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "España",
+      "city": "Menorca",
+      "website": "https://example.com/hotel-alba",
+      "type": "hotel"
+    },
+    "stage": "nuevo",
+    "score": 42,
+    "source": "Misión Aurora 01 · España",
+    "notes": "Reforma de 18 habitaciones; necesitan lámparas resistentes y repetibles.",
+    "drafts": [
+      {
+        "id": "drf_88e3882e3c3d",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Aurora 01: una serie corta para Luz de Autor",
+        "body": "Hola,\n\nVi la selección de Luz de Autor y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Lumbre\n",
+        "status": "revisar",
+        "createdAt": "2026-11-15T13:06:55.224Z",
+        "source": "mision",
+        "guardVersion": 2,
+        "lockedReview": true,
+        "reviewNote": "Migración: este mensaje coincide con otro borrador de la misma misión. Verificá que sea 1:1 antes de enviarlo."
+      }
+    ],
+    "messages": [],
+    "nextStep": "Buscar un contacto verificable (LinkedIn o formulario web).",
+    "nextFollowUp": "2026-11-17T13:06:55.224Z",
+    "lastActivityAt": "2026-11-15T13:06:55.224Z",
+    "createdAt": "2026-11-15T13:06:55.224Z",
+    "updatedAt": "2026-11-15T13:06:55.224Z"
+  },
+  {
+    "id": "thr_demo_1",
+    "demo": true,
+    "missionId": "mis_demo_aurora",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "concept store",
+      "company": "Luz de Autor",
+      "role": "concept store",
+      "email": "compras@luz-de-autor.example.com",
+      "emailStatus": "publico",
+      "country": "España",
+      "city": "Madrid",
+      "website": "https://example.com/luz-de-autor",
+      "type": "tienda"
+    },
+    "stage": "interesado",
+    "score": 82,
+    "source": "Misión Aurora 01",
+    "notes": "Pidió ver la ficha y preguntó por el plazo de producción. Buena señal.\nAnálisis simulado del modo demo. Configurá una IA para analizar la respuesta real.",
+    "drafts": [
+      {
+        "id": "drf_c6fccc363dd8",
+        "channel": "email",
+        "language": "es",
+        "subject": "Re: Re: Aurora 01",
+        "body": "Hola,\n\nGracias por responder. Te paso el dato concreto: la pieza se produce a pedido en 3 semanas y el precio mayorista arranca en 4 unidades.\n\nTe adjunto la ficha con medidas y materiales. Si te sirve, te reservo un lugar en la próxima serie y te confirmo la fecha exacta.\n\n¿Querés que avancemos con una unidad de muestra?\n\n— Lumbre",
+        "status": "listo",
+        "source": "ia",
+        "createdAt": "2026-11-15T13:05:34.283Z",
+        "guardVersion": 2
+      },
+      {
+        "id": "drf_a159740f6109",
+        "channel": "email",
+        "language": "es",
+        "subject": "Aurora 01: una serie corta para Luz de Autor",
+        "body": "Hola,\n\nVi la selección de Luz de Autor y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Lumbre\n\nSi preferís no recibir más mensajes, respondé BAJA.",
+        "status": "listo",
+        "createdAt": "2026-11-11T13:05:07.874Z",
+        "guardVersion": 2
+      },
+      {
+        "id": "drf_a76329630da6",
+        "channel": "email",
+        "language": "es",
+        "subject": "Re: Aurora 01 — ficha y plazos",
+        "body": "Hola Marta,\n\nGracias por responder. Te paso los datos concretos: la pantalla mide 32 cm de diámetro, el cable es de 180 cm y el plazo para 4 unidades es de 3 semanas desde la confirmación.\n\nEl precio mayorista es USD 156 por unidad, sin envío, con un mínimo de 4. La pantalla se puede personalizar en hueso, terracota o verde oliva sin costo adicional; un color fuera de esa paleta tiene un extra del 12%.\n\nTe adjunto la ficha completa. Si te sirve, puedo reservar la producción de la primera serie para la semana que viene.\n\n— Lumbre\nSi preferís no recibir más mensajes, respondé BAJA.",
+        "status": "listo",
+        "createdAt": "2026-11-14T13:05:07.881Z",
+        "guardVersion": 2
+      }
+    ],
+    "messages": [
+      {
+        "id": "msg_6540f7abac2c",
+        "direction": "out",
+        "channel": "email",
+        "subject": "Aurora 01: una serie corta para Luz de Autor",
+        "body": "Hola,\n\nVi la selección de Luz de Autor y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Lumbre\n",
+        "at": "2026-11-12T13:05:07.881Z",
+        "status": "enviado"
+      },
+      {
+        "id": "msg_86eaf7fd5fe1",
+        "direction": "in",
+        "channel": "email",
+        "subject": "Re: Aurora 01",
+        "body": "Hola, gracias por escribir. Nos interesa ver la ficha y saber el plazo de producción para 4 unidades. También nos gustaría saber si se puede personalizar el color de la pantalla. Saludos, Marta.",
+        "at": "2026-11-13T13:05:07.881Z",
+        "status": "recibido"
+      }
+    ],
+    "nextStep": "Responder con el dato exacto, una prueba y un único siguiente paso.",
+    "nextFollowUp": "2026-11-19T13:05:07.880Z",
+    "lastActivityAt": "2026-11-13T13:05:07.881Z",
+    "createdAt": "2026-11-11T13:05:07.874Z",
+    "updatedAt": "2026-11-15T13:05:34.283Z",
+    "lastAnalysis": {
+      "intencion": "interesado",
+      "sentimiento": "positivo",
+      "score": 82,
+      "senales": [
+        "Pregunta concreta sobre producto o condiciones.",
+        "No pidió retirarse."
+      ],
+      "siguiente_paso": "Responder con el dato exacto, una prueba y un único siguiente paso.",
+      "etapa": "interesado",
+      "borrador": {
+        "asunto": "Re: Re: Aurora 01",
+        "cuerpo": "Hola,\n\nGracias por responder. Te paso el dato concreto: la pieza se produce a pedido en 3 semanas y el precio mayorista arranca en 4 unidades.\n\nTe adjunto la ficha con medidas y materiales. Si te sirve, te reservo un lugar en la próxima serie y te confirmo la fecha exacta.\n\n¿Querés que avancemos con una unidad de muestra?\n\n— Lumbre"
+      },
+      "nota": "Análisis simulado del modo demo. Configurá una IA para analizar la respuesta real.",
+      "demo": true,
+      "at": "2026-11-15T13:05:34.283Z"
+    }
+  },
+  {
+    "id": "thr_demo_2",
+    "demo": true,
+    "missionId": "mis_demo_aurora",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "diseño de interiores",
+      "company": "Casa Nórdica",
+      "role": "diseño de interiores",
+      "email": "hola@casa-nordica.example.com",
+      "emailStatus": "publico",
+      "country": "México",
+      "city": "Ciudad de México",
+      "website": "https://example.com/casa-nordica",
+      "type": "tienda"
+    },
+    "stage": "contactado",
+    "score": 51,
+    "source": "Misión Aurora 01",
+    "notes": "",
+    "drafts": [
+      {
+        "id": "drf_383528185669",
+        "channel": "email",
+        "language": "es",
+        "subject": "Aurora 01: una serie corta para Casa Nórdica",
+        "body": "Hola,\n\nVi la selección de Casa Nórdica y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Lumbre\n\nSi preferís no recibir más mensajes, respondé BAJA.",
+        "status": "listo",
+        "createdAt": "2026-11-11T13:05:07.874Z",
+        "guardVersion": 2
+      }
+    ],
+    "messages": [
+      {
+        "id": "msg_2b46a0e65e21",
+        "direction": "out",
+        "channel": "email",
+        "subject": "Aurora 01: una serie corta para Casa Nórdica",
+        "body": "Hola,\n\nVi la selección de Casa Nórdica y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Lumbre\n",
+        "at": "2026-11-12T13:05:07.881Z",
+        "status": "enviado"
+      }
+    ],
+    "nextStep": "Seguimiento el día 4.",
+    "nextFollowUp": "2026-11-19T13:05:07.881Z",
+    "lastActivityAt": "2026-11-11T13:05:07.874Z",
+    "createdAt": "2026-11-11T13:05:07.874Z",
+    "updatedAt": "2026-11-11T13:05:07.874Z"
+  },
+  {
+    "id": "thr_demo_3",
+    "demo": true,
+    "missionId": "mis_demo_aurora",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "estudio de interiorismo",
+      "company": "Studio Lumen",
+      "role": "estudio de interiorismo",
+      "email": "hello@studio-lumen.example.com",
+      "emailStatus": "publico",
+      "country": "Estados Unidos",
+      "city": "Nueva York",
+      "website": "https://example.com/studio-lumen",
+      "type": "interiorista"
+    },
+    "stage": "respondio",
+    "score": 72,
+    "source": "Misión Aurora 01",
+    "notes": "Pregunta por certificación UL. No prometer nada hasta confirmar.",
+    "drafts": [
+      {
+        "id": "drf_1eb8ae8bf6e3",
+        "channel": "email",
+        "language": "en",
+        "subject": "Aurora 01: a small series for Studio Lumen",
+        "body": "Hi Studio Lumen team,\n\nI saw your selection of sculptural lighting and small-series objects and thought Aurora 01 might fit.\n\nIt is a 3D-printed pendant lamp with a warm, dimmable light and a geometric shade that casts a distinct shadow. Each piece is made to order in a small series and can be finished in a custom color.\n\nRetail is USD 240; wholesale starts at 4 units. I can send a one-page spec sheet with dimensions, materials and lead time.\n\nWould it make sense to send it over?\n\n— Lumbre\n\nSi preferís no recibir más mensajes, respondé BAJA.",
+        "status": "listo",
+        "createdAt": "2026-11-11T13:05:07.874Z",
+        "guardVersion": 2
+      }
+    ],
+    "messages": [
+      {
+        "id": "msg_e8d41bea405d",
+        "direction": "out",
+        "channel": "email",
+        "subject": "Aurora 01: a small series for Studio Lumen",
+        "body": "Hi Studio Lumen team,\n\nI saw your selection of sculptural lighting and small-series objects and thought Aurora 01 might fit.\n\nIt is a 3D-printed pendant lamp with a warm, dimmable light and a geometric shade that casts a distinct shadow. Each piece is made to order in a small series and can be finished in a custom color.\n\nRetail is USD 240; wholesale starts at 4 units. I can send a one-page spec sheet with dimensions, materials and lead time.\n\nWould it make sense to send it over?\n\n— Lumbre\n",
+        "at": "2026-11-12T13:05:07.881Z",
+        "status": "enviado"
+      },
+      {
+        "id": "msg_74f39481f3bf",
+        "direction": "in",
+        "channel": "email",
+        "subject": "Re: Aurora 01",
+        "body": "Thanks for reaching out. We like the shade. What would shipping to New York cost for one sample, and do you have UL certification? We cannot specify a fixture without it.",
+        "at": "2026-11-14T13:05:07.881Z",
+        "status": "recibido"
+      }
+    ],
+    "nextStep": "Responder la consulta de envío.",
+    "nextFollowUp": "2026-11-19T13:05:07.881Z",
+    "lastActivityAt": "2026-11-11T13:05:07.874Z",
+    "createdAt": "2026-11-11T13:05:07.874Z",
+    "updatedAt": "2026-11-11T13:05:07.874Z"
+  },
+  {
+    "id": "thr_demo_4",
+    "demo": true,
+    "missionId": "mis_demo_aurora",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "galería de objetos",
+      "company": "Atelier Bruma",
+      "role": "galería de objetos",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "España",
+      "city": "París",
+      "website": "https://example.com/atelier-bruma",
+      "type": "galeria"
+    },
+    "stage": "nuevo",
+    "score": 38,
+    "source": "Misión Aurora 01",
+    "notes": "",
+    "drafts": [
+      {
+        "id": "drf_de177642e74b",
+        "channel": "email",
+        "language": "es",
+        "subject": "Aurora 01: una serie corta para Atelier Bruma",
+        "body": "Hola,\n\nVi la selección de Atelier Bruma y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Lumbre\n\nSi preferís no recibir más mensajes, respondé BAJA.",
+        "status": "listo",
+        "createdAt": "2026-11-11T13:05:07.874Z",
+        "guardVersion": 2
+      }
+    ],
+    "messages": [],
+    "nextStep": "Revisar el borrador y enviar.",
+    "nextFollowUp": "2026-11-16T13:05:07.882Z",
+    "lastActivityAt": "2026-11-11T13:05:07.874Z",
+    "createdAt": "2026-11-11T13:05:07.874Z",
+    "updatedAt": "2026-11-11T13:05:07.874Z"
+  },
+  {
+    "id": "thr_demo_5",
+    "demo": true,
+    "missionId": "mis_demo_aurora",
+    "productId": "prod_demo_aurora",
+    "contact": {
+      "name": "mobiliario y luz",
+      "company": "Forma Living",
+      "role": "mobiliario y luz",
+      "email": "info@forma-living.example.com",
+      "emailStatus": "publico",
+      "country": "España",
+      "city": "Barcelona",
+      "website": "https://example.com/forma-living",
+      "type": "tienda"
+    },
+    "stage": "nuevo",
+    "score": 38,
+    "source": "Misión Aurora 01",
+    "notes": "",
+    "drafts": [
+      {
+        "id": "drf_f7a4718da7f8",
+        "channel": "email",
+        "language": "es",
+        "subject": "Aurora 01: una serie corta para Forma Living",
+        "body": "Hola,\n\nVi la selección de Forma Living y me pareció que Aurora 01 puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es USD 240; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— Lumbre\n\nSi preferís no recibir más mensajes, respondé BAJA.",
+        "status": "listo",
+        "createdAt": "2026-11-11T13:05:07.874Z",
+        "guardVersion": 2
+      }
+    ],
+    "messages": [],
+    "nextStep": "Revisar el borrador y enviar.",
+    "nextFollowUp": "2026-11-16T13:05:07.882Z",
+    "lastActivityAt": "2026-11-11T13:05:07.874Z",
+    "createdAt": "2026-11-11T13:05:07.874Z",
+    "updatedAt": "2026-11-11T13:05:07.874Z"
+  }
+]

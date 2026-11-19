@@ -1,0 +1,15 @@
+﻿import fs from "node:fs";
+const missions = JSON.parse(fs.readFileSync("data/missions.json","utf8"));
+const m = missions.find(x=>x.id==="mis_6db79905b862");
+console.log("REQUEST:", JSON.stringify({demo:m.demo,mode:m.mode,requestedMode:m.requestedMode,productId:m.productId,name:m.name,goal:m.goal,markets:m.markets,depth:m.depth,tone:m.tone,budget:m.budget,maxProspects:m.maxProspects,notes:m.notes},null,2));
+console.log("STATUS:", m.status, "phase:", m.phase, "progress:", m.progress, "currentStep:", m.currentStep);
+console.log("SUMMARY:", JSON.stringify(m.summary,null,2).slice(0,4000));
+console.log("ERROR:", m.error);
+console.log("\nSTEPS:");
+for (const s of m.steps) console.log(JSON.stringify({id:s.id,title:s.title,status:s.status,demo:s.demo,startedAt:s.startedAt,finishedAt:s.finishedAt,error:s.error,summary:(s.summary||"").slice(0,200),outKeys:s.output?Object.keys(s.output):null,usage:s.usage}));
+console.log("\nARTIFACTS keys:", Object.keys(m.artifacts||{}));
+for (const [k,v] of Object.entries(m.artifacts||{})) console.log(k, ":", JSON.stringify(v).slice(0,300));
+console.log("\nSTATS:", JSON.stringify(m.stats));
+console.log("\nNOTICES:", JSON.stringify(m.notices));
+console.log("\nSKIPPED:", JSON.stringify(m.skippedProspects));
+console.log("\nUSAGE:", JSON.stringify(m.usage));
