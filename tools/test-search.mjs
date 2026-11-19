@@ -6,6 +6,7 @@ import {
   searchProviderInfo, searchWeb, searchWebDetailed,
 } from '../lib/search.mjs';
 import { extractEmails } from '../lib/util.mjs';
+import { isRateLimitError } from '../lib/ai.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const searxFixture = fs.readFileSync(path.join(here, 'fixtures', 'searxng-results.html'), 'utf8');
@@ -79,5 +80,13 @@ try {
   await searchWeb({ search: { provider: 'tavily', apiKey: '' } }, 'tiendas de diseño Madrid');
 } catch { threw = true; }
 ok(threw, 'searchWeb lanza el error del proveedor en vez de ocultarlo');
+
+/* 413 de Groq por tokens por minuto: es cuota temporal, no un pedido
+   imposible. Si se tratara como error fatal, el paso se cae y la misión
+   muere (pasó en "Mercado y competencia" y en "Plan final"). */
+ok(isRateLimitError(new Error('413 Request too large for model `qwen/qwen3.8-27b` in organization `x` service tier `on_demand` on input tokens per minute')), 'detecta el 413 por tokens por minuto como límite temporal');
+ok(isRateLimitError(new Error('429 rate limit exceeded')), 'detecta el 429 como límite temporal');
+ok(!isRateLimitError(new Error('401 unauthorized')), 'una clave rechazada no es un límite temporal');
+ok(!isRateLimitError(new Error('413 Payload Too Large')), 'un cuerpo demasiado grande no se reintenta como cuota');
 
 console.log(`\n${passed} comprobaciones de búsqueda OK`);

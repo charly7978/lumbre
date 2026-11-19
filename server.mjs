@@ -21,7 +21,7 @@ import {
 } from './lib/email.mjs';
 import { Notifier, parseWhatsAppWebhook, sendWhatsApp, telegramChats, testTelegram, testWhatsApp } from './lib/notify.mjs';
 import {
-  analyzeThread, askTeam, migrateLegacyDrafts, reconcileThreads, runMission, sanitizeLegacyThreads,
+  analyzeThread, askTeam, migrateLegacyDrafts, reconcileThreads, releaseInterruptedMissions, runMission, sanitizeLegacyThreads,
 } from './lib/agents.mjs';
 import { DEPTHS, STEPS } from './lib/prompts.mjs';
 import { clearDemo, seedDemo } from './lib/demo.mjs';
@@ -260,6 +260,10 @@ if (legacyMigration.changed) {
 const unverifiedMigration = await sanitizeLegacyThreads(store);
 if (unverifiedMigration.changed) {
   console.log(`  Verificación de hilos históricos: ${unverifiedMigration.changed} marcados${unverifiedMigration.discarded ? `, ${unverifiedMigration.discarded} borradores descartados` : ''}.`);
+}
+const interrupted = await releaseInterruptedMissions(store);
+if (interrupted.released) {
+  console.log(`  Misiones interrumpidas liberadas: ${interrupted.released} (quedan reintentables).`);
 }
 
 const listeners = new Map();

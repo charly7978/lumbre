@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import { Store } from '../lib/store.mjs';
 import {
   createThreads, isAggregatorSite, isNotBuyerSite, isPlaceholderBuyerName, normalizeProspectUrl,
-  reconcileThreads, sanitizeLegacyThreads, verifyProspectArtifact,
+  reconcileThreads, releaseInterruptedMissions, sanitizeLegacyThreads, verifyProspectArtifact,
 } from '../lib/agents.mjs';
 import { candidatesForMarkets, directorySize, SEED_BUYERS } from '../lib/directory.mjs';
 
@@ -238,6 +238,48 @@ ok(verifiedArtifact.descartados.some((item) => /fuente|sitio/i.test(item.motivo)
   ok(store.get('threads')[0].drafts[0].status === 'listo', 'revalidar respeta una aprobación explícita del dueño');
 }
 
+/* Una misión lanzada con un temporizador en memoria queda "running" para
+   siempre si Lumbre se cierra. Después bloquea reintentos, backups y borrado
+   del producto. Al arrancar, se libera y vuelve a ser reintentable. */
+{
+  const store = await freshStore();
+  const old = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  store.get('missions').unshift(
+    {
+      id: 'mis_colgada',
+      name: 'Prueba',
+      status: 'running',
+      phase: 'prospeccion',
+      currentStep: 'prospecting',
+      createdAt: old,
+      startedAt: old,
+      updatedAt: old,
+      steps: [
+        { id: 'brief', title: 'Brief y tesis comercial', status: 'done' },
+        { id: 'prospecting', title: 'Compradores concretos', status: 'running' },
+        { id: 'customs', title: 'Aduanas y logística', status: 'pending' },
+      ],
+    },
+    {
+      id: 'mis_nueva',
+      name: 'En curso',
+      status: 'running',
+      createdAt: new Date().toISOString(),
+      startedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      steps: [{ id: 'brief', title: 'Brief', status: 'running' }],
+    },
+  );
+  const result = await releaseInterruptedMissions(store);
+  const stale = store.find('missions', 'mis_colgada');
+  ok(result.released === 1 && result.ids[0] === 'mis_colgada', 'libera solo la misión abandonada');
+  ok(stale.status === 'error' && stale.phase === 'error', 'la misión abandonada queda reintentable');
+  ok(/Reintentá/i.test(stale.error || ''), 'el error dice cómo retomarla', stale.error);
+  ok(stale.steps.find((s) => s.id === 'prospecting').status === 'error', 'marca el paso que quedó a medias');
+  ok(store.find('missions', 'mis_nueva').status === 'running', 'no toca una misión que recién arranca');
+  const again = await releaseInterruptedMissions(store);
+  ok(again.released === 0, 'la limpieza es idempotente');
+}
 for (const dir of dirs) {
   await fs.rm(dir, { recursive: true, force: true });
 }

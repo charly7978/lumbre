@@ -236,3 +236,63 @@ Decisiones:
   de compras. Por eso los compradores propuestos por conocimiento del modelo
   quedan **Por aprobar** hasta que el dueño confirme que es una tienda
   multimarca.
+
+---
+
+# Ronda 3 — desbloqueo real (2026-11-19, tarde)
+
+La auditoría del 2026-11-19 describía el estado de las 04:00. Para cuando se
+revisó el código, casi todo lo que figuraba como “pendiente” ya estaba hecho:
+marca completa, onboarding terminado, Groq como proveedor, Tavily con clave y
+Telegram activo. Se verificó en vivo, con las claves reales:
+
+- **IA**: `groq · qwen/qwen3.8-27b` responde (303 ms).
+- **Búsqueda**: `tavily` devuelve 5 resultados reales de Madrid (5,9 s).
+- **`npm test`**: 6 suites OK (26 búsqueda, 80 guardas, 67 flujo, API).
+
+Lo que sí estaba roto, y se corrigió:
+
+### 1. El 413 de Groq tumbaba la misión entera
+
+- **Medición**: `mis_4d7e8c243231` (“Mercado y competencia”) y
+  `mis_f33d39e773b0` (“Plan final para el dueño”) murieron con
+  `413 Request too large for model qwen/qwen3.8-27b … on input tokens per
+  minute`. Es el límite de tokens por minuto de la organización, una cuota
+  temporal, no una petición imposible.
+- **Causa**: `chat()` solo reintentaba con 429. Un 413 era fatal, y el paso
+  siguiente (`critical: true`) arrastraba la misión.
+- **Decisión**: `isRateLimitError()` (exportado) reconoce 429, “tokens per
+  minute”/“rate limit”/“quota” y 413 “Request too large”. `generateJson`
+  espera (`RATE_LIMIT_WAIT_MS`, 20 s), achica el presupuesto de salida
+  (`shrinkBudget`, nunca por debajo de 1024) y pide un JSON más corto, en vez
+  de abortar. Un 413 de cuerpo grande que no es de cuota no se reintenta.
+- **Prueba**: la misión de España (profunda, 5 mercados) pasó de 15 % a 100 %
+  tras reiniciarla: 12 compradores, 9 emails públicos, 3 borradores **listos**,
+  0 bloqueados, sin avisos. Antes moría en compliance/redteam/plan final.
+
+### 2. Misiones huérfanas que bloqueaban todo
+
+- **Medición**: `mis_8d9e1e639399` y `mis_980d6581290d` quedaron `running`
+  durante 40+ minutos sin proceso vivo, y había tres `server.mjs` corriendo a
+  la vez sobre los mismos datos.
+- **Causa**: la misión se lanza con un `setTimeout` en memoria
+  (`server.mjs`); si el proceso se cierra, nadie escribe el estado final. Una
+  misión `running` bloquea reintentos, restauración de backups y borrado del
+  producto.
+- **Decisión**: `releaseInterruptedMissions()` corre al arrancar. Marca como
+  `error` toda misión `running`/`queued` sin dueño en memoria y con más de 15
+  minutos sin actividad, marca el paso a medias y deja un error que explica
+  que se puede reintentar. No toca una misión que acaba de arrancar. Es
+  idempotente.
+- **Prueba**: al arrancar, `Misiones interrumpidas liberadas: 2`.
+
+### Pendiente, fuera del código
+
+- **Resend**: `email.resendKey` está vacío, así que el envío es manual o
+  `.eml`. Para envío automático hace falta dominio con SPF/DKIM/DMARC y la
+  clave.
+- **Precio**: la propia misión recomienda USD 89 FOB Buenos Aires (USD 65
+  interiorismo), no los USD 35 que asume la auditoría.
+- **Instancia única**: tres servidores a la vez siguen siendo posibles porque
+  el puerto se autoincrementa. Hoy la limpieza de misiones huérfanas evita el
+  daño grave, pero conviene cerrar los demás procesos al abrir Lumbre.

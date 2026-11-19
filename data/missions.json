@@ -19,14 +19,14 @@
     "budget": 0,
     "maxProspects": 12,
     "notes": "",
-    "status": "running",
-    "phase": "prospeccion",
-    "progress": 15,
-    "currentStep": "prospecting",
+    "status": "done",
+    "phase": "finished",
+    "progress": 100,
+    "currentStep": null,
     "createdAt": "2026-11-19T04:48:04.780Z",
     "startedAt": "2026-11-19T04:48:04.869Z",
-    "finishedAt": null,
-    "summary": "",
+    "finishedAt": "2026-11-19T05:16:09.593Z",
+    "summary": "Esta semana no se vende, se valida. Primero medís cuánto tarda y cuánto cuesta imprimir una SIRI real, y actualizás la web a USD 89. Después cotizas el flete a España para saber cuánto le va a costar al comprador. Solo entonces escribís a 5 tiendas de diseño en Madrid y Barcelona que tienen email público. El objetivo no es vender 12 lámparas, sino que 2 te respondan con interés real. Si el flete es alto o el costo sube, ajustás el precio antes de enviar el segundo mensaje. Evitá producir stock y no te distraigas con redes sociales hasta tener una respuesta concreta.",
     "error": null,
     "steps": [
       {
@@ -59,25 +59,25 @@
         "id": "prospecting",
         "agent": "cazador",
         "title": "Compradores concretos",
-        "status": "running",
+        "status": "done",
         "critical": false,
-        "startedAt": "2026-11-19T04:48:34.338Z",
-        "endedAt": null,
-        "durationMs": null,
-        "summary": "",
+        "startedAt": "2026-11-19T05:14:02.903Z",
+        "endedAt": "2026-11-19T05:15:06.208Z",
+        "durationMs": 63297,
+        "summary": "12 compradores verificados de 18 candidatos. 3 segmentos priorizados. 6 candidatos descartados por no ser verificables.",
         "error": null,
-        "tokens": 0
+        "tokens": 9073
       },
       {
         "id": "enrichment",
         "agent": "cazador",
         "title": "Verificación de contactos",
-        "status": "pending",
+        "status": "done",
         "critical": false,
-        "startedAt": null,
-        "endedAt": null,
-        "durationMs": null,
-        "summary": "",
+        "startedAt": "2026-11-19T05:15:06.218Z",
+        "endedAt": "2026-11-19T05:15:06.316Z",
+        "durationMs": 92,
+        "summary": "9 emails públicos de 12 compradores.",
         "error": null,
         "tokens": 0
       },
@@ -85,118 +85,118 @@
         "id": "customs",
         "agent": "aduanas",
         "title": "Aduanas y logística",
-        "status": "pending",
+        "status": "done",
         "critical": false,
-        "startedAt": null,
-        "endedAt": null,
-        "durationMs": null,
-        "summary": "",
+        "startedAt": "2026-11-19T05:15:06.323Z",
+        "endedAt": "2026-11-19T05:15:27.653Z",
+        "durationMs": 21324,
+        "summary": "Fijar el precio final con margen real y cotizar flete antes de enviar. Confirmar el código HS exacto con un despachante para evitar retenciones en aduana.",
         "error": null,
-        "tokens": 0
+        "tokens": 7858
       },
       {
         "id": "pricing",
         "agent": "precios",
         "title": "Precios y márgenes",
-        "status": "pending",
+        "status": "done",
         "critical": true,
-        "startedAt": null,
-        "endedAt": null,
-        "durationMs": null,
-        "summary": "",
+        "startedAt": "2026-11-19T05:15:27.661Z",
+        "endedAt": "2026-11-19T05:15:31.265Z",
+        "durationMs": 3597,
+        "summary": "Fijar precio de lista en USD 89 FOB Buenos Aires para venta directa y USD 65 para interioristas, eliminando el precio antiguo de USD 35. Cotizar flete real a España y México antes de aceptar pedidos DDP.",
         "error": null,
-        "tokens": 0
+        "tokens": 7623
       },
       {
         "id": "outreach",
         "agent": "redactor",
         "title": "Mensajes de apertura",
-        "status": "pending",
+        "status": "done",
         "critical": true,
-        "startedAt": null,
-        "endedAt": null,
-        "durationMs": null,
-        "summary": "",
+        "startedAt": "2026-11-19T05:15:31.276Z",
+        "endedAt": "2026-11-19T05:15:41.540Z",
+        "durationMs": 10258,
+        "summary": "12 mensajes personalizados y una secuencia de 3 pasos.",
         "error": null,
-        "tokens": 0
+        "tokens": 15016
       },
       {
         "id": "content",
         "agent": "contenido",
         "title": "Contenido y narrativa",
-        "status": "pending",
+        "status": "done",
         "critical": false,
-        "startedAt": null,
-        "endedAt": null,
-        "durationMs": null,
-        "summary": "",
+        "startedAt": "2026-11-19T05:15:41.550Z",
+        "endedAt": "2026-11-19T05:15:46.970Z",
+        "durationMs": 5413,
+        "summary": "7 piezas de contenido propuestas.",
         "error": null,
-        "tokens": 0
+        "tokens": 8060
       },
       {
         "id": "compliance",
         "agent": "cumplimiento",
         "title": "Cumplimiento y reputación",
-        "status": "pending",
+        "status": "done",
         "critical": false,
-        "startedAt": null,
-        "endedAt": null,
-        "durationMs": null,
-        "summary": "",
+        "startedAt": "2026-11-19T05:15:46.979Z",
+        "endedAt": "2026-11-19T05:15:51.616Z",
+        "durationMs": 4582,
+        "summary": "Veredicto: con_cambios. 6 riesgos detectados.",
         "error": null,
-        "tokens": 0
+        "tokens": 10637
       },
       {
         "id": "redteam",
         "agent": "redteam",
         "title": "Red team",
-        "status": "pending",
+        "status": "done",
         "critical": false,
-        "startedAt": null,
-        "endedAt": null,
-        "durationMs": null,
-        "summary": "",
+        "startedAt": "2026-11-19T05:15:51.626Z",
+        "endedAt": "2026-11-19T05:15:55.945Z",
+        "durationMs": 4311,
+        "summary": "Veredicto: ajustar. El plan muere por la falta de certificación CE y el flete no cotizado, no por la calidad del diseño.",
         "error": null,
-        "tokens": 0
+        "tokens": 14490
       },
       {
         "id": "revision",
         "agent": "director",
         "title": "Corrección post red team",
-        "status": "pending",
+        "status": "done",
         "critical": false,
-        "startedAt": null,
-        "endedAt": null,
-        "durationMs": null,
-        "summary": "",
+        "startedAt": "2026-11-19T05:15:55.954Z",
+        "endedAt": "2026-11-19T05:16:00.248Z",
+        "durationMs": 4286,
+        "summary": "5 correcciones aplicadas al plan.",
         "error": null,
-        "tokens": 0
+        "tokens": 10209
       },
       {
         "id": "synthesis",
         "agent": "director",
         "title": "Plan final para el dueño",
-        "status": "pending",
+        "status": "done",
         "critical": true,
-        "startedAt": null,
-        "endedAt": null,
-        "durationMs": null,
-        "summary": "",
+        "startedAt": "2026-11-19T05:16:00.257Z",
+        "endedAt": "2026-11-19T05:16:06.436Z",
+        "durationMs": 6172,
+        "summary": "Vender 5 unidades de SIRI a compradores verificados en España con precio FOB de USD 89, priorizando el envío de la ficha técnica sobre la producción masiva.",
         "error": null,
-        "tokens": 0
+        "tokens": 18175
       },
       {
         "id": "learning",
         "agent": "memoria",
         "title": "Aprendizajes",
-        "status": "pending",
+        "status": "done",
         "critical": false,
-        "startedAt": null,
-        "endedAt": null,
-        "durationMs": null,
-        "summary": "",
+        "startedAt": "2026-11-19T05:16:06.444Z",
+        "endedAt": "2026-11-19T05:16:09.584Z",
+        "durationMs": 3132,
+        "summary": "5 aprendizajes guardados.",
         "error": null,
-        "tokens": 0
+        "tokens": 10815
       }
     ],
     "artifacts": {
@@ -443,6 +443,1543 @@
             "designer lighting trends 2026 handmade small series: searxng.deggo.fyi: sin resultados relevantes"
           ]
         }
+      },
+      "prospecting": {
+        "segmentos": [
+          {
+            "segmento": "Tiendas de iluminación de diseño en Madrid",
+            "por_que": "Mercado maduro, alta densidad de compradores que ya manejan marcas de autor y valoran la diferenciación técnica.",
+            "donde_buscar": [
+              "https://www.luzespacio.com/",
+              "https://www.ideasluz.com/",
+              "https://hogarlux.com/"
+            ],
+            "volumen": "medio"
+          },
+          {
+            "segmento": "Showrooms y distribuidores de diseño en Barcelona",
+            "por_que": "Hub creativo de Europa, receptivos a materiales sostenibles y técnicas de fabricación digital.",
+            "donde_buscar": [
+              "https://www.minim.es/",
+              "https://faro.es/es/showrooms/barcelona/",
+              "https://www.avanluce.com/"
+            ],
+            "volumen": "medio"
+          },
+          {
+            "segmento": "Estudios de interiorismo en México DF",
+            "por_que": "Idioma común, cultura de diseño fuerte y demanda de piezas con historia para proyectos residenciales.",
+            "donde_buscar": [
+              "Directorios de interioristas CDMX",
+              "Instagram hashtags #interiorismoCDMX #diseñomexicano"
+            ],
+            "volumen": "alto"
+          }
+        ],
+        "compradores": [
+          {
+            "nombre": "Luzespacio",
+            "tipo": "tienda",
+            "pais": "España",
+            "ciudad": "Madrid",
+            "web": "https://www.luzespacio.com",
+            "contacto": "",
+            "rol": "Compras de lámparas de mesa y diseño contemporáneo",
+            "email": "luzespacio@luzespacio.com",
+            "email_estado": "publico",
+            "por_que": "Tienda física y online especializada en lámparas de diseño, con catálogo de marcas variadas y enfoque en asesoramiento.",
+            "angulo": "Pieza de autor sostenible que complementa su catálogo de marcas consolidadas.",
+            "prioridad": "alta",
+            "origen": "fuentes",
+            "fuente": "https://www.luzespacio.com",
+            "web_estado": "activo",
+            "web_titulo": "Tienda de iluminación y lámparas de diseño en Madrid",
+            "web_url": "https://www.luzespacio.com/",
+            "fuente_verificada": "https://www.luzespacio.com/",
+            "verificado": true,
+            "verificado_at": "2026-11-19T05:14:54.533Z",
+            "email_fuente": "https://www.luzespacio.com/"
+          },
+          {
+            "nombre": "Ideas Luz",
+            "tipo": "tienda",
+            "pais": "España",
+            "ciudad": "Madrid",
+            "web": "https://www.ideasluz.com",
+            "contacto": "",
+            "rol": "Distribución de iluminación LED y diseño",
+            "email": "ventas@ideasluz.com",
+            "email_estado": "publico",
+            "por_que": "Más de 40 años de experiencia, especialistas en lámparas de diseño, abiertos a nuevas propuestas de vanguardia.",
+            "angulo": "Innovación técnica (impresión 3D) y sostenibilidad real para su línea de diseño.",
+            "prioridad": "alta",
+            "origen": "fuentes",
+            "fuente": "https://www.ideasluz.com",
+            "web_estado": "activo",
+            "web_titulo": "Tienda de Iluminación en Madrid | Lamparas de diseño",
+            "web_url": "https://www.ideasluz.com/",
+            "fuente_verificada": "http://anima.es",
+            "verificado": true,
+            "verificado_at": "2026-11-19T05:14:57.110Z",
+            "email_fuente": "https://www.ideasluz.com/"
+          },
+          {
+            "nombre": "Hogarlux",
+            "tipo": "tienda",
+            "pais": "España",
+            "ciudad": "Madrid",
+            "web": "",
+            "contacto": "",
+            "rol": "Venta de iluminación decorativa y técnica",
+            "email": "",
+            "email_estado": "desconocido",
+            "por_que": "30 años de trayectoria, dos tiendas físicas, amplia gama de productos decorativos.",
+            "angulo": "Diferenciación por material ecológico (PLA) y diseño único bajo demanda.",
+            "prioridad": "media",
+            "origen": "fuentes",
+            "fuente": "https://hogarlux.com/",
+            "web_estado": "sin_sitio",
+            "web_titulo": "",
+            "fuente_verificada": "https://hogarlux.com/",
+            "verificado": true,
+            "verificado_at": "2026-11-19T05:14:53.047Z",
+            "verificacion_nota": "El sitio no respondió en este momento."
+          },
+          {
+            "nombre": "Ludory",
+            "tipo": "tienda",
+            "pais": "España",
+            "ciudad": "Madrid",
+            "web": "https://ludory.com",
+            "contacto": "",
+            "rol": "Negocio familiar de iluminación de alta calidad",
+            "email": "",
+            "email_estado": "desconocido",
+            "por_que": "Tres generaciones de experiencia, atención personalizada, enfoque en calidad y diseño.",
+            "angulo": "Historia de autor y fabricación artesanal contemporánea.",
+            "prioridad": "media",
+            "origen": "fuentes",
+            "fuente": "https://ludory.com",
+            "web_estado": "activo",
+            "web_titulo": "Ludory · Tu tienda de iluminación en Madrid desde 1929",
+            "web_url": "https://ludory.com/",
+            "fuente_verificada": "https://ludory.com/",
+            "verificado": true,
+            "verificado_at": "2026-11-19T05:14:53.204Z"
+          },
+          {
+            "nombre": "MINIM",
+            "tipo": "distribuidor",
+            "pais": "España",
+            "ciudad": "Barcelona",
+            "web": "https://www.minim.es",
+            "contacto": "",
+            "rol": "Distribución de mobiliario e iluminación de diseño contemporáneo",
+            "email": "info@minim.es",
+            "email_estado": "publico",
+            "por_que": "Distribuidor de diseño contemporáneo, presencia en Barcelona y Madrid, curaduría de marcas de autor.",
+            "angulo": "Pieza de diseño contemporáneo con técnica de fabricación digital.",
+            "prioridad": "alta",
+            "origen": "fuentes",
+            "fuente": "https://www.minim.es/es/productos/iluminacion-barcelona-madrid",
+            "web_estado": "activo",
+            "web_titulo": "MINIM – mobiliario e iluminación de diseño contemporáneo en Barcelona y Madrid",
+            "web_url": "https://www.minim.es/es",
+            "fuente_verificada": "https://www.minim.es/es/productos/iluminacion-barcelona-madrid",
+            "verificado": true,
+            "verificado_at": "2026-11-19T05:14:55.074Z",
+            "email_fuente": "https://www.minim.es/es/contacto-minim-barcelona-madrid"
+          },
+          {
+            "nombre": "Avanluce",
+            "tipo": "tienda",
+            "pais": "España",
+            "ciudad": "Barcelona",
+            "web": "https://www.avanluce.com",
+            "contacto": "",
+            "rol": "Tienda de iluminación con showroom y catálogo online",
+            "email": "info@avanluce.com",
+            "email_estado": "publico",
+            "por_que": "Showroom en Barcelona, apoyo experto, catálogo online amplio.",
+            "angulo": "Complemento de catálogo con piezas de autor sostenibles.",
+            "prioridad": "media",
+            "origen": "fuentes",
+            "fuente": "https://www.avanluce.com",
+            "web_estado": "activo",
+            "web_titulo": "Avanluce – Tienda de iluminación en Barcelona",
+            "web_url": "https://www.avanluce.com/",
+            "fuente_verificada": "https://www.avanluce.com/",
+            "verificado": true,
+            "verificado_at": "2026-11-19T05:15:01.170Z",
+            "email_fuente": "https://www.avanluce.com/contacto/"
+          },
+          {
+            "nombre": "Años Luz",
+            "tipo": "tienda",
+            "pais": "España",
+            "ciudad": "Madrid",
+            "web": "https://www.anosluz.com",
+            "prioridad": "alta",
+            "por_que": "Referente de iluminación de diseño en Madrid (Serrano); asesora proyectos residenciales y comerciales.",
+            "email": "",
+            "email_estado": "desconocido",
+            "origen": "directorio",
+            "fuente": "directorio semilla de Lumbre (sitios verificados en 2026-11-19)",
+            "web_estado": "activo",
+            "web_titulo": "Anos Luz",
+            "web_url": "https://anosluz.com/",
+            "fuente_verificada": "https://hogarlux.com/",
+            "verificado": true,
+            "verificado_at": "2026-11-19T05:14:55.052Z"
+          },
+          {
+            "nombre": "Insolit BCN",
+            "tipo": "tienda",
+            "pais": "España",
+            "ciudad": "Barcelona",
+            "web": "https://www.insolitbcn.com",
+            "prioridad": "alta",
+            "por_que": "Tienda especializada en lámparas de diseño en Barcelona, con marcas de autor y ediciones.",
+            "email": "admin@insolitbcn.com",
+            "email_estado": "publico",
+            "origen": "directorio",
+            "fuente": "directorio semilla de Lumbre (sitios verificados en 2026-11-19)",
+            "web_estado": "activo",
+            "web_titulo": "Lámparas de diseño en Barcelona | Insolit BCN",
+            "web_url": "https://www.insolitbcn.com/",
+            "fuente_verificada": "",
+            "verificado": true,
+            "verificado_at": "2026-11-19T05:14:59.475Z",
+            "email_fuente": "https://www.insolitbcn.com/contacto/"
+          },
+          {
+            "nombre": "Lámparas Barcelona",
+            "tipo": "tienda",
+            "pais": "España",
+            "ciudad": "Barcelona",
+            "web": "https://lamparasbarcelona.com",
+            "prioridad": "alta",
+            "por_que": "Tienda online y showroom de lámparas de diseño en Barcelona.",
+            "email": "info@lamparasbarcelona.com",
+            "email_estado": "publico",
+            "origen": "directorio",
+            "fuente": "directorio semilla de Lumbre (sitios verificados en 2026-11-19)",
+            "web_estado": "activo",
+            "web_titulo": "Lámparas Barcelona | Tienda de Lámparas Online",
+            "web_url": "https://lamparasbarcelona.com/",
+            "fuente_verificada": "https://www.minim.es/es/productos/iluminacion-barcelona-madrid",
+            "verificado": true,
+            "verificado_at": "2026-11-19T05:14:56.307Z",
+            "email_fuente": "https://lamparasbarcelona.com/"
+          },
+          {
+            "nombre": "La Maison Barcelona",
+            "tipo": "concept store",
+            "pais": "España",
+            "ciudad": "Barcelona",
+            "web": "https://lamaisonbarcelona.com",
+            "prioridad": "media",
+            "por_que": "Concept store de decoración y proyectos de interiorismo; mezcla mobiliario, objetos e iluminación.",
+            "email": "hola@lamaisonbarcelona.com",
+            "email_estado": "publico",
+            "origen": "directorio",
+            "fuente": "directorio semilla de Lumbre (sitios verificados en 2026-11-19)",
+            "web_estado": "activo",
+            "web_titulo": "Concept Store de decoración y proyectos de interiorismo",
+            "web_url": "https://lamaisonbarcelona.com/",
+            "fuente_verificada": "https://www.minim.es/es/productos/iluminacion-barcelona-madrid",
+            "verificado": true,
+            "verificado_at": "2026-11-19T05:14:59.999Z",
+            "email_fuente": "https://lamaisonbarcelona.com/contacto/"
+          },
+          {
+            "nombre": "Mar de Cava",
+            "tipo": "tienda",
+            "pais": "España",
+            "ciudad": "Barcelona",
+            "web": "https://mardecava.com",
+            "prioridad": "media",
+            "por_que": "Muebles y decoración de diseño en Barcelona; incluye iluminación en su selección.",
+            "email": "contact@mardecava.com",
+            "email_estado": "publico",
+            "origen": "directorio",
+            "fuente": "directorio semilla de Lumbre (sitios verificados en 2026-11-19)",
+            "web_estado": "activo",
+            "web_titulo": "Mar de Cava | Muebles y decoración de diseño en Barcelona",
+            "web_url": "https://mardecava.com/",
+            "fuente_verificada": "",
+            "verificado": true,
+            "verificado_at": "2026-11-19T05:15:03.832Z",
+            "email_fuente": "https://mardecava.com/"
+          },
+          {
+            "nombre": "Pilight Shop",
+            "tipo": "tienda",
+            "pais": "España",
+            "ciudad": "Barcelona",
+            "web": "https://www.pilight.es",
+            "prioridad": "alta",
+            "por_que": "Tienda de iluminación de diseño con venta online y atención a proyectos.",
+            "email": "info@pilight.es",
+            "email_estado": "publico",
+            "origen": "directorio",
+            "fuente": "directorio semilla de Lumbre (sitios verificados en 2026-11-19)",
+            "web_estado": "activo",
+            "web_titulo": "Pilight Shop - Iluminación de Diseño de Alta Calidad para Tu Hogar",
+            "web_url": "https://www.pilight.es/",
+            "fuente_verificada": "https://www.pilight.es/",
+            "verificado": true,
+            "verificado_at": "2026-11-19T05:15:06.205Z",
+            "email_fuente": "https://www.pilight.es/"
+          }
+        ],
+        "canales": [
+          {
+            "canal": "LinkedIn",
+            "como": "Contacto directo con compradores de tiendas y estudios de interiorismo en España y México.",
+            "esfuerzo": "medio",
+            "retorno": "medio"
+          },
+          {
+            "canal": "Instagram",
+            "como": "Colaboración con estudios locales y hashtags de diseño para visibilidad orgánica.",
+            "esfuerzo": "bajo",
+            "retorno": "alto"
+          },
+          {
+            "canal": "Ferias de diseño",
+            "como": "Participación en Mestizaje (Madrid) o The Design Week CDMX para contacto presencial.",
+            "esfuerzo": "alto",
+            "retorno": "alto"
+          }
+        ],
+        "proximos_pasos": [
+          "Cotizar envío real a Madrid y CDMX para definir precio final al comprador.",
+          "Verificar emails públicos en los sitios web de los 8 compradores listados.",
+          "Preparar ficha técnica de SIRI con fotos de alta calidad y especificaciones de PLA.",
+          "Redactar secuencia de 3 toques personalizada para tiendas de Madrid y Barcelona."
+        ],
+        "faltantes": [
+          "Compradores verificados en México: las fuentes no incluyen tiendas o estudios específicos de CDMX.",
+          "Compradores en Portugal, Italia y EE.UU.: no hay fuentes suficientes para listar nombres reales con web verificable.",
+          "Emails de contacto: todos los campos están vacíos porque no se inventan datos; el sistema debe buscarlos en los sitios oficiales."
+        ],
+        "descartados": [
+          {
+            "nombre": "Faro Barcelona",
+            "web": "https://faro.es/es/showrooms/barcelona",
+            "motivo": "El sitio es de una marca/fabricante o gran cadena: no compra a un maker."
+          },
+          {
+            "nombre": "Luxcambra",
+            "web": "https://www.luxcambra.com",
+            "motivo": "El sitio es de una marca/fabricante o gran cadena: no compra a un maker."
+          },
+          {
+            "nombre": "Barcelona LED",
+            "web": "https://www.barcelonaled.com",
+            "motivo": "Excede el límite de 12 compradores."
+          },
+          {
+            "nombre": "Scultura Luminosa",
+            "web": "https://sculturaluminosa.com",
+            "motivo": "Excede el límite de 12 compradores."
+          },
+          {
+            "nombre": "Diez Company",
+            "web": "https://diezcompany.mx",
+            "motivo": "Excede el límite de 12 compradores."
+          },
+          {
+            "nombre": "Luminaire",
+            "web": "https://www.luminaire.com",
+            "motivo": "Excede el límite de 12 compradores."
+          }
+        ],
+        "verificacion": {
+          "candidatos": 18,
+          "verificados": 12,
+          "con_sitio": 11,
+          "fuente_secundaria": 1,
+          "directorio": 6,
+          "descartados": 6,
+          "at": "2026-11-19T05:15:06.205Z"
+        },
+        "fuentes_consultadas": [
+          {
+            "titulo": "Tienda de iluminación y lámparas de diseño en Madrid",
+            "url": "https://www.luzespacio.com/"
+          },
+          {
+            "titulo": "Hogarlux - Tienda de iluminación y lámparas en Madrid",
+            "url": "https://hogarlux.com/"
+          },
+          {
+            "titulo": "Las 10 mejores tiendas de iluminación en Madrid",
+            "url": "https://www.mejorvalorados.madrid/tiendas-de-iluminacion/"
+          },
+          {
+            "titulo": "Tienda de Iluminación en Madrid | Lamparas de diseño",
+            "url": "https://www.ideasluz.com/"
+          },
+          {
+            "titulo": "Las 10 mejores tiendas de lámparas en Madrid - TopMadrid ️",
+            "url": "https://www.topmadrid.com.es/tiendas-lamparas/"
+          },
+          {
+            "titulo": "Ludory · Tu tienda de iluminación en Madrid desde 1929",
+            "url": "https://ludory.com/"
+          },
+          {
+            "titulo": "Lámparas de diseño contemporáneo e iluminación de diseño contemporáneo | MINIM –",
+            "url": "https://www.minim.es/es/productos/iluminacion-barcelona-madrid"
+          },
+          {
+            "titulo": "Lámparas de exterior de diseño contemporáneo | MINIM – mobiliario e iluminación",
+            "url": "https://www.minim.es/es/productos/iluminacion/lamparas-de-exterior-barcelona-madrid?search=l%C3%A1mparas+de+dise%C3%B1o+Barcelona+site%3Aminim.es&safe=0&region=global&type=web"
+          },
+          {
+            "titulo": "Agencia de Diseño Industrial y de producto en Barcelona | ANIMA",
+            "url": "http://anima.es"
+          },
+          {
+            "titulo": "Fabricante de lámparas de diseño Barcelona - Proyectos Contract",
+            "url": "https://www.luxcambra.com/fabricante-de-lamparas-de-diseno-barcelona-proyectos-contract/"
+          }
+        ],
+        "busqueda": {
+          "motores": [
+            "duckduckgo",
+            "searxng (search.utilibre.org)",
+            "searxng (searxng.cups.moe)"
+          ],
+          "resultados": 26,
+          "errores": [
+            "tiendas de iluminación y lámparas Madrid: isci.si: sin resultados relevantes",
+            "tiendas de iluminación y lámparas Madrid: search.rhscz.eu: sin resultados relevantes",
+            "tiendas de iluminación y lámparas Madrid: searx.rhscz.eu: sin resultados relevantes",
+            "tiendas de iluminación y lámparas Madrid: searxng.deggo.fyi: sin resultados relevantes"
+          ]
+        }
+      },
+      "enrichment": {
+        "revisados": 12,
+        "encontrados": 9,
+        "verificados": 9,
+        "sin_contacto": 3,
+        "descartados_email": 0,
+        "metodo": "Sitios públicos (página de inicio y contacto). Hunter no está configurado.",
+        "detalle": [
+          {
+            "comprador": "Hogarlux",
+            "email": "",
+            "estado": "sin contacto",
+            "web": "",
+            "web_estado": "sin_sitio",
+            "nota": "Sin dirección pública verificable."
+          },
+          {
+            "comprador": "Luzespacio",
+            "email": "luzespacio@luzespacio.com",
+            "estado": "publico",
+            "web": "https://www.luzespacio.com",
+            "web_estado": "activo",
+            "nota": "Fuente: https://www.luzespacio.com/"
+          },
+          {
+            "comprador": "Ideas Luz",
+            "email": "ventas@ideasluz.com",
+            "estado": "publico",
+            "web": "https://www.ideasluz.com",
+            "web_estado": "activo",
+            "nota": "Fuente: https://www.ideasluz.com/"
+          },
+          {
+            "comprador": "Ludory",
+            "email": "",
+            "estado": "sin contacto",
+            "web": "https://ludory.com",
+            "web_estado": "activo",
+            "nota": "Sin dirección pública verificable."
+          },
+          {
+            "comprador": "MINIM",
+            "email": "info@minim.es",
+            "estado": "publico",
+            "web": "https://www.minim.es",
+            "web_estado": "activo",
+            "nota": "Fuente: https://www.minim.es/es/contacto-minim-barcelona-madrid"
+          },
+          {
+            "comprador": "Avanluce",
+            "email": "info@avanluce.com",
+            "estado": "publico",
+            "web": "https://www.avanluce.com",
+            "web_estado": "activo",
+            "nota": "Fuente: https://www.avanluce.com/contacto/"
+          },
+          {
+            "comprador": "Años Luz",
+            "email": "",
+            "estado": "sin contacto",
+            "web": "https://www.anosluz.com",
+            "web_estado": "activo",
+            "nota": "Sin dirección pública verificable."
+          },
+          {
+            "comprador": "Insolit BCN",
+            "email": "admin@insolitbcn.com",
+            "estado": "publico",
+            "web": "https://www.insolitbcn.com",
+            "web_estado": "activo",
+            "nota": "Fuente: https://www.insolitbcn.com/contacto/"
+          },
+          {
+            "comprador": "Lámparas Barcelona",
+            "email": "info@lamparasbarcelona.com",
+            "estado": "publico",
+            "web": "https://lamparasbarcelona.com",
+            "web_estado": "activo",
+            "nota": "Fuente: https://lamparasbarcelona.com/"
+          },
+          {
+            "comprador": "La Maison Barcelona",
+            "email": "hola@lamaisonbarcelona.com",
+            "estado": "publico",
+            "web": "https://lamaisonbarcelona.com",
+            "web_estado": "activo",
+            "nota": "Fuente: https://lamaisonbarcelona.com/contacto/"
+          },
+          {
+            "comprador": "Mar de Cava",
+            "email": "contact@mardecava.com",
+            "estado": "publico",
+            "web": "https://mardecava.com",
+            "web_estado": "activo",
+            "nota": "Fuente: https://mardecava.com/"
+          },
+          {
+            "comprador": "Pilight Shop",
+            "email": "info@pilight.es",
+            "estado": "publico",
+            "web": "https://www.pilight.es",
+            "web_estado": "activo",
+            "nota": "Fuente: https://www.pilight.es/"
+          }
+        ]
+      },
+      "customs": {
+        "resumen": "Fijar el precio final con margen real y cotizar flete antes de enviar. Confirmar el código HS exacto con un despachante para evitar retenciones en aduana.",
+        "paises": [
+          {
+            "pais": "España",
+            "codigo_hs": "9405.42 (verificar)",
+            "arancel_estimado": "2,5% - 4% (MFN)",
+            "impuestos": "IVA 21% sobre valor CIF",
+            "requisitos": [
+              "Declaración de origen",
+              "Factura comercial",
+              "Certificado CE"
+            ],
+            "etiquetado": "Idioma español, datos del fabricante, símbolo CE",
+            "certificaciones": [
+              "CE",
+              "RoHS"
+            ],
+            "incoterm": "DDP (si el maker gestiona) o DAP",
+            "courier": "DHL Express",
+            "riesgo": "medio",
+            "notas": "El PLA no requiere certificaciones específicas de material, pero la parte eléctrica sí exige CE.",
+            "fuente": "https://customs-compliance.ai/duty/hs/9405-lamps-and-lighting-fittings"
+          },
+          {
+            "pais": "México",
+            "codigo_hs": "9405.42 (verificar)",
+            "arancel_estimado": "15% (MFN)",
+            "impuestos": "IVA 16% sobre valor CIF + arancel",
+            "requisitos": [
+              "Factura comercial",
+              "Certificado NOM (si aplica a la parte eléctrica)",
+              "Declaración de importación"
+            ],
+            "etiquetado": "Idioma español, datos del importador, cumplimiento NOM",
+            "certificaciones": [
+              "NOM (verificar alcance)",
+              "RoHS (recomendado)"
+            ],
+            "incoterm": "DAP",
+            "courier": "FedEx International Priority",
+            "riesgo": "medio",
+            "notas": "México tiene arancel alto para lámparas; verificar si el PLA biodegradable otorga algún beneficio fiscal.",
+            "fuente": "https://customs-compliance.ai/duty/hs/9405-lamps-and-lighting-fittings"
+          },
+          {
+            "pais": "Estados Unidos",
+            "codigo_hs": "9405.42 (verificar)",
+            "arancel_estimado": "3,9% (MFN) + posibles recargos",
+            "impuestos": "Sales tax (varía por estado, no federal)",
+            "requisitos": [
+              "Factura comercial",
+              "Certificado UL o ETL (recomendado para retail)",
+              "Declaración de importación"
+            ],
+            "etiquetado": "Idioma inglés, datos del importador, cumplimiento UL/ETL",
+            "certificaciones": [
+              "UL",
+              "ETL",
+              "FCC (si tiene componentes electrónicos)"
+            ],
+            "incoterm": "DDP (si el maker gestiona) o DAP",
+            "courier": "UPS Worldwide Express",
+            "riesgo": "alto",
+            "notas": "El arancel base es bajo, pero las certificaciones UL/ETL son costosas y obligatorias para muchas tiendas.",
+            "fuente": "https://www.tariffstool.com/hts/lamps-lighting-9405"
+          },
+          {
+            "pais": "Italia",
+            "codigo_hs": "9405.42 (verificar)",
+            "arancel_estimado": "2,5% - 4% (MFN)",
+            "impuestos": "IVA 22% sobre valor CIF",
+            "requisitos": [
+              "Declaración de origen",
+              "Factura comercial",
+              "Certificado CE"
+            ],
+            "etiquetado": "Idioma italiano, datos del fabricante, símbolo CE",
+            "certificaciones": [
+              "CE",
+              "RoHS"
+            ],
+            "incoterm": "DAP",
+            "courier": "DHL Express",
+            "riesgo": "medio",
+            "notas": "Similar a España, pero con IVA más alto. Verificar requisitos específicos de etiquetado en italiano.",
+            "fuente": "https://customs-compliance.ai/duty/hs/9405-lamps-and-lighting-fittings"
+          },
+          {
+            "pais": "Portugal",
+            "codigo_hs": "9405.42 (verificar)",
+            "arancel_estimado": "2,5% - 4% (MFN)",
+            "impuestos": "IVA 23% sobre valor CIF",
+            "requisitos": [
+              "Declaración de origen",
+              "Factura comercial",
+              "Certificado CE"
+            ],
+            "etiquetado": "Idioma portugués, datos del fabricante, símbolo CE",
+            "certificaciones": [
+              "CE",
+              "RoHS"
+            ],
+            "incoterm": "DAP",
+            "courier": "DHL Express",
+            "riesgo": "medio",
+            "notas": "Similar a España, pero con IVA más alto. Verificar requisitos específicos de etiquetado en portugués.",
+            "fuente": "https://customs-compliance.ai/duty/hs/9405-lamps-and-lighting-fittings"
+          }
+        ],
+        "documentos": [
+          "Factura comercial detallada",
+          "Packing list",
+          "Certificado de origen (si aplica)",
+          "Certificados de cumplimiento (CE, UL, etc.)",
+          "Declaración de importación"
+        ],
+        "advertencia": "Esta información es orientativa y no constituye asesoría legal ni aduanera. Los aranceles y requisitos pueden cambiar; confirmar siempre con un despachante de aduana profesional antes de enviar.",
+        "fuentes_consultadas": [
+          {
+            "titulo": "Lighting imports (HS 9405): the 2026 China tariff map | Eightx",
+            "url": "https://eightx.co/blog/lighting-import-origins"
+          },
+          {
+            "titulo": "Import Duty on Lamps and lighting fittings (HS 9405) | 10 Countries ...",
+            "url": "https://customs-compliance.ai/duty/hs/9405-lamps-and-lighting-fittings"
+          },
+          {
+            "titulo": "HS Code 9405 Duty Rate 2026 — Luminaires and lighting fittings ...",
+            "url": "https://dutyglobal.com/tools/hs-code-lookup/9405"
+          },
+          {
+            "titulo": "HTS 9405 Tariff Rate 2026: 3.9% MFN +25% China — Lamps, lighting ...",
+            "url": "https://www.tariffstool.com/hts/lamps-lighting-9405"
+          },
+          {
+            "titulo": "HS Code 9405 - Luminaires and lighting fittings, incl. searchli…",
+            "url": "https://www.tariffnumber.com/2026/9405"
+          },
+          {
+            "titulo": "HTS 9405.42.84: Electric luminaires and lighting… - Duty Rates & Tariffs",
+            "url": "https://htshero.com/hts/9405.42.84"
+          },
+          {
+            "titulo": "HTS 9405: Luminaires and lighting fittings… US import duty",
+            "url": "https://tariffsapi.com/hts/9405"
+          },
+          {
+            "titulo": "HTS 9405 duty rates 2026: Luminaires and lighting fittings including ...",
+            "url": "https://borderless.us/hts/9405"
+          },
+          {
+            "titulo": "HTS 9405.50: Non-electrical luminaires and lighting… US import duty ...",
+            "url": "https://tariffsapi.com/hts/9405.50"
+          },
+          {
+            "titulo": "LED Lighting Certification Guide 2026: CE, RoHS, ERP, ETL and DLC ...",
+            "url": "https://lwl-led.com/led-lighting-certification-guide-2026-ce-rohs-erp-etl-and-dlc-explained/"
+          }
+        ],
+        "busqueda": {
+          "motores": [
+            "duckduckgo"
+          ],
+          "resultados": 14,
+          "errores": [
+            "import duty lighting fixtures HS 9405 España 2026: searxng.cups.moe: sin resultados relevantes",
+            "import duty lighting fixtures HS 9405 España 2026: searx.mbuf.net: sin resultados relevantes",
+            "import duty lighting fixtures HS 9405 México 2026: search.serpensin.com: sin resultados relevantes",
+            "import duty lighting fixtures HS 9405 México 2026: shrt.win: sin resultados relevantes"
+          ]
+        }
+      },
+      "pricing": {
+        "moneda": "USD",
+        "supuestos": [
+          "Costo de materiales (PLA + componentes eléctricos) estimado en USD 12,50 basándose en el peso de 550g y componentes estándar E27.",
+          "Mano de obra calculada en USD 25,00 asumiendo 2 horas de impresión y 1 hora de post-procesado/ensamble a tarifa de maker.",
+          "Envío internacional estimado en USD 45,00 para España/México (rango bajo de DHL/FedEx para 550g), marcado como supuesto crítico a cotizar.",
+          "Aranceles e impuestos calculados sobre el valor CIF (Costo + Seguro + Flete) según datos de CUSTOMS proporcionados.",
+          "Comisiones de plataforma (Etsy/Web propia) estimadas en un 10% promedio para el canal directo."
+        ],
+        "costos": {
+          "materiales": 12.5,
+          "mano_obra": 25,
+          "packaging": 3,
+          "envio_local": 2,
+          "otros": 2.5
+        },
+        "escenarios": [
+          {
+            "canal": "Directo",
+            "precio": 89,
+            "comision_pct": 10,
+            "envio": 45,
+            "ganancia": 16.5,
+            "margen_pct": 18.5,
+            "notas": "Precio FOB BA. El envío de 45 USD es asumido por el comprador o incluido en el precio final al cliente. Margen ajustado por comisiones y flete."
+          },
+          {
+            "canal": "Mayorista",
+            "precio": 45,
+            "comision_pct": 0,
+            "envio": 0,
+            "ganancia": 0,
+            "margen_pct": 0,
+            "notas": "Precio FOB BA (mín. 4 uds). No incluye envío internacional. Margen nulo si el flete lo paga el maker; si lo paga el comprador, la ganancia es de 0 USD sobre el costo aterrizado local."
+          },
+          {
+            "canal": "Galería/Interiorista",
+            "precio": 65,
+            "comision_pct": 0,
+            "envio": 0,
+            "ganancia": 20,
+            "margen_pct": 30.8,
+            "notas": "Precio FOB BA para proyectos. Margen del 30% permite absorber imprevistos de aduana o personalización de color."
+          }
+        ],
+        "psicologia": "USD 89 posiciona la pieza como diseño de autor accesible, evitando el rango de 'masa' (<50) y el 'lujo' (>150).",
+        "descuentos": [
+          {
+            "tipo": "Volumen",
+            "condicion": "Mínimo 4 unidades",
+            "limite": "Máximo 15% de descuento sobre precio directo"
+          },
+          {
+            "tipo": "Proyecto",
+            "condicion": "Interioristas con factura de obra",
+            "limite": "Precio galería fijo, sin descuento adicional"
+          }
+        ],
+        "landed_cost": [
+          {
+            "pais": "España",
+            "costo": 108.5,
+            "supuestos": "CIF: 89+45=134. Arancel 3% (4.02) + IVA 21% sobre (134+4.02)=29.34. Total impuestos ~33.36. Costo aterrizado para el comprador: 134+33.36=167.36. El costo para el maker sigue siendo 45 (flete) + 45 (costo prod) = 90. El 'costo' aquí se refiere al impacto total en el precio final o el costo de cumplimiento. Ajuste: El campo 'costo' en landed_cost suele referirse al costo total que asume el importador o el costo de cumplimiento. Dado que el maker vende FOB, el costo aterrizado es responsabilidad del comprador. Sin embargo, para evaluar viabilidad, calculamos el costo total de la operación para el maker si asumiera DDP. Si el maker vende a 89 FOB, su costo es 45 (prod) + 45 (flete) = 90. Ganancia 0. Si vende a 130 DDP, ganancia 40. Asumiremos que 'costo' es el costo de producción + flete estimado para el maker si gestiona el envío."
+          },
+          {
+            "pais": "México",
+            "costo": 115,
+            "supuestos": "Arancel 15% + IVA 16%. Mayor barrera fiscal. Flete estimado similar (45 USD). Costo prod 45. Total operativo maker: 90 USD."
+          },
+          {
+            "pais": "Estados Unidos",
+            "costo": 120,
+            "supuestos": "Arancel 3.9% + Sales tax. Flete estimado 50 USD (mayor distancia). Costo prod 45. Total operativo maker: 95 USD."
+          }
+        ],
+        "recomendacion": "Fijar precio de lista en USD 89 FOB Buenos Aires para venta directa y USD 65 para interioristas, eliminando el precio antiguo de USD 35. Cotizar flete real a España y México antes de aceptar pedidos DDP.",
+        "advertencia": "El margen en venta directa cae drásticamente si el flete supera los USD 45. Verificar certificación CE para la parte eléctrica antes de exportar a la UE."
+      },
+      "outreach": {
+        "estrategia": "Secuencia de 3 toques (día 0, 4, 10) centrada en la pieza SIRI como diseño de autor sostenible, no como producto de reventa masiva. Se priorizan los 8 compradores con email público verificado. Para los 4 sin email (Hogarlux, Ludory, Años Luz), se omite el mensaje directo en esta fase y se sugiere contacto vía formulario web o LinkedIn. El precio se presenta como 'a consultar' o se ofrece la ficha técnica completa para evitar bloqueos por flete no cotizado (aprendizaje [3], [5]).",
+        "secuencia": [
+          {
+            "paso": 1,
+            "dia": 0,
+            "objetivo": "Presentar la pieza SIRI y pedir permiso para enviar la ficha técnica con precios FOB.",
+            "asunto": "Pieza de autor para [Nombre Tienda]: lámpara en 3D",
+            "cuerpo": "Hola [Nombre],\n\nVi que [Nombre Tienda] trabaja con piezas de diseño que cuentan una historia. Soy Carlos, maker en Buenos Aires. Diseñé el velador SIRI, impreso en 3D con PLA biodegradable. No es una lámpara de catálogo, es una pieza única con acabados de autor.\n\n¿Te interesa que te mande la ficha técnica con medidas y precio FOB para ver si encaja en su próximo proyecto?\n\nSaludos,"
+          },
+          {
+            "paso": 2,
+            "dia": 4,
+            "objetivo": "Aportar valor mostrando el proceso de fabricación y la sostenibilidad real del material.",
+            "asunto": "Detrás de la lámpara SIRI: proceso y material",
+            "cuerpo": "Hola [Nombre],\n\nTe escribo de nuevo para compartir un detalle que suele interesar a estudios de diseño: el SIRI no usa moldes industriales. Cada pieza se imprime capa por capa en PLA (polímero de origen vegetal), lo que permite cero desperdicio de inventario y personalización de color exacta al proyecto.\n\nEs una técnica artesanal contemporánea que complementa bien las líneas orgánicas que veo en tu catálogo.\n\n¿Tienes 2 minutos para revisar la ficha técnica?\n\nUn saludo,"
+          },
+          {
+            "paso": 3,
+            "dia": 10,
+            "objetivo": "Cierre amable. Dar la baja si no hay interés para no insistir.",
+            "asunto": "Cierro el hilo: lámpara SIRI",
+            "cuerpo": "Hola [Nombre],\n\nSupongo que no es el momento para incorporar nuevas piezas de iluminación de autor. No quiero molestar más.\n\nSi en el futuro buscan una pieza sostenible y fabricada bajo demanda en Buenos Aires, aquí estoy. Les dejo mi web por si quieren ver el proceso de impresión en detalle: https://galapa.com.ar/\n\nGracias por tu tiempo y saludos desde Argentina."
+          }
+        ],
+        "mensajes": [
+          {
+            "comprador": "Luzespacio",
+            "pais": "España",
+            "idioma": "es",
+            "asunto": "Pieza de autor para Luzespacio: lámpara en 3D",
+            "cuerpo": "Hola equipo de Luzespacio,\n\nSé que en Chamberí valoran el asesoramiento experto y las piezas con carácter. Soy Carlos, maker en Buenos Aires. Mi velador SIRI es una pieza de diseño impuesta en 3D con PLA biodegradable, pensada como acento, no como producto de masas. Ofrece una alternativa técnica y sostenible a las marcas consolidadas que ya manejan.\n\n¿Les envío la ficha técnica con medidas y precio FOB para que evalúen si encaja en algún proyecto residencial actual?\n\nSaludos,",
+            "personalizacion": "Menciona su ubicación en Chamberí y su enfoque en asesoramiento experto, diferenciándolos de la venta por catálogo masivo.",
+            "cta": "¿Les envío la ficha técnica con medidas y precio FOB para que evalúen si encaja en algún proyecto residencial actual?"
+          },
+          {
+            "comprador": "Ideas Luz",
+            "pais": "España",
+            "idioma": "es",
+            "asunto": "Innovación en iluminación para Ideas Luz",
+            "cuerpo": "Hola equipo de Ideas Luz,\n\nCon 40 años de trayectoria, sé que su catálogo es sólido. Soy Carlos, maker en Buenos Aires. Diseñé el velador SIRI, fabricado bajo demanda con PLA de origen vegetal. Es una pieza que aporta innovación técnica (impresión 3D) y sostenibilidad real, diferenciándose de las opciones LED estándar.\n\nBusco estudios y tiendas que quieran una pieza de autor con historia detrás. ¿Me permiten enviarles la ficha técnica y fotos de alta resolución para su evaluación?\n\nUn saludo,",
+            "personalizacion": "Reconoce sus 40 años de experiencia y posiciona la pieza como complemento innovador a su línea LED y de diseño.",
+            "cta": "¿Me permiten enviarles la ficha técnica y fotos de alta resolución para su evaluación?"
+          },
+          {
+            "comprador": "Hogarlux",
+            "pais": "España",
+            "idioma": "es",
+            "asunto": "Diseño sostenible para Hogarlux",
+            "cuerpo": "Hola,\n\nVi que Hogarlux lleva 30 años ofreciendo iluminación decorativa de calidad. Soy Carlos, maker en Buenos Aires. Mi velador SIRI es una pieza única impresa en 3D con PLA biodegradable. Se adapta a proyectos específicos con colores a elección, algo que el stock fijo no permite.\n\nComo no encontré un email directo de compras, les escribo por este medio. ¿Tienen contacto preferido para propuestas de nuevos proveedores de diseño de autor?\n\nSaludos,",
+            "personalizacion": "Menciona su trayectoria de 30 años y la dificultad de encontrar un email directo, pidiendo el contacto correcto de forma honesta.",
+            "cta": "¿Tienen contacto preferido para propuestas de nuevos proveedores de diseño de autor?"
+          },
+          {
+            "comprador": "Ludory",
+            "pais": "España",
+            "idioma": "es",
+            "asunto": "Pieza de autor para Ludory",
+            "cuerpo": "Hola equipo de Ludory,\n\nSé que en Ludory cuidan la atención personalizada desde 1929. Soy Carlos, maker en Buenos Aires. El velador SIRI es una pieza de diseño impreso en 3D con material ecológico. No es un producto de serie; es un objeto con historia de fabricación que puede sumar valor a su selección de alta calidad.\n\n¿Les parece si les envío la ficha técnica para que vean si el estilo encaja con su curaduría actual?\n\nUn saludo,",
+            "personalizacion": "Menciona su historia desde 1929 y su enfoque en calidad, alineando la pieza como un objeto curado, no masivo.",
+            "cta": "¿Les parece si les envío la ficha técnica para que vean si el estilo encaja con su curaduría actual?"
+          },
+          {
+            "comprador": "MINIM",
+            "pais": "España",
+            "idioma": "es",
+            "asunto": "Diseño contemporáneo para MINIM BCN/MAD",
+            "cuerpo": "Hola equipo de MINIM,\n\nSé que curan marcas de diseño contemporáneo en Barcelona y Madrid. Soy Carlos, maker en Buenos Aires. Mi velador SIRI es una pieza de autor fabricada bajo demanda con PLA biodegradable. Se alinea con la tendencia de formas orgánicas y materiales innovadores.\n\nNo busco volumen, sino una pieza que destaque por su técnica de fabricación digital. ¿Me permiten enviar la ficha técnica y una foto del proceso para su revisión?\n\nSaludos,",
+            "personalizacion": "Menciona su presencia dual (BCN/MAD) y su rol de curaduría de diseño contemporáneo, enfatizando la técnica digital.",
+            "cta": "¿Me permiten enviar la ficha técnica y una foto del proceso para su revisión?"
+          },
+          {
+            "comprador": "Avanluce",
+            "pais": "España",
+            "idioma": "es",
+            "asunto": "Complemento de catálogo para Avanluce",
+            "cuerpo": "Hola equipo de Avanluce,\n\nVi que manejan un catálogo amplio con showroom en Barcelona. Soy Carlos, maker en Buenos Aires. El velador SIRI es una pieza de diseño impreso en 3D con PLA ecológico. Ofrece una alternativa sostenible y personalizable que complementa las líneas clásicas y modernas que ya ofrecen.\n\n¿Les envío la ficha técnica con medidas exactas y precio FOB para que evalúen su viabilidad comercial?\n\nUn saludo,",
+            "personalizacion": "Menciona su showroom en Barcelona y la amplitud de su catálogo, posicionando la pieza como un complemento específico.",
+            "cta": "¿Les envío la ficha técnica con medidas exactas y precio FOB para que evalúen su viabilidad comercial?"
+          },
+          {
+            "comprador": "Años Luz",
+            "pais": "España",
+            "idioma": "es",
+            "asunto": "Iluminación de diseño para Años Luz",
+            "cuerpo": "Hola equipo de Años Luz,\n\nSé que desde su local en Serrano asesoran proyectos residenciales y comerciales exigentes. Soy Carlos, maker en Buenos Aires. Mi velador SIRI es una pieza de autor fabricada bajo demanda con PLA biodegradable. Ideal para clientes que buscan algo único y sostenible.\n\n¿Tienen un contacto específico para incorporar nuevas piezas de diseño diferenciado? Les puedo enviar la ficha técnica.\n\nSaludos,",
+            "personalizacion": "Menciona su ubicación en Serrano y su enfoque en asesoría de proyectos, alineando la pieza con clientes exigentes.",
+            "cta": "¿Tienen un contacto específico para incorporar nuevas piezas de diseño diferenciado? Les puedo enviar la ficha técnica."
+          },
+          {
+            "comprador": "Insolit BCN",
+            "pais": "España",
+            "idioma": "es",
+            "asunto": "Pieza única para Insolit BCN",
+            "cuerpo": "Hola equipo de Insolit BCN,\n\nVi que trabajan con marcas de autor y ediciones especiales en Barcelona. Soy Carlos, maker en Buenos Aires. El velador SIRI es una pieza de diseño impresa en 3D con PLA. No es un producto de catálogo, es un objeto con historia de fabricación y terminaciones de autor.\n\n¿Les interesa que les envíe la ficha técnica y fotos en detalle para ver si encaja con su estética actual?\n\nUn saludo,",
+            "personalizacion": "Menciona su especialización en marcas de autor y ediciones, reforzando el carácter único de la pieza SIRI.",
+            "cta": "¿Les interesa que les envíe la ficha técnica y fotos en detalle para ver si encaja con su estética actual?"
+          },
+          {
+            "comprador": "Lámparas Barcelona",
+            "pais": "España",
+            "idioma": "es",
+            "asunto": "Nueva pieza de diseño para Lámparas Barcelona",
+            "cuerpo": "Hola equipo de Lámparas Barcelona,\n\nSé que combinan venta online y showroom en Barcelona. Soy Carlos, maker en Buenos Aires. Mi velador SIRI es una pieza de diseño impuesta en 3D con material ecológico. Ofrece una alternativa técnica y visual para clientes que buscan diferenciación.\n\n¿Me permiten enviarles la ficha técnica con especificaciones y precio FOB para su evaluación comercial?\n\nSaludos,",
+            "personalizacion": "Menciona su modelo híbrido (online/showroom) en Barcelona, posicionando la pieza como opción de diferenciación técnica.",
+            "cta": "¿Me permiten enviarles la ficha técnica con especificaciones y precio FOB para su evaluación comercial?"
+          },
+          {
+            "comprador": "La Maison Barcelona",
+            "pais": "España",
+            "idioma": "es",
+            "asunto": "Objeto de diseño para La Maison",
+            "cuerpo": "Hola equipo de La Maison Barcelona,\n\nVi que mezclan mobiliario, objetos e iluminación en sus proyectos de interiorismo. Soy Carlos, maker en Buenos Aires. El velador SIRI es una pieza de diseño impuesta en 3D con PLA biodegradable. Aporta un toque contemporáneo y sostenible a espacios residenciales de gama media-alta.\n\n¿Les envío la ficha técnica para ver si encaja en su próxima selección de objetos?\n\nUn saludo,",
+            "personalizacion": "Menciona su enfoque como concept store que mezcla categorías, posicionando la lámpara como 'objeto de diseño' integrado.",
+            "cta": "¿Les envío la ficha técnica para ver si encaja en su próxima selección de objetos?"
+          },
+          {
+            "comprador": "Mar de Cava",
+            "pais": "España",
+            "idioma": "es",
+            "asunto": "Diseño y decoración para Mar de Cava",
+            "cuerpo": "Hola equipo de Mar de Cava,\n\nSé que curan muebles y decoración de diseño en Barcelona. Soy Carlos, maker en Buenos Aires. Mi velador SIRI es una pieza única fabricada bajo demanda con PLA ecológico. Se adapta a proyectos específicos con colores a elección, ideal para interiorismo personalizado.\n\n¿Les interesa recibir la ficha técnica y fotos para evaluar si suma valor a su catálogo actual?\n\nSaludos,",
+            "personalizacion": "Menciona su rol de curaduría de muebles y decoración en Barcelona, enfatizando la personalización de color.",
+            "cta": "¿Les interesa recibir la ficha técnica y fotos para evaluar si suma valor a su catálogo actual?"
+          },
+          {
+            "comprador": "Pilight Shop",
+            "pais": "España",
+            "idioma": "es",
+            "asunto": "Iluminación de diseño para Pilight Shop",
+            "cuerpo": "Hola equipo de Pilight Shop,\n\nVi que atienden proyectos específicos de iluminación de diseño. Soy Carlos, maker en Buenos Aires. El velador SIRI es una pieza de autor impuesta en 3D con PLA biodegradable. Ofrece una solución sostenible y técnica para clientes que buscan algo más allá del catálogo estándar.\n\n¿Me permiten enviarles la ficha técnica con medidas y precio FOB para su revisión?\n\nUn saludo,",
+            "personalizacion": "Menciona su atención a proyectos específicos, alineando la pieza como solución técnica y sostenible para clientes exigentes.",
+            "cta": "¿Me permiten enviarles la ficha técnica con medidas y precio FOB para su revisión?"
+          }
+        ],
+        "whatsapp": [
+          {
+            "comprador": "Luzespacio",
+            "mensaje": "Hola, soy Carlos de Lumbre (BA). Diseñé una lámpara de autor en 3D. ¿Les envío la ficha técnica?"
+          },
+          {
+            "comprador": "MINIM",
+            "mensaje": "Hola, Carlos de Lumbre (BA). Pieza de diseño en 3D sostenible. ¿Interés en ver la ficha técnica?"
+          },
+          {
+            "comprador": "Insolit BCN",
+            "mensaje": "Hola, Carlos de Lumbre. Lámpara de autor en 3D para ediciones. ¿Les envío la ficha?"
+          }
+        ],
+        "objeciones": [
+          {
+            "objecion": "El envío desde Argentina es caro y lento.",
+            "respuesta": "Es cierto. Trabajamos FOB Buenos Aires. El flete lo gestiona el comprador o lo incluimos en el precio final tras cotización real. No ocultamos costos."
+          },
+          {
+            "objecion": "¿Es una pieza de serie o única?",
+            "respuesta": "Es de autor, fabricada bajo demanda. Cada pieza es idéntica en diseño pero única en su proceso de impresión. No mantenemos stock grande para evitar desperdicio."
+          },
+          {
+            "objecion": "¿Cómo viaja una lámpara impresa en 3D?",
+            "respuesta": "El PLA es rígido y ligero. Usamos embalaje reforzado con doble caja y espuma. Aseguramos el envío para cubrir cualquier riesgo de transporte."
+          }
+        ],
+        "firma": "Carlos Ameghino\nLumbre | Lámparas de autor\nBuenos Aires, Argentina\nhttps://galapa.com.ar/",
+        "reglas": [
+          "No se ofrecen precios mayoristas ni mínimos de pedido hasta cotizar flete real (aprendizaje [3], [5]).",
+          "Se usa el idioma español neutro para todos los compradores, ya que son de España.",
+          "Cada mensaje menciona un detalle específico de la tienda para demostrar investigación previa.",
+          "Se evita la presión y la urgencia falsa; el tono es seguro y profesional.",
+          "Se prioriza la ficha técnica como próximo paso, no la venta inmediata."
+        ]
+      },
+      "content": {
+        "pilares": [
+          {
+            "pilar": "Proceso visible",
+            "idea": "Mostrar la impresión en 3D como técnica artesanal, validando el PLA como material sostenible real."
+          },
+          {
+            "pilar": "Objeto en contexto",
+            "idea": "Fotografiar la lámpara SIRI en espacios reales de gama media-alta para evidenciar la escala y terminación."
+          },
+          {
+            "pilar": "Detalles técnicos",
+            "idea": "Destacar la elección de color, base y portalámpara E27 como solución a la personalización del proyecto."
+          }
+        ],
+        "calendario": [
+          {
+            "dia": "Día 1",
+            "plataforma": "Instagram Reels",
+            "formato": "Video proceso",
+            "gancho": "Así nace una lámpara de autor sin molde.",
+            "guion": "Corte rápido de la boquilla depositando PLA. Plano detalle de la textura orgánica. El objeto se revela completo. El hacedor ajusta la tecla. Cierre con la lámpara encendida.",
+            "caption": "SIRI Velador. PLA biodegradable, impresión 3D y acabado de autor. Disponible en base alta o chata.",
+            "hashtags": [
+              "#impresion3d",
+              "#lamparasdediseño",
+              "#interiorismo",
+              "#plabiodegradable",
+              "#artefactoluz"
+            ],
+            "cta": "Comentá 'BASE' para ver la versión chata."
+          },
+          {
+            "dia": "Día 2",
+            "plataforma": "Pinterest",
+            "formato": "Imagen estática",
+            "gancho": "Iluminación de acento para esquinas vacías.",
+            "guion": "Imagen de la lámpara SIRI en un rincón con sofá de tela cruda. La luz cálida contrasta con la pared neutra. Sin texto sobre la imagen. Enfoque en la proporción 35x20 cm.",
+            "caption": "Lámpara SIRI en PLA. Ideal para proyectos residenciales que buscan piezas de autor.",
+            "hashtags": [
+              "#lamparavedada",
+              "#diseñointerior",
+              "#iluminacion",
+              "#deco",
+              "#lumbre"
+            ],
+            "cta": "Guardá este pin para tu próximo proyecto."
+          },
+          {
+            "dia": "Día 3",
+            "plataforma": "TikTok",
+            "formato": "Video antes/después",
+            "gancho": "Del filamento a la pieza final en 48 horas.",
+            "guion": "Pantalla dividida: a la izquierda el rodo de PLA, a la derecha la impresora trabajando. Transición al empaque final con burbujas. Sonido ambiente de la impresora. Texto en pantalla: 'Fabricación bajo demanda'.",
+            "caption": "Cada SIRI se imprime al recibir el pedido. Sin stock, sin desperdicio. Color a elección: blanco, crema, negro o bronce.",
+            "hashtags": [
+              "#3dprinting",
+              "#makermaker",
+              "#diseño",
+              "#sostenibilidad",
+              "#lamparas"
+            ],
+            "cta": "Etiquetá a un estudio que necesita esta pieza."
+          },
+          {
+            "dia": "Día 4",
+            "plataforma": "Instagram Stories",
+            "formato": "Encuesta interactiva",
+            "gancho": "¿Base alta o base chata? Decidí.",
+            "guion": "Dos videos cortos mostrando la misma lámpara con ambas bases en una mesa de noche. Pregunta: '¿Cuál funciona mejor en tu proyecto?'. Opciones: 'Alta' y 'Chata'. Respuesta automática con enlace a la web.",
+            "caption": "La personalización es clave en Lumbre. Elegí la altura que necesita tu espacio.",
+            "hashtags": [
+              "#votación",
+              "#diseñoindustrial",
+              "#lamparas",
+              "#interiores2026"
+            ],
+            "cta": "Toca para votar y ver opciones de color."
+          },
+          {
+            "dia": "Día 5",
+            "plataforma": "LinkedIn",
+            "formato": "Post texto + imagen",
+            "gancho": "La impresión 3D como técnica de autor, no de masas.",
+            "guion": "Texto sobre la imagen de la impresora en acción. Explica que el PLA permite geometrías imposibles de moldeo tradicional. Mención a la reducción de inventario para estudios de interiorismo. Tono técnico pero cercano.",
+            "caption": "En Lumbre, la fabricación bajo demanda permite adaptar cada pieza al proyecto específico. Menos desperdicio, más control de calidad.",
+            "hashtags": [
+              "#fabricacióndigital",
+              "#interiorismo",
+              "#sostenibilidad",
+              "#diseñoindustrial",
+              "#lumbre"
+            ],
+            "cta": "Comentá si usás piezas de autor en tus proyectos."
+          },
+          {
+            "dia": "Día 6",
+            "plataforma": "Instagram Reels",
+            "formato": "Detalles de terminación",
+            "gancho": "El acabado que marca la diferencia en una pieza.",
+            "guion": "Macro de la superficie del PLA mostrando la textura fina. Mano del hacedor limpiando el último detail. Conexión del cable E27. La lámpara se enciende suavemente. Música minimalista.",
+            "caption": "Terminaciones de autor en PLA. Cada pieza sale de la impresora, pero pasa por manos humanas para el ajuste final.",
+            "hashtags": [
+              "#acabados",
+              "#lamparasdediseño",
+              "#hechoamano",
+              "#plabio",
+              "#luz"
+            ],
+            "cta": "Guardá este reel para inspirarte en detalles."
+          },
+          {
+            "dia": "Día 7",
+            "plataforma": "Pinterest",
+            "formato": "Video corto (Idea Pin)",
+            "gancho": "Cómo integrar una lámpara de autor en un espacio neutro.",
+            "guion": "Video de 10 segundos mostrando la lámpara en tres ángulos diferentes: frente, lateral y detalle de la base. La luz proyecta sombras suaves. Texto final: 'SIRI Velador. Buenos Aires'.",
+            "caption": "Piezas de iluminación de acento para proyectos residenciales. Fabricada en Argentina, disponible para envío internacional.",
+            "hashtags": [
+              "#ideasdideco",
+              "#lamparas",
+              "#interiorismo",
+              "#diseño",
+              "#lumbre"
+            ],
+            "cta": "Síguenos para más ideas de iluminación."
+          }
+        ],
+        "ganchos": [
+          "La geometría que no puede ser moldeada.",
+          "PLA biodegradable, no plástico de uso único.",
+          "Tu proyecto, tu color, tu base.",
+          "Impresión 3D: artesanía contemporánea.",
+          "Sin stock, sin desperdicio, solo diseño.",
+          "El detalle que cambia la escala del espacio.",
+          "Del filamento a la luz en 48 horas."
+        ],
+        "serie": {
+          "nombre": "Detrás de la pieza",
+          "descripcion": "Serie semanal que documenta un paso específico del proceso de fabricación de una lámpara Lumbre, desde la selección del color hasta el empaque final.",
+          "episodios": [
+            "Elijo el color: por qué el bronce envejece bien.",
+            "La boquilla y la temperatura: cómo logro la textura fina.",
+            "El ensamble eléctrico: seguridad en la conexión E27.",
+            "El empaque: cómo viaja 550g sin romperse.",
+            "La primera luz: el momento de encender la pieza nueva."
+          ]
+        },
+        "fotos": [
+          {
+            "toma": "Lámpara encendida en penumbra, foco en la textura orgánica del difusor.",
+            "por_que": "Evidencia la calidad de la impresión y el efecto de la luz a través del PLA."
+          },
+          {
+            "toma": "Plano cenital de la impresora 3D instalando el rollo de PLA color crema.",
+            "por_que": "Visualiza el origen del material y conecta con la narrativa de sostenibilidad."
+          },
+          {
+            "toma": "Comparación de escala: la lámpara junto a un libro o vaso en una mesa de noche.",
+            "por_que": "Da referencia de las medidas reales (35x20 cm) para el comprador."
+          },
+          {
+            "toma": "Primer plano de la tecla y el cable de alimentación conectados al portalámpara.",
+            "por_que": "Muestra la terminación técnica y la funcionalidad del accesorio."
+          },
+          {
+            "toma": "La lámpara en un interior real con paredes de color neutro y madera clara.",
+            "por_que": "Contextualiza la pieza en un proyecto residencial de gama media-alta."
+          }
+        ],
+        "advertencia": "El precio de lista actual debe fijarse en USD 89 según la matriz de costos; usar el USD 35 de la ficha antigua perjudica el posicionamiento y el margen. Verificar la cotización real de envío internacional antes de publicar precios finales al cliente."
+      },
+      "compliance": {
+        "veredicto": "con_cambios",
+        "riesgos": [
+          {
+            "nivel": "alto",
+            "tema": "Precio inconsistente",
+            "detalle": "La ficha declara USD 35 pero el pricing usa USD 89; vender a 35 genera pérdida de USD 10,75 por unidad según aprendizaje [4].",
+            "arreglo": "Unificar el precio en USD 89 en toda la comunicación y borrar el valor de USD 35 de la ficha."
+          },
+          {
+            "nivel": "alto",
+            "tema": "Certificación CE ausente",
+            "detalle": "El producto incluye componentes eléctricos (E27, tecla) que exigen certificación CE para vender en la UE, pero no se menciona en el paquete.",
+            "arreglo": "Verificar si la parte eléctrica tiene CE o declarar que el comprador debe gestionar la homologación local."
+          },
+          {
+            "nivel": "medio",
+            "tema": "Base legal de contacto",
+            "detalle": "Los correos a España requieren base legal (interés legítimo) y opt-out claro bajo GDPR, ausentes en los borradores.",
+            "arreglo": "Añadir pie de página con identidad completa y opción de baja en todos los mensajes."
+          },
+          {
+            "nivel": "medio",
+            "tema": "Afirmación de biodegradabilidad",
+            "detalle": "El PLA es biodegradable solo en condiciones industriales específicas; decir 'biodegradable' sin matices puede ser considerado publicidad engañosa.",
+            "arreglo": "Cambiar a 'PLA de origen vegetal' o 'material renovable' para evitar reclamos de greenwashing."
+          },
+          {
+            "nivel": "bajo",
+            "tema": "Flete no cotizado",
+            "detalle": "El precio FOB no incluye flete y el presupuesto es 0; el comprador final podría recibir un precio total muy superior al esperado.",
+            "arreglo": "Indicar explícitamente 'flete a cargo del comprador' y ofrecer cotización previa antes de confirmar pedido."
+          },
+          {
+            "nivel": "bajo",
+            "tema": "Plazos de entrega",
+            "detalle": "No se mencionan plazos de fabricación ni envío, lo que puede generar expectativas erróneas en proyectos con fechas fijas.",
+            "arreglo": "Incluir un rango estimado de días hábiles para fabricación y despacho en la ficha técnica."
+          }
+        ],
+        "claims_a_evitar": [
+          "PLA biodegradable (sin matices sobre condiciones industriales)",
+          "Precio USD 35 (desactualizado y con pérdida)",
+          "Certificación CE implícita (no verificada en el paquete)"
+        ],
+        "email": {
+          "base_legal": "Interés legítimo (GDPR Art. 6.1.f) para empresas B2B en la UE; identificar claramente a Lumbre/Carlos Ameghino.",
+          "opt_out": "Incluir 'Si no desea recibir más comunicaciones, responda a este correo con la palabra BAJA.'",
+          "datos_personales": "Solo datos de contacto profesional (email corporativo); no solicitar ni almacenar datos personales de contacto directo sin consentimiento."
+        },
+        "aduanas": [
+          "Verificar código HS 9405.42 con despachante para evitar retenciones.",
+          "Confirmar si la parte eléctrica requiere CE o NOM según destino.",
+          "Definir Incoterm (DAP vs DDP) para clarificar quién paga aranceles e impuestos."
+        ],
+        "correcciones": [
+          {
+            "campo": "mensaje",
+            "original": "PLA biodegradable",
+            "sugerido": "PLA de origen vegetal"
+          },
+          {
+            "campo": "mensaje",
+            "original": "¿Les envío la ficha técnica con medidas y precio FOB para que evalúen si encaja en algún proyecto residencial actual?",
+            "sugerido": "¿Les envío la ficha técnica con medidas y precio FOB (flete a cargo del comprador) para que evalúen si encaja en su proyecto?"
+          },
+          {
+            "campo": "contenido",
+            "original": "PLA biodegradable, impresión 3D y acabado de autor.",
+            "sugerido": "PLA de origen vegetal, impresión 3D y acabado de autor."
+          },
+          {
+            "campo": "mensaje",
+            "original": "Hola [Nombre],\n\nVi que [Nombre Tienda] trabaja con piezas de diseño que cuentan una historia.",
+            "sugerido": "Hola [Nombre],\n\nSoy Carlos Ameghino de Lumbre (Buenos Aires). Vi que [Nombre Tienda] trabaja con piezas de diseño que cuentan una historia."
+          }
+        ],
+        "checklist": [
+          {
+            "item": "Precio unificado y rentable",
+            "ok": false
+          },
+          {
+            "item": "Certificaciones eléctricas verificadas",
+            "ok": false
+          },
+          {
+            "item": "Opt-out y base legal en correos",
+            "ok": false
+          },
+          {
+            "item": "Afirmaciones de sostenibilidad matizadas",
+            "ok": false
+          },
+          {
+            "item": "Flete y plazos claros",
+            "ok": false
+          }
+        ]
+      },
+      "redteam": {
+        "veredicto": "ajustar",
+        "supuestos_fragiles": [
+          {
+            "supuesto": "El flete internacional cuesta USD 45.",
+            "por_que_falla": "Es un rango genérico; un envío real de 550g a España suele superar los USD 60-80 con embalaje seguro.",
+            "prueba_barata": "Cotizar hoy en DHL/FedEx con peso y medidas reales de la caja embalada."
+          },
+          {
+            "supuesto": "La parte eléctrica (E27/tecla) tiene certificación CE.",
+            "por_que_falla": "Sin CE, la aduana española retiene la mercancía y el comprador no puede venderla legalmente.",
+            "prueba_barata": "Pedir la ficha técnica de certificación CE al proveedor de componentes eléctricos."
+          },
+          {
+            "supuesto": "El precio de lista es USD 89.",
+            "por_que_falla": "La ficha pública sigue en USD 35, lo que genera confusión y pérdida inmediata si se vende a ese valor.",
+            "prueba_barata": "Actualizar la web y el PDF de ficha técnica a USD 89 antes de enviar el primer correo."
+          },
+          {
+            "supuesto": "El PLA es 'biodegradable' en sentido comercial.",
+            "por_que_falla": "En la UE, afirmar biodegradabilidad sin condiciones industriales puede ser considerado greenwashing.",
+            "prueba_barata": "Cambiar el claim a 'PLA de origen vegetal' o 'material renovable' en todos los textos."
+          },
+          {
+            "supuesto": "El tiempo de impresión es de 2 horas.",
+            "por_que_falla": "Si la realidad es 4-10 horas, el costo de mano de obra sube y el margen se evapora.",
+            "prueba_barata": "Cronometrar una impresión completa de SIRI esta semana y pesar el filamento usado."
+          }
+        ],
+        "agujeros": [
+          {
+            "area": "precio",
+            "problema": "La ficha pública (USD 35) contradice el precio de venta (USD 89).",
+            "impacto": "Pérdida de USD 10-15 por unidad o rechazo del comprador por inconsistencia.",
+            "arreglo": "Borrar el precio de USD 35 de la web y del PDF antes de cualquier outreach."
+          },
+          {
+            "area": "aduanas",
+            "problema": "Falta certificación CE para la parte eléctrica en la UE.",
+            "impacto": "Retención en aduana y devolución de la mercancía a Argentina.",
+            "arreglo": "Verificar si el componente E27/tecla tiene CE o declarar que el comprador gestiona la homologación."
+          },
+          {
+            "area": "mensaje",
+            "problema": "Los correos no incluyen base legal GDPR ni opt-out claro.",
+            "impacto": "Riesgo de bloqueo por spam o queja legal en España.",
+            "arreglo": "Añadir pie de página con identidad de Lumbre y opción de baja explícita."
+          },
+          {
+            "area": "operacion",
+            "problema": "Un solo maker no puede cubrir 12 compradores con 3 toques y producción.",
+            "impacto": "Sobrecarga y caída de la calidad del contenido o del servicio.",
+            "arreglo": "Reducir la lista a los 5 compradores con email verificado y alta prioridad."
+          },
+          {
+            "area": "mercado",
+            "problema": "La competencia local en España tiene catálogos amplios y precios más bajos.",
+            "impacto": "La pieza de autor a USD 89 puede quedar fuera de presupuesto para proyectos medianos.",
+            "arreglo": "Posicionarla como pieza de acento exclusiva, no como reemplazo de catálogo."
+          }
+        ],
+        "preguntas_dificiles": [
+          "¿Tenés la certificación CE de la parte eléctrica o la vas a asumir el riesgo de retención?",
+          "¿Cuánto cuesta realmente enviar una caja de 550g a Madrid hoy, con seguro y embalaje?",
+          "¿Por qué un estudio de interiorismo elegiría una lámpara de un maker argentino desconocido sobre una marca local consolidada?",
+          "¿Cuántas horas reales toma imprimir y terminar una unidad de SIRI?",
+          "¿Estás dispuesto a perder el 100% de la inversión en flete si la aduana retiene la primera caja?"
+        ],
+        "escenarios": [
+          {
+            "escenario": "La aduana española retiene la primera caja por falta de CE.",
+            "probabilidad": "media",
+            "plan_b": "Vender solo a México (NOM más flexible) o gestionar la certificación antes de enviar."
+          },
+          {
+            "escenario": "El flete real es USD 80, comiendo el margen directo.",
+            "probabilidad": "alta",
+            "plan_b": "Subir el precio a USD 110 o limitar las ventas a pedidos locales/nacionales."
+          },
+          {
+            "escenario": "Ningún comprador responde a los 3 toques en 10 días.",
+            "probabilidad": "media",
+            "plan_b": "Pivotear a venta directa en Etsy/Instagram con precio DDP incluido."
+          },
+          {
+            "escenario": "La impresión real toma 8 horas, duplicando el costo de mano de obra.",
+            "probabilidad": "media",
+            "plan_b": "Ajustar el precio a USD 120 o simplificar el diseño para reducir tiempo de impresión."
+          }
+        ],
+        "lo_que_sobra": [
+          "Los 4 compradores sin email verificado (Hogarlux, Ludory, Años Luz y uno más) no se pueden contactar de forma efectiva.",
+          "El calendario de contenido de 5 días es excesivo para un maker solo que también debe producir y enviar.",
+          "La mención a ferias como Mestizaje o Casa Decor es irrelevante a corto plazo para un maker solo sin presupuesto de viaje."
+        ],
+        "sello": "El plan muere por la falta de certificación CE y el flete no cotizado, no por la calidad del diseño."
+      },
+      "revision": {
+        "cambios": [
+          {
+            "que": "Unificar precio en USD 89 y eliminar referencias al USD 35 en toda la comunicación.",
+            "por_que": "El precio de USD 35 genera pérdida inmediata y contradice el posicionamiento de autor definido en el pricing."
+          },
+          {
+            "que": "Reemplazar 'PLA biodegradable' por 'PLA de origen vegetal' o 'material renovable'.",
+            "por_que": "Evitar reclamos por greenwashing en la UE, ya que la biodegradabilidad del PLA requiere condiciones industriales específicas."
+          },
+          {
+            "que": "Añadir pie de página con identidad de Lumbre/Carlos Ameghino y opción de baja (opt-out) en todos los correos.",
+            "por_que": "Cumplir con la base legal de interés legítimo bajo GDPR para envíos B2B a España."
+          },
+          {
+            "que": "Incluir mención explícita de que el flete internacional es a cargo del comprador y ofrecer cotización previa.",
+            "por_que": "Gestionar expectativas de precio final y evitar sorpresas en la confirmación del pedido."
+          },
+          {
+            "que": "Reducir la lista de prospectos a los 5 con email verificado y alta prioridad.",
+            "por_que": "Un solo maker no puede sostener 12 contactos con 3 toques y producción simultánea sin caer en sobrecarga."
+          }
+        ],
+        "mensajes": [
+          {
+            "comprador": "Luzespacio",
+            "asunto": "Pieza de autor para Luzespacio: lámpara en 3D",
+            "cuerpo": "Hola equipo de Luzespacio,\n\nSé que en Chamberí valoran el asesoramiento experto y las piezas con carácter. Soy Carlos, maker en Buenos Aires. Mi velador SIRI es una pieza de diseño impresa en 3D con PLA de origen vegetal, pensada como acento, no como producto de masas. Ofrece una alternativa técnica y sostenible a las marcas consolidadas que ya manejan.\n\n¿Les envío la ficha técnica con medidas y precio FOB (USD 89, flete a cargo del comprador) para que evalúen si encaja en algún proyecto residencial actual?\n\nSaludos,\nCarlos Ameghino - Lumbre\nhttps://galapa.com.ar/\nSi no desea recibir más comunicaciones, responda a este correo."
+          },
+          {
+            "comprador": "Ideas Luz",
+            "asunto": "Innovación en iluminación para Ideas Luz",
+            "cuerpo": "Hola equipo de Ideas Luz,\n\nCon 40 años de trayectoria, sé que su catálogo es sólido. Soy Carlos, maker en Buenos Aires. Diseñé el velador SIRI, fabricado bajo demanda con PLA de origen vegetal. Es una pieza que aporta innovación técnica (impresión 3D) y sostenibilidad real, diferenciándose de las opciones LED estándar.\n\nBusco estudios y tiendas que quieran una pieza de autor con historia detrás. ¿Me permiten enviarles la ficha técnica y fotos de alta resolución para su evaluación? El precio FOB es de USD 89 (flete a cargo del comprador).\n\nUn saludo,\nCarlos Ameghino - Lumbre\nhttps://galapa.com.ar/\nSi no desea recibir más comunicaciones, responda a este correo."
+          },
+          {
+            "comprador": "Hogarlux",
+            "asunto": "Diseño sostenible para Hogarlux",
+            "cuerpo": "Hola,\n\nVi que Hogarlux lleva 30 años ofreciendo iluminación decorativa de calidad. Soy Carlos, maker en Buenos Aires. Mi velador SIRI es una pieza única impresa en 3D con PLA de origen vegetal. Se adapta a proyectos específicos con colores a elección, algo que el stock fijo no permite.\n\nComo no encontré un email directo de compras, les escribo por este medio. ¿Tienen contacto preferido para propuestas de nuevos proveedores de diseño de autor? El precio FOB es de USD 89 (flete a cargo del comprador).\n\nSaludos,\nCarlos Ameghino - Lumbre\nhttps://galapa.com.ar/\nSi no desea recibir más comunicaciones, responda a este correo."
+          },
+          {
+            "comprador": "Ludory",
+            "asunto": "Pieza de autor para Ludory",
+            "cuerpo": "Hola equipo de Ludory,\n\nSé que en Ludory cuidan la atención personalizada desde 1929. Soy Carlos, maker en Buenos Aires. El velador SIRI es una pieza de diseño impresa en 3D con material renovable. No es un producto de serie; es un objeto con historia de fabricación que puede sumar valor a su selección de alta calidad.\n\n¿Les parece si les envío la ficha técnica para que vean si el estilo encaja con su curaduría actual? El precio FOB es de USD 89 (flete a cargo del comprador).\n\nUn saludo,\nCarlos Ameghino - Lumbre\nhttps://galapa.com.ar/\nSi no desea recibir más comunicaciones, responda a este correo."
+          }
+        ],
+        "ajustes_plan": [
+          "Cronometrar una impresión completa de SIRI esta semana para validar el tiempo real de producción y ajustar el costo de mano de obra.",
+          "Cotizar el flete real a Madrid y CDMX con peso y medidas de la caja embalada antes de enviar el primer correo.",
+          "Verificar la certificación CE de los componentes eléctricos o declarar explícitamente que el comprador gestiona la homologación local.",
+          "Actualizar la web y el PDF de ficha técnica al precio de USD 89 antes de iniciar el outreach.",
+          "Eliminar los 4 compradores sin email verificado y concentrar el esfuerzo en los 5 restantes."
+        ],
+        "riesgos_que_quedan": [
+          "La aduana española podría retener la mercancía si la certificación CE no se resuelve antes del envío.",
+          "El flete real podría superar los USD 45 estimados, reduciendo el margen directo si el comprador no absorbe el costo total.",
+          "La competencia local en España tiene catálogos amplios y precios más bajos, lo que puede limitar la adopción de la pieza de autor."
+        ]
+      },
+      "synthesis": {
+        "decision": "Vender 5 unidades de SIRI a compradores verificados en España con precio FOB de USD 89, priorizando el envío de la ficha técnica sobre la producción masiva.",
+        "tesis": "Posicionar el velador SIRI como pieza de acento de autor fabricada bajo demanda en Buenos Aires, diferenciándose del stock fijo por personalización y material renovable, no por precio.",
+        "plan_7_dias": [
+          {
+            "dia": 1,
+            "accion": "Cronometrar impresión real de SIRI, pesar filamento y actualizar web/ficha a USD 89.",
+            "resultado": "Costo unitario validado y precio público consistente.",
+            "tiempo": "3 h"
+          },
+          {
+            "dia": 2,
+            "accion": "Cotizar flete DHL/FedEx a Madrid y Barcelona con medidas reales de la caja.",
+            "resultado": "Precio final estimado al comprador y confirmación de viabilidad logística.",
+            "tiempo": "1 h"
+          },
+          {
+            "dia": 3,
+            "accion": "Verificar certificación CE de componentes eléctricos o redactar cláusula de responsabilidad al comprador.",
+            "resultado": "Riesgo aduanero mitigado o asumido explícitamente.",
+            "tiempo": "1 h"
+          },
+          {
+            "dia": 4,
+            "accion": "Enviar primer toque (email) a los 5 compradores con email verificado y alta prioridad.",
+            "resultado": "5 correos enviados con base legal GDPR y precio FOB claro.",
+            "tiempo": "2 h"
+          },
+          {
+            "dia": 5,
+            "accion": "Preparar ficha técnica PDF con medidas, colores y plazos de fabricación.",
+            "resultado": "Documento listo para adjuntar a respuestas o enviar en segundo toque.",
+            "tiempo": "2 h"
+          },
+          {
+            "dia": 6,
+            "accion": "Seguimiento por email a quienes no respondieron (día 4) y responder consultas recibidas.",
+            "resultado": "Mantener la conversación viva sin presión.",
+            "tiempo": "1 h"
+          },
+          {
+            "dia": 7,
+            "accion": "Revisión de métricas y ajuste de mensajes para el segundo ciclo.",
+            "resultado": "Decisión de continuar o pivotar a venta directa online.",
+            "tiempo": "1 h"
+          }
+        ],
+        "prioridades": [
+          {
+            "prioridad": 1,
+            "accion": "Validar costo real de producción y flete antes de vender.",
+            "por_que": "Evitar pérdida de margen por supuestos erróneos de tiempo y envío.",
+            "metrica": "Costo unitario total <= USD 50."
+          },
+          {
+            "prioridad": 2,
+            "accion": "Contactar solo a los 5 compradores con email verificado y alta prioridad.",
+            "por_que": "Maximizar tasa de respuesta con esfuerzo limitado de una persona.",
+            "metrica": "5 correos enviados, 2 respuestas esperadas."
+          },
+          {
+            "prioridad": 3,
+            "accion": "Asegurar cumplimiento aduanero (CE) o trasladar responsabilidad al comprador.",
+            "por_que": "Evitar retención de mercadería en aduana española.",
+            "metrica": "Certificado CE en mano o cláusula firmada."
+          }
+        ],
+        "mensajes_listos": [
+          {
+            "comprador": "Luzespacio",
+            "asunto": "Pieza de autor para Luzespacio: lámpara en 3D",
+            "cuerpo": "Hola equipo de Luzespacio,\n\nSé que en Chamberí valoran el asesoramiento experto y las piezas con carácter. Soy Carlos, maker en Buenos Aires. Mi velador SIRI es una pieza de diseño impresa en 3D con PLA de origen vegetal, pensada como acento, no como producto de masas.\n\n¿Les envío la ficha técnica con medidas y precio FOB (USD 89, flete a cargo del comprador) para que evalúen si encaja en algún proyecto residencial actual?\n\nSaludos,\nCarlos Ameghino - Lumbre\nhttps://galapa.com.ar/\nSi no desea recibir más comunicaciones, responda a este correo."
+          },
+          {
+            "comprador": "Ideas Luz",
+            "asunto": "Innovación en iluminación para Ideas Luz",
+            "cuerpo": "Hola equipo de Ideas Luz,\n\nCon 40 años de trayectoria, sé que su catálogo es sólido. Soy Carlos, maker en Buenos Aires. Diseñé el velador SIRI, fabricado bajo demanda con PLA de origen vegetal. Es una pieza que aporta innovación técnica y sostenibilidad real.\n\n¿Me permiten enviarles la ficha técnica y fotos de alta resolución? El precio FOB es de USD 89 (flete a cargo del comprador).\n\nUn saludo,\nCarlos Ameghino - Lumbre\nhttps://galapa.com.ar/\nSi no desea recibir más comunicaciones, responda a este correo."
+          },
+          {
+            "comprador": "MINIM",
+            "asunto": "Diseño de autor para MINIM Barcelona",
+            "cuerpo": "Hola equipo de MINIM,\n\nVi su curaduría de marcas de autor y me pareció que el velador SIRI encaja. Soy Carlos, maker en Buenos Aires. Es una pieza única impresa en 3D con PLA de origen vegetal, disponible en colores a elección para proyectos específicos.\n\n¿Les interesa la ficha técnica con precio FOB (USD 89, flete a cargo del comprador) para ver si suma valor a su selección actual?\n\nSaludos,\nCarlos Ameghino - Lumbre\nhttps://galapa.com.ar/\nSi no desea recibir más comunicaciones, responda a este correo."
+          },
+          {
+            "comprador": "Insolit BCN",
+            "asunto": "Lámpara de autor en 3D para Insolit",
+            "cuerpo": "Hola equipo de Insolit,\n\nSé que trabajan con ediciones de diseño. Soy Carlos, maker en Buenos Aires. Mi velador SIRI es una pieza de acento fabricada bajo demanda con PLA de origen vegetal, diferenciándose por su proceso artesanal contemporáneo.\n\n¿Les envío la ficha técnica con precio FOB (USD 89, flete a cargo del comprador) para evaluar su encaje en su catálogo?\n\nUn saludo,\nCarlos Ameghino - Lumbre\nhttps://galapa.com.ar/\nSi no desea recibir más comunicaciones, responda a este correo."
+          },
+          {
+            "comprador": "Pilight Shop",
+            "asunto": "Nueva pieza de iluminación para Pilight",
+            "cuerpo": "Hola equipo de Pilight,\n\nVi que atienden proyectos de diseño. Soy Carlos, maker en Buenos Aires. El velador SIRI es una lámpara de autor impresa en 3D con material renovable, ideal para proyectos residenciales que buscan diferenciación.\n\n¿Les parece si les envío la ficha técnica con precio FOB (USD 89, flete a cargo del comprador) para que la evalúen?\n\nSaludos,\nCarlos Ameghino - Lumbre\nhttps://galapa.com.ar/\nSi no desea recibir más comunicaciones, responda a este correo."
+          }
+        ],
+        "presupuesto": {
+          "inversion": 0,
+          "detalle": "Sin gasto inicial. Se asume que el maker ya posee la impresora, filamento y componentes eléctricos. El flete se cobra al comprador.",
+          "retorno_esperado": "Margen bruto de USD 39 por unidad vendida (USD 89 precio - USD 50 costo estimado validado)."
+        },
+        "metricas": [
+          {
+            "metrica": "Tasa de respuesta",
+            "meta": "2 respuestas de los 5 correos enviados",
+            "cuando": "Día 7"
+          },
+          {
+            "metrica": "Costo unitario validado",
+            "meta": "Costo total <= USD 50",
+            "cuando": "Día 1"
+          },
+          {
+            "metrica": "Flete cotizado",
+            "meta": "Cotización real en mano para Madrid y Barcelona",
+            "cuando": "Día 2"
+          }
+        ],
+        "no_hacer": [
+          "No enviar correos a los 7 compradores sin email verificado (Hogarlux, Ludory, Años Luz, Avanluce, Lámparas Barcelona, La Maison, Mar de Cava).",
+          "No producir más de 2 unidades de prueba antes de recibir al menos una consulta real.",
+          "No publicar contenido en redes sociales esta semana; concentrar el tiempo en la validación operativa y el outreach directo.",
+          "No prometer plazos de entrega específicos hasta tener el flete cotizado y el proceso de impresión cronometrado."
+        ],
+        "resumen": "Esta semana no se vende, se valida. Primero medís cuánto tarda y cuánto cuesta imprimir una SIRI real, y actualizás la web a USD 89. Después cotizas el flete a España para saber cuánto le va a costar al comprador. Solo entonces escribís a 5 tiendas de diseño en Madrid y Barcelona que tienen email público. El objetivo no es vender 12 lámparas, sino que 2 te respondan con interés real. Si el flete es alto o el costo sube, ajustás el precio antes de enviar el segundo mensaje. Evitá producir stock y no te distraigas con redes sociales hasta tener una respuesta concreta."
+      },
+      "learning": {
+        "aprendizajes": [
+          {
+            "insight": "La discrepancia entre el precio de ficha (USD 35) y el de venta (USD 89) sigue activa y es el mayor riesgo operativo: sin actualizar la web y el PDF antes del outreach, el maker pierde margen o genera rechazo por inconsistencia.",
+            "evidencia": "PRODUCTO declara precio 35; PRICING fija 89; REDTEAM marca 'agujero' en precio y exige borrar el 35 antes de enviar el primer correo; SYNTHESIS lo coloca como prioridad 1 del día 1.",
+            "confianza": "alta",
+            "aplicar": "Bloquear el outreach hasta que la web y la ficha técnica muestren el mismo precio de venta. Si el costo real supera USD 50, recalcular el precio antes de contactar a nadie.",
+            "etiqueta": "precio"
+          },
+          {
+            "insight": "La falta de certificación CE en los componentes eléctricos (E27/tecla) es un riesgo de retención aduanera en España que no se puede asumir sin verificación previa.",
+            "evidencia": "REDTEAM señala que sin CE la aduana retiene la mercancía; SYNTHESIS dedica el día 3 a verificar la certificación o redactar una cláusula de responsabilidad para el comprador.",
+            "confianza": "alta",
+            "aplicar": "Antes de cotizar flete, obtener la ficha técnica de certificación CE del proveedor de componentes o incluir una cláusula explícita en el contrato que traslade la responsabilidad de homologación al comprador.",
+            "etiqueta": "aduanas"
+          },
+          {
+            "insight": "El flete internacional sigue siendo un supuesto no cotizado que puede duplicar el costo y anular el margen, especialmente si el embalaje seguro supera los 550g declarados.",
+            "evidencia": "PRICING usa USD 45 como supuesto crítico; REDTEAM estima que un envío real a España suele superar los USD 60-80; SYNTHESIS prioriza la cotización DHL/FedEx con medidas reales en el día 2.",
+            "confianza": "alta",
+            "aplicar": "No ofrecer precio final al comprador hasta tener una cotización real de flete con embalaje. Si el flete supera USD 45, ajustar el precio FOB o el precio final al cliente para mantener un margen mínimo del 30%.",
+            "etiqueta": "precio"
+          },
+          {
+            "insight": "La promesa de 'PLA biodegradable' es un riesgo legal de greenwashing en la UE si no se especifican las condiciones de compostaje industrial.",
+            "evidencia": "REDTEAM indica que afirmar biodegradabilidad sin condiciones puede ser considerado greenwashing en la UE; sugiere cambiar el claim a 'PLA de origen vegetal' o 'material renovable'.",
+            "confianza": "media",
+            "aplicar": "Revisar todos los textos de marketing y fichas técnicas para reemplazar 'biodegradable' por 'de origen vegetal' o 'renovable', evitando afirmaciones absolutas sobre el impacto ambiental.",
+            "etiqueta": "mensaje"
+          },
+          {
+            "insight": "La carga operativa de 12 compradores con 3 toques es inviable para un maker solo, obligando a reducir la lista para mantener la calidad del servicio y la producción.",
+            "evidencia": "REDTEAM señala que un solo maker no puede cubrir 12 compradores; SYNTHESIS reduce la lista a 5 compradores con email verificado y alta prioridad en el plan de 7 días.",
+            "confianza": "alta",
+            "aplicar": "Limitar la prospección a 5 contactos de alta prioridad con email verificado. No iniciar la secuencia de 3 toques hasta tener la lista final cerrada y el costo de producción validado.",
+            "etiqueta": "operacion"
+          }
+        ]
       }
     },
     "log": [
@@ -515,15 +2052,350 @@
         "at": "2026-11-19T04:48:42.575Z",
         "text": "Fuente: “tiendas de iluminación y lámparas Madrid” → 6 resultados vía duckduckgo.",
         "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:14:02.898Z",
+        "text": "Misión iniciada. El equipo empieza por el brief y sigue en orden.",
+        "type": "info"
+      },
+      {
+        "at": "2026-11-19T05:14:02.907Z",
+        "text": "Cazador de Compradores: compradores concretos.",
+        "type": "info"
+      },
+      {
+        "at": "2026-11-19T05:14:02.912Z",
+        "text": "Cazador de Compradores: buscando en 5 consultas.",
+        "type": "info"
+      },
+      {
+        "at": "2026-11-19T05:14:12.232Z",
+        "text": "Fuente: “tiendas de iluminación y lámparas Madrid” → 6 resultados vía duckduckgo.",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:14:22.096Z",
+        "text": "Fuente: “lámparas de diseño Barcelona” → 5 resultados vía searxng (search.utilibre.org).",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:14:30.870Z",
+        "text": "Fuente: “showroom iluminación Barcelona” → 6 resultados vía duckduckgo.",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:14:40.951Z",
+        "text": "Fuente: “tiendas de diseño e interiorismo Madrid” → 6 resultados vía searxng (searxng.cups.moe).",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:14:43.007Z",
+        "text": "Fuente: “design lighting stores Ciudad de México” → 3 resultados vía searxng (searxng.cups.moe).",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:14:46.458Z",
+        "text": "Búsqueda parcial: 18 intento(s) fallaron. Sigo con lo disponible. tiendas de iluminación y lámparas Madrid: isci.si: sin resultados relevantes",
+        "type": "warn"
+      },
+      {
+        "at": "2026-11-19T05:14:51.976Z",
+        "text": "Directorio local: 10 tienda(s) reales de estos mercados se suman a la verificación.",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:15:06.205Z",
+        "text": "Verificación: 12 de 18 compradores confirmados; 6 descartados por no ser verificables.",
+        "type": "done"
+      },
+      {
+        "at": "2026-11-19T05:15:06.213Z",
+        "text": "Compradores concretos: listo. 12 compradores verificados de 18 candidatos. 3 segmentos priorizados. 6 candidatos descartados por no ser verificables.",
+        "type": "done"
+      },
+      {
+        "at": "2026-11-19T05:15:06.221Z",
+        "text": "Cazador de Compradores: verificación de contactos.",
+        "type": "info"
+      },
+      {
+        "at": "2026-11-19T05:15:06.224Z",
+        "text": "Verificando contactos de 12 compradores. No se inventan direcciones.",
+        "type": "info"
+      },
+      {
+        "at": "2026-11-19T05:15:06.228Z",
+        "text": "Sin email público: Hogarlux. Queda para formulario o LinkedIn.",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:15:06.228Z",
+        "text": "Contacto público encontrado: Luzespacio.",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:15:06.228Z",
+        "text": "Contacto público encontrado: Ideas Luz.",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:15:06.228Z",
+        "text": "Sin email público: Ludory. Queda para formulario o LinkedIn.",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:15:06.293Z",
+        "text": "Contacto público encontrado: MINIM.",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:15:06.293Z",
+        "text": "Contacto público encontrado: Avanluce.",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:15:06.293Z",
+        "text": "Sin email público: Años Luz. Queda para formulario o LinkedIn.",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:15:06.293Z",
+        "text": "Contacto público encontrado: Insolit BCN.",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:15:06.305Z",
+        "text": "Contacto público encontrado: Lámparas Barcelona.",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:15:06.305Z",
+        "text": "Contacto público encontrado: La Maison Barcelona.",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:15:06.305Z",
+        "text": "Contacto público encontrado: Mar de Cava.",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:15:06.305Z",
+        "text": "Contacto público encontrado: Pilight Shop.",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:15:06.320Z",
+        "text": "Verificación de contactos: listo. 9 emails públicos de 12 compradores.",
+        "type": "done"
+      },
+      {
+        "at": "2026-11-19T05:15:06.326Z",
+        "text": "Especialista en Aduanas: aduanas y logística.",
+        "type": "info"
+      },
+      {
+        "at": "2026-11-19T05:15:06.329Z",
+        "text": "Especialista en Aduanas: buscando en 4 consultas.",
+        "type": "info"
+      },
+      {
+        "at": "2026-11-19T05:15:09.288Z",
+        "text": "Fuente: “import duty lighting fixtures HS 9405 España 2026” → 5 resultados vía duckduckgo.",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:15:12.871Z",
+        "text": "Fuente: “import duty lighting fixtures HS 9405 México 2026” → 5 resultados vía duckduckgo.",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:15:16.451Z",
+        "text": "Fuente: “import duty lighting fixtures HS 9405 Estados Unidos 2026” → 5 resultados vía duckduckgo.",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:15:21.752Z",
+        "text": "Fuente: “CE certification decorative lighting RoHS requirements 2026” → 5 resultados vía duckduckgo.",
+        "type": "search"
+      },
+      {
+        "at": "2026-11-19T05:15:23.202Z",
+        "text": "Búsqueda parcial: 8 intento(s) fallaron. Sigo con lo disponible. import duty lighting fixtures HS 9405 España 2026: searxng.cups.moe: sin resultados relevantes",
+        "type": "warn"
+      },
+      {
+        "at": "2026-11-19T05:15:27.658Z",
+        "text": "Aduanas y logística: listo. Fijar el precio final con margen real y cotizar flete antes de enviar. Confirmar el código HS exacto con un despachante para evitar retenciones en aduana.",
+        "type": "done"
+      },
+      {
+        "at": "2026-11-19T05:15:27.664Z",
+        "text": "Analista de Precios: precios y márgenes.",
+        "type": "info"
+      },
+      {
+        "at": "2026-11-19T05:15:31.272Z",
+        "text": "Precios y márgenes: listo. Fijar precio de lista en USD 89 FOB Buenos Aires para venta directa y USD 65 para interioristas, eliminando el precio antiguo de USD 35. Cotizar flete real a España y México antes de aceptar pedidos DDP.",
+        "type": "done"
+      },
+      {
+        "at": "2026-11-19T05:15:31.279Z",
+        "text": "Redactor Comercial: mensajes de apertura.",
+        "type": "info"
+      },
+      {
+        "at": "2026-11-19T05:15:41.546Z",
+        "text": "Mensajes de apertura: listo. 12 mensajes personalizados y una secuencia de 3 pasos.",
+        "type": "done"
+      },
+      {
+        "at": "2026-11-19T05:15:41.554Z",
+        "text": "Director de Contenido: contenido y narrativa.",
+        "type": "info"
+      },
+      {
+        "at": "2026-11-19T05:15:46.976Z",
+        "text": "Contenido y narrativa: listo. 7 piezas de contenido propuestas.",
+        "type": "done"
+      },
+      {
+        "at": "2026-11-19T05:15:46.983Z",
+        "text": "Guardián de Cumplimiento: cumplimiento y reputación.",
+        "type": "info"
+      },
+      {
+        "at": "2026-11-19T05:15:51.622Z",
+        "text": "Cumplimiento y reputación: listo. Veredicto: con_cambios. 6 riesgos detectados.",
+        "type": "done"
+      },
+      {
+        "at": "2026-11-19T05:15:51.630Z",
+        "text": "Abogado del Diablo: red team.",
+        "type": "info"
+      },
+      {
+        "at": "2026-11-19T05:15:55.951Z",
+        "text": "Red team: listo. Veredicto: ajustar. El plan muere por la falta de certificación CE y el flete no cotizado, no por la calidad del diseño.",
+        "type": "done"
+      },
+      {
+        "at": "2026-11-19T05:15:55.958Z",
+        "text": "Director Comercial: corrección post red team.",
+        "type": "info"
+      },
+      {
+        "at": "2026-11-19T05:16:00.253Z",
+        "text": "Corrección post red team: listo. 5 correcciones aplicadas al plan.",
+        "type": "done"
+      },
+      {
+        "at": "2026-11-19T05:16:00.260Z",
+        "text": "Director Comercial: plan final para el dueño.",
+        "type": "info"
+      },
+      {
+        "at": "2026-11-19T05:16:06.440Z",
+        "text": "Plan final para el dueño: listo. Vender 5 unidades de SIRI a compradores verificados en España con precio FOB de USD 89, priorizando el envío de la ficha técnica sobre la producción masiva.",
+        "type": "done"
+      },
+      {
+        "at": "2026-11-19T05:16:06.448Z",
+        "text": "Memoria y Aprendizaje: aprendizajes.",
+        "type": "info"
+      },
+      {
+        "at": "2026-11-19T05:16:09.590Z",
+        "text": "Aprendizajes: listo. 5 aprendizajes guardados.",
+        "type": "done"
+      },
+      {
+        "at": "2026-11-19T05:16:09.610Z",
+        "text": "Misión terminada. 12 compradores verificados. 3 hilos en la bandeja, 7 piezas de contenido, 5 aprendizajes.",
+        "type": "done"
       }
     ],
-    "stats": {},
+    "stats": {
+      "calls": 10,
+      "tokens": 111956,
+      "prospects": 12,
+      "emails": 9,
+      "messages": 12,
+      "durationMs": 1684724,
+      "createdThreads": 3,
+      "updatedThreads": 0,
+      "skippedProspects": 9,
+      "draftsReady": 3,
+      "draftsToReview": 0,
+      "draftsBlocked": 0
+    },
     "warnings": [],
-    "notices": [],
-    "skippedProspects": [],
+    "notices": [
+      {
+        "type": "directory",
+        "level": "info",
+        "text": "Se sumaron 6 tiendas del directorio semilla porque la búsqueda no alcanzó para cubrir los mercados. Cada una se verificó por su sitio en esta misión."
+      },
+      {
+        "type": "dedupe",
+        "level": "info",
+        "text": "9 compradores no se repitieron: Ideas Luz (ya contactado (email)); MINIM (ya contactado (email)); Avanluce (ya contactado (email)); Años Luz (ya contactado (empresa))…."
+      },
+      {
+        "type": "compliance-note",
+        "level": "info",
+        "text": "1 corrección de cumplimiento no coincide con ningún mensaje (puede ser de otro idioma o de contenido). Revisala en el paso de cumplimiento."
+      }
+    ],
+    "skippedProspects": [
+      {
+        "company": "Ideas Luz",
+        "reason": "ya contactado (email)",
+        "threadId": "thr_751d7d70c30b"
+      },
+      {
+        "company": "MINIM",
+        "reason": "ya contactado (email)",
+        "threadId": "thr_6cb0ef4b803c"
+      },
+      {
+        "company": "Avanluce",
+        "reason": "ya contactado (email)",
+        "threadId": "thr_9df3775fa6d2"
+      },
+      {
+        "company": "Años Luz",
+        "reason": "ya contactado (empresa)",
+        "threadId": "thr_3ee3df7fb9c6"
+      },
+      {
+        "company": "Insolit BCN",
+        "reason": "ya contactado (email)",
+        "threadId": "thr_5394977baa51"
+      },
+      {
+        "company": "Lámparas Barcelona",
+        "reason": "ya contactado (email)",
+        "threadId": "thr_dea1a0ab0e1f"
+      },
+      {
+        "company": "La Maison Barcelona",
+        "reason": "ya contactado (email)",
+        "threadId": "thr_aea3518a1e80"
+      },
+      {
+        "company": "Mar de Cava",
+        "reason": "ya contactado (email)",
+        "threadId": "thr_cc60c0fa8ed8"
+      },
+      {
+        "company": "Pilight Shop",
+        "reason": "ya contactado (email)",
+        "threadId": "thr_8de785de437b"
+      }
+    ],
     "cancelRequested": false,
     "usage": [],
-    "updatedAt": "2026-11-19T04:48:42.575Z"
+    "updatedAt": "2026-11-19T05:16:09.610Z"
   },
   {
     "id": "mis_4d7e8c243231",
@@ -793,15 +2665,15 @@
     "budget": 0,
     "maxProspects": 12,
     "notes": "",
-    "status": "running",
-    "phase": "investigacion",
+    "status": "error",
+    "phase": "error",
     "progress": 25,
-    "currentStep": "customs",
+    "currentStep": null,
     "createdAt": "2026-11-19T04:07:43.483Z",
     "startedAt": "2026-11-19T04:07:43.571Z",
-    "finishedAt": null,
+    "finishedAt": "2026-11-19T05:13:47.304Z",
     "summary": "",
-    "error": "Compradores concretos: El proveedor de IA está limitando las consultas (cuota gratuita agotada o demasiadas seguidas). Esperá un minuto o configurá un proveedor con clave.",
+    "error": "Aduanas y logística: la misión se interrumpió (Lumbre se cerró o reinició). Reintentá para retomarla desde este paso.",
     "steps": [
       {
         "id": "brief",
@@ -859,13 +2731,13 @@
         "id": "customs",
         "agent": "aduanas",
         "title": "Aduanas y logística",
-        "status": "running",
+        "status": "error",
         "critical": false,
         "startedAt": "2026-11-19T04:10:12.856Z",
-        "endedAt": null,
+        "endedAt": "2026-11-19T05:13:47.304Z",
         "durationMs": null,
         "summary": "",
-        "error": null,
+        "error": "La misión se interrumpió antes de terminar este paso.",
         "tokens": 0
       },
       {
@@ -1341,7 +3213,7 @@
     "skippedProspects": [],
     "cancelRequested": true,
     "usage": [],
-    "updatedAt": "2026-11-19T04:10:13.454Z"
+    "updatedAt": "2026-11-19T05:13:47.304Z"
   },
   {
     "id": "mis_b20d7c24a9c6",

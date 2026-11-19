@@ -1,5 +1,161 @@
 [
   {
+    "id": "thr_ed0dbb0efcd1",
+    "demo": false,
+    "missionId": "mis_8d9e1e639399",
+    "productId": "prd_8ecb7702a6de",
+    "contact": {
+      "name": "Negocio familiar de iluminación de alta calidad",
+      "company": "Ludory",
+      "role": "Negocio familiar de iluminación de alta calidad",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "España",
+      "city": "Madrid",
+      "website": "https://ludory.com",
+      "type": "tienda"
+    },
+    "verification": {
+      "webEstado": "activo",
+      "webTitulo": "Ludory · Tu tienda de iluminación en Madrid desde 1929",
+      "webUrl": "https://ludory.com/",
+      "emailEstado": "desconocido",
+      "emailFuente": "",
+      "origen": "fuentes",
+      "fuente": "https://ludory.com/",
+      "at": "2026-11-19T05:16:09.594Z"
+    },
+    "unverified": false,
+    "stage": "nuevo",
+    "score": 60,
+    "source": "Misión SIRI Velador (base alta) · España",
+    "notes": "Tres generaciones de experiencia, atención personalizada, enfoque en calidad y diseño.",
+    "drafts": [
+      {
+        "id": "drf_313e3b36eff1",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Pieza de autor para Ludory",
+        "body": "Hola equipo de Ludory,\n\nSé que en Ludory cuidan la atención personalizada desde 1929. Soy Carlos, maker en Buenos Aires. El velador SIRI es una pieza de diseño impresa en 3D con material renovable. No es un producto de serie; es un objeto con historia de fabricación que puede sumar valor a su selección de alta calidad.\n\n¿Les parece si les envío la ficha técnica para que vean si el estilo encaja con su curaduría actual? El precio FOB es de USD 89 (flete a cargo del comprador).\n\nUn saludo,\nCarlos Ameghino - Lumbre\nhttps://galapa.com.ar/\nSi no desea recibir más comunicaciones, responda a este correo.",
+        "status": "listo",
+        "createdAt": "2026-11-19T05:16:09.594Z",
+        "source": "mision",
+        "revisionApplied": true,
+        "guardVersion": 2
+      }
+    ],
+    "messages": [],
+    "nextStep": "Enviar por formulario o LinkedIn y marcarlo como enviado.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T05:16:09.594Z",
+    "createdAt": "2026-11-19T05:16:09.594Z",
+    "updatedAt": "2026-11-19T05:16:09.594Z"
+  },
+  {
+    "id": "thr_49bdaf04c5ae",
+    "demo": false,
+    "missionId": "mis_8d9e1e639399",
+    "productId": "prd_8ecb7702a6de",
+    "contact": {
+      "name": "Venta de iluminación decorativa y técnica",
+      "company": "Hogarlux",
+      "role": "Venta de iluminación decorativa y técnica",
+      "email": "",
+      "emailStatus": "desconocido",
+      "country": "España",
+      "city": "Madrid",
+      "website": "",
+      "type": "tienda"
+    },
+    "verification": {
+      "webEstado": "sin_sitio",
+      "webTitulo": "",
+      "webUrl": "",
+      "emailEstado": "desconocido",
+      "emailFuente": "",
+      "origen": "fuentes",
+      "fuente": "https://hogarlux.com/",
+      "at": "2026-11-19T05:16:09.594Z"
+    },
+    "unverified": false,
+    "stage": "nuevo",
+    "score": 60,
+    "source": "Misión SIRI Velador (base alta) · España",
+    "notes": "30 años de trayectoria, dos tiendas físicas, amplia gama de productos decorativos.",
+    "drafts": [
+      {
+        "id": "drf_d0a8f8d67fe2",
+        "channel": "formulario",
+        "language": "es",
+        "subject": "Diseño sostenible para Hogarlux",
+        "body": "Hola,\n\nVi que Hogarlux lleva 30 años ofreciendo iluminación decorativa de calidad. Soy Carlos, maker en Buenos Aires. Mi velador SIRI es una pieza única impresa en 3D con PLA de origen vegetal. Se adapta a proyectos específicos con colores a elección, algo que el stock fijo no permite.\n\nComo no encontré un email directo de compras, les escribo por este medio. ¿Tienen contacto preferido para propuestas de nuevos proveedores de diseño de autor? El precio FOB es de USD 89 (flete a cargo del comprador).\n\nSaludos,\nCarlos Ameghino - Lumbre\nhttps://galapa.com.ar/\nSi no desea recibir más comunicaciones, responda a este correo.",
+        "status": "listo",
+        "createdAt": "2026-11-19T05:16:09.594Z",
+        "source": "mision",
+        "revisionApplied": true,
+        "guardVersion": 2
+      }
+    ],
+    "messages": [],
+    "nextStep": "Buscar el sitio o el formulario de la tienda, contactar por ese canal y marcar el borrador como enviado. No hay email público verificado.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T05:16:09.594Z",
+    "createdAt": "2026-11-19T05:16:09.594Z",
+    "updatedAt": "2026-11-19T05:16:09.594Z"
+  },
+  {
+    "id": "thr_74ea601ba6c0",
+    "demo": false,
+    "missionId": "mis_8d9e1e639399",
+    "productId": "prd_8ecb7702a6de",
+    "contact": {
+      "name": "Compras de lámparas de mesa y diseño contemporáneo",
+      "company": "Luzespacio",
+      "role": "Compras de lámparas de mesa y diseño contemporáneo",
+      "email": "luzespacio@luzespacio.com",
+      "emailStatus": "publico",
+      "country": "España",
+      "city": "Madrid",
+      "website": "https://www.luzespacio.com",
+      "type": "tienda"
+    },
+    "verification": {
+      "webEstado": "activo",
+      "webTitulo": "Tienda de iluminación y lámparas de diseño en Madrid",
+      "webUrl": "https://www.luzespacio.com/",
+      "emailEstado": "publico",
+      "emailFuente": "https://www.luzespacio.com/",
+      "origen": "fuentes",
+      "fuente": "https://www.luzespacio.com/",
+      "at": "2026-11-19T05:16:09.594Z"
+    },
+    "unverified": false,
+    "stage": "nuevo",
+    "score": 86,
+    "source": "Misión SIRI Velador (base alta) · España",
+    "notes": "Tienda física y online especializada en lámparas de diseño, con catálogo de marcas variadas y enfoque en asesoramiento.",
+    "drafts": [
+      {
+        "id": "drf_5f9cf603e1d4",
+        "channel": "email",
+        "language": "es",
+        "subject": "Pieza de autor para Luzespacio: lámpara en 3D",
+        "body": "Hola equipo de Luzespacio,\n\nSé que en Chamberí valoran el asesoramiento experto y las piezas con carácter. Soy Carlos, maker en Buenos Aires. Mi velador SIRI es una pieza de diseño impresa en 3D con PLA de origen vegetal, pensada como acento, no como producto de masas. Ofrece una alternativa técnica y sostenible a las marcas consolidadas que ya manejan.\n\n¿Les envío la ficha técnica con medidas y precio FOB (USD 89, flete a cargo del comprador) para que evalúen si encaja en algún proyecto residencial actual?\n\nSaludos,\nCarlos Ameghino - Lumbre\nhttps://galapa.com.ar/\nSi no desea recibir más comunicaciones, responda a este correo.",
+        "status": "listo",
+        "createdAt": "2026-11-19T05:16:09.594Z",
+        "source": "mision",
+        "revisionApplied": true,
+        "guardVersion": 2
+      }
+    ],
+    "messages": [],
+    "nextStep": "Revisar el borrador y enviarlo.",
+    "nextFollowUp": null,
+    "lastActivityAt": "2026-11-19T05:16:09.594Z",
+    "createdAt": "2026-11-19T05:16:09.594Z",
+    "updatedAt": "2026-11-19T05:16:09.594Z"
+  },
+  {
     "id": "thr_demo_1",
     "demo": true,
     "missionId": "mis_demo_aurora",

@@ -1,5 +1,43 @@
 [
   {
+    "id": "act_a497b4b64a34",
+    "type": "mission",
+    "text": "Misión completada: SIRI Velador (base alta) · España. 12 compradores verificados. 3 hilos en la bandeja.",
+    "meta": {
+      "missionId": "mis_8d9e1e639399",
+      "demo": false,
+      "warnings": 0,
+      "prospects": 12
+    },
+    "at": "2026-11-19T05:16:09.614Z"
+  },
+  {
+    "id": "act_82b3dd884acf",
+    "type": "mission",
+    "text": "Misión iniciada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_8d9e1e639399",
+      "demo": false
+    },
+    "at": "2026-11-19T05:14:02.898Z"
+  },
+  {
+    "id": "act_aff1228c180b",
+    "type": "mission",
+    "text": "Misión reintentada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_8d9e1e639399"
+    },
+    "at": "2026-11-19T05:14:02.805Z"
+  },
+  {
+    "id": "act_f399f641c7f1",
+    "type": "system",
+    "text": "Se liberaron 2 misiónes interrumpidas por un cierre de Lumbre.",
+    "meta": {},
+    "at": "2026-11-19T05:13:47.311Z"
+  },
+  {
     "id": "act_74a05266dcb3",
     "type": "mission",
     "text": "Misión iniciada: SIRI Velador (base alta) · España.",
