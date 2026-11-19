@@ -26,6 +26,7 @@ import {
 import { DEPTHS, STEPS } from './lib/prompts.mjs';
 import { clearDemo, seedDemo } from './lib/demo.mjs';
 import { createZip, readZip } from './lib/zip.mjs';
+import { productReadiness } from './lib/readiness.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.LUMBRE_DATA_DIR ? path.resolve(process.env.LUMBRE_DATA_DIR) : path.join(__dirname, 'data');
@@ -35,6 +36,7 @@ const HOST = process.env.LUMBRE_HOST || '127.0.0.1';
 const START_PORT = Number(process.env.PORT || process.env.LUMBRE_PORT || 4321);
 const BODY_LIMIT = 40 * 1024 * 1024;
 const RESTORE_LIMIT = 160 * 1024 * 1024;
+const dispatchInProgress = new Set();
 
 class HttpError extends Error {
   constructor(status, message) {
@@ -325,7 +327,7 @@ function statePayload() {
     flags,
     onboarding: settings.onboarding,
     providers: Object.entries(PROVIDERS).map(([id, p]) => ({ id, ...p })),
-    products,
+    products: products.map((product) => ({ ...product, readiness: productReadiness(product) })),
     missions: missions.map(missionSummary),
     threads: threads.map((thread) => threadSummary(thread, suppressions)),
     content,
@@ -398,6 +400,9 @@ function productFields(body, existing, id) {
     currency: asString(body.currency ?? existing?.currency, store.settings().brand.currency || 'USD').toUpperCase().slice(0, 6),
     cost: body.cost === undefined ? Number(existing?.cost ?? 0) : Math.max(0, asNumber(body.cost)),
     weightGrams: body.weightGrams === undefined ? Number(existing?.weightGrams ?? 0) : Math.max(0, asNumber(body.weightGrams)),
+    capacityPerWeek: body.capacityPerWeek === undefined ? Number(existing?.capacityPerWeek ?? 0) : clamp(asNumber(body.capacityPerWeek), 0, 100000),
+    leadTimeDays: body.leadTimeDays === undefined ? Number(existing?.leadTimeDays ?? 0) : clamp(asNumber(body.leadTimeDays), 0, 365),
+    minimumOrderQuantity: body.minimumOrderQuantity === undefined ? Number(existing?.minimumOrderQuantity ?? 1) : clamp(asNumber(body.minimumOrderQuantity), 1, 100000),
     dimensions: asString(body.dimensions ?? existing?.dimensions),
     materials: asString(body.materials ?? existing?.materials),
     description: asString(body.description ?? existing?.description),
@@ -454,6 +459,8 @@ async function createMission(body) {
     throw new HttpError(400, 'Para lanzar una misión real primero configurá una IA en Ajustes.');
   }
 
+  // La prospección puede iniciarse incompleta: se advierte, no se crean precios ficticios.
+  const readiness = productReadiness(product);
   const id = uid('mis');
   const now = nowISO();
   const steps = DEPTHS[depth].steps.map((stepId) => {
@@ -501,7 +508,8 @@ async function createMission(body) {
     log: [],
     stats: {},
     warnings: [],
-    notices: [],
+    notices: readiness.warnings.length ? [`Ficha del producto incompleta (${readiness.score}%): ${readiness.warnings.join('; ')}`] : [],
+    productReadinessAtLaunch: readiness,
     skippedProspects: [],
     cancelRequested: false,
   };
@@ -625,6 +633,8 @@ async function sendThreadMessage(threadId, body) {
   const settings = store.settings();
   const channel = ['resend', 'webhook', 'manual'].includes(body.channel) ? body.channel : 'manual';
   const company = thread.contact?.company || '';
+  const dispatchKey = `${threadId}:${draft.id}`;
+  if (dispatchInProgress.has(dispatchKey)) throw new HttpError(409, 'Este mensaje ya se está enviando. Esperá el resultado antes de reintentar.');
   let message;
   try {
     message = composeEmail(thread, draft, settings);
@@ -644,11 +654,22 @@ async function sendThreadMessage(threadId, body) {
   if (channel === 'manual') {
     if (body.confirm !== true) throw new HttpError(400, 'Para marcar un mensaje como enviado necesitás confirmarlo.');
   } else {
-    if (channel === 'resend') {
-      try { await sendWithResend(settings, message); } catch (error) { throw new HttpError(502, error.message || 'Resend rechazó el envío.'); }
+    if (channel === 'resend' && !(thread.contact?.emailPermissionAt && thread.contact?.emailPermissionSource)) {
+      throw new HttpError(400, 'Resend no permite prospección no solicitada. Registrá la fecha y evidencia del consentimiento del destinatario en Contacto antes de enviar.');
     }
-    if (channel === 'webhook') {
-      try { await sendWithWebhook(settings, message, { threadId: thread.id, contact: thread.contact }); } catch (error) { throw new HttpError(502, error.message || 'El webhook rechazó el envío.'); }
+    dispatchInProgress.add(dispatchKey);
+    try {
+      // Idempotencia estable para reintentos de Resend (ventana del proveedor).
+      // Nunca usar un ID aleatorio distinto al reintentar el mismo borrador.
+      const idempotencyKey = crypto.createHash('sha256').update(`lumbre:${thread.id}:${draft.id}:${message.text}`).digest('hex');
+      if (channel === 'resend') {
+        await sendWithResend(settings, message, { idempotencyKey });
+      } else if (channel === 'webhook') {
+        await sendWithWebhook(settings, message, { threadId: thread.id, contact: thread.contact, idempotencyKey });
+      }
+    } catch (error) {
+      dispatchInProgress.delete(dispatchKey);
+      throw new HttpError(502, `${error.message || 'El proveedor rechazó el envío.'} Si hubo un corte de red, verificá el panel del proveedor antes de reintentar para evitar duplicados.`);
     }
   }
 
@@ -674,7 +695,7 @@ async function sendThreadMessage(threadId, body) {
   thread.updatedAt = now;
   thread.nextStep = 'Seguimiento con valor en 4 días.';
   thread.nextFollowUp = new Date(Date.now() + 4 * 86400000).toISOString();
-  await store.set('threads', threads);
+  try { await store.set('threads', threads); } finally { dispatchInProgress.delete(dispatchKey); }
   await store.activity('outreach', `Mensaje ${channel === 'manual' ? 'marcado como enviado' : 'enviado'} a ${thread.contact?.company || message.to || 'el contacto'}.`, { threadId, channel });
   return { thread, message: sent, draft };
 }
@@ -1149,14 +1170,14 @@ async function handle(req, res) {
   }
 
   if (pathname === '/api/products' && method === 'GET') {
-    json(res, 200, { products: store.get('products') });
+    json(res, 200, { products: store.get('products').map((product) => ({ ...product, readiness: productReadiness(product) })) });
     return;
   }
 
   if (pathname === '/api/products' && method === 'POST') {
     const body = await readJson(req);
     const product = await createProduct(body);
-    json(res, 201, { product });
+    json(res, 201, { product: { ...product, readiness: productReadiness(product) } });
     return;
   }
 
@@ -1166,12 +1187,13 @@ async function handle(req, res) {
     if (method === 'GET') {
       const product = store.find('products', id);
       if (!product) throw new HttpError(404, 'Producto no encontrado.');
-      json(res, 200, { product });
+      json(res, 200, { product: { ...product, readiness: productReadiness(product) } });
       return;
     }
     if (method === 'PUT') {
       const body = await readJson(req);
-      json(res, 200, { product: await updateProduct(id, body) });
+      const updated = await updateProduct(id, body);
+      json(res, 200, { product: { ...updated, readiness: productReadiness(updated) } });
       return;
     }
     if (method === 'DELETE') {
@@ -1332,6 +1354,16 @@ async function handle(req, res) {
           if (body.contact[key] !== undefined) contact[key] = asString(body.contact[key]).slice(0, 300);
         }
         if (contact.email && !isValidEmail(contact.email)) throw new HttpError(400, 'El email del contacto no es válido.');
+        if (body.contact.emailPermissionSource !== undefined) {
+          const evidence = asString(body.contact.emailPermissionSource).trim().slice(0, 1000);
+          contact.emailPermissionSource = evidence;
+          contact.emailPermissionAt = evidence ? (contact.emailPermissionAt || nowISO()) : null;
+        }
+        // El permiso pertenece a una dirección concreta, no a cualquier cambio futuro de email.
+        if (normalizeEmail(contact.email) !== normalizeEmail(target.contact?.email)) {
+          contact.emailPermissionAt = null;
+          contact.emailPermissionSource = '';
+        }
         target.contact = contact;
       }
       target.updatedAt = nowISO();
@@ -1817,7 +1849,14 @@ async function handle(req, res) {
   }
 
   if (pathname === '/api/webhooks/whatsapp' && method === 'POST') {
-    const payload = await readJson(req, 5 * 1024 * 1024);
+    const appSecret = process.env.LUMBRE_META_APP_SECRET || store.settings().notify?.whatsapp?.appSecret || '';
+    if (!appSecret) throw new HttpError(503, 'Para recibir mensajes de WhatsApp configurá LUMBRE_META_APP_SECRET. No se aceptan webhooks sin firma.');
+    const raw = await readBody(req, 5 * 1024 * 1024);
+    const signature = String(req.headers['x-hub-signature-256'] || '');
+    const expected = `sha256=${crypto.createHmac('sha256', appSecret).update(raw).digest('hex')}`;
+    if (!webhookTokenMatches(signature, expected)) throw new HttpError(401, 'Firma de WhatsApp no válida.');
+    let payload;
+    try { payload = JSON.parse(raw.toString('utf8')); } catch { throw new HttpError(400, 'El webhook no contiene JSON válido.'); }
     res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' });
     res.end('ok');
     const settings = store.settings();
