@@ -7,9 +7,10 @@
   "scripts": {
     "start": "node server.mjs",
     "dev": "node --watch server.mjs",
-    "check": "node --check server.mjs && node --check lib/util.mjs && node --check lib/store.mjs && node --check lib/zip.mjs && node --check lib/ai.mjs && node --check lib/search.mjs && node --check lib/hunter.mjs && node --check lib/directory.mjs && node --check lib/prompts.mjs && node --check lib/demo.mjs && node --check lib/agents.mjs && node --check lib/email.mjs && node --check lib/notify.mjs && node --check lib/outbox.mjs && node --check public/app.js && node --check tools/test-search.mjs && node --check tools/test-flow.mjs && node --check tools/test-verify.mjs && node --check tools/test-telegram.mjs && node --check tools/test-scale.mjs && node --check lib/telegram-actions.mjs",
-    "test": "npm run check && npm run test:search && npm run test:core && npm run test:guards && npm run test:flow && npm run test:verify && npm run test:telegram && npm run test:scale && npm run test:api",
+    "check": "node --check server.mjs && node --check lib/util.mjs && node --check lib/store.mjs && node --check lib/readiness.mjs && node --check tools/test-readiness.mjs && node --check lib/zip.mjs && node --check lib/ai.mjs && node --check lib/search.mjs && node --check lib/hunter.mjs && node --check lib/directory.mjs && node --check lib/prompts.mjs && node --check lib/demo.mjs && node --check lib/agents.mjs && node --check lib/email.mjs && node --check lib/notify.mjs && node --check lib/outbox.mjs && node --check public/app.js && node --check tools/test-search.mjs && node --check tools/test-flow.mjs && node --check tools/test-verify.mjs && node --check tools/test-telegram.mjs && node --check tools/test-scale.mjs && node --check lib/telegram-actions.mjs",
+    "test": "npm run check && npm run test:readiness && npm run test:search && npm run test:core && npm run test:guards && npm run test:flow && npm run test:verify && npm run test:telegram && npm run test:scale && npm run test:api",
     "test:search": "node tools/test-search.mjs",
+    "test:readiness": "node tools/test-readiness.mjs",
     "test:core": "node tools/test-core.mjs",
     "test:guards": "node tools/test-guards.mjs",
     "test:flow": "node tools/test-flow.mjs",
