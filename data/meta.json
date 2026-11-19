@@ -2,17 +2,17 @@
   "createdAt": "2026-11-15T13:03:59.853Z",
   "lastDigest": null,
   "agentUsage": {
-    "director": 27,
-    "mercado": 13,
-    "aduanas": 11,
-    "precios": 12,
-    "cazador": 25,
-    "redactor": 10,
-    "contenido": 8,
-    "cumplimiento": 7,
-    "redteam": 7,
-    "memoria": 8
+    "director": 39,
+    "mercado": 17,
+    "aduanas": 16,
+    "precios": 17,
+    "cazador": 35,
+    "redactor": 15,
+    "contenido": 11,
+    "cumplimiento": 10,
+    "redteam": 10,
+    "memoria": 11
   },
   "telegramOffset": 380588326,
-  "lastMissionAt": "2026-11-19T05:16:09.614Z"
+  "lastMissionAt": "2026-11-19T06:26:04.843Z"
 }

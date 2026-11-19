@@ -1,5 +1,208 @@
 [
   {
+    "id": "act_fe189412001f",
+    "type": "mission",
+    "text": "Misión completada: SIRI Velador (base alta) · España. 12 compradores verificados. 0 hilos en la bandeja.",
+    "meta": {
+      "missionId": "mis_99afbe10b40d",
+      "demo": false,
+      "warnings": 0,
+      "prospects": 12
+    },
+    "at": "2026-11-19T06:26:04.843Z"
+  },
+  {
+    "id": "act_d18f75df075d",
+    "type": "mission",
+    "text": "Misión iniciada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_99afbe10b40d",
+      "demo": false
+    },
+    "at": "2026-11-19T06:25:21.951Z"
+  },
+  {
+    "id": "act_c032224e91b1",
+    "type": "mission",
+    "text": "Misión creada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_99afbe10b40d",
+      "demo": false
+    },
+    "at": "2026-11-19T06:25:21.865Z"
+  },
+  {
+    "id": "act_46e5b6c207f7",
+    "type": "mission",
+    "text": "Misión completada: SIRI Velador (base alta) · España. 12 compradores verificados. 0 hilos en la bandeja.",
+    "meta": {
+      "missionId": "mis_f33d39e773b0",
+      "demo": false,
+      "warnings": 0,
+      "prospects": 12
+    },
+    "at": "2026-11-19T06:23:11.459Z"
+  },
+  {
+    "id": "act_e906dbfe8773",
+    "type": "mission",
+    "text": "Misión iniciada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_f33d39e773b0",
+      "demo": false
+    },
+    "at": "2026-11-19T06:22:11.303Z"
+  },
+  {
+    "id": "act_72d36c0dcbf7",
+    "type": "mission",
+    "text": "Misión reintentada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_f33d39e773b0"
+    },
+    "at": "2026-11-19T06:22:11.213Z"
+  },
+  {
+    "id": "act_3df8ef2c0e02",
+    "type": "mission",
+    "text": "Misión eliminada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_b20d7c24a9c6"
+    },
+    "at": "2026-11-19T06:21:51.897Z"
+  },
+  {
+    "id": "act_6205904986f7",
+    "type": "mission",
+    "text": "Misión eliminada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_980d6581290d"
+    },
+    "at": "2026-11-19T06:18:14.416Z"
+  },
+  {
+    "id": "act_bfa486af3bdc",
+    "type": "mission",
+    "text": "Misión eliminada: SIRI Velador (base alta) · Argentina.",
+    "meta": {
+      "missionId": "mis_4d7e8c243231"
+    },
+    "at": "2026-11-19T06:18:04.946Z"
+  },
+  {
+    "id": "act_28de75fad99f",
+    "type": "mission",
+    "text": "Misión eliminada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_b9bb8cf85ee7"
+    },
+    "at": "2026-11-19T06:17:55.649Z"
+  },
+  {
+    "id": "act_0ba6bc479858",
+    "type": "mission",
+    "text": "Misión completada: SIRI Velador (base alta) · Argentina. 6 compradores verificados. 6 hilos en la bandeja.",
+    "meta": {
+      "missionId": "mis_8e389ee8aa48",
+      "demo": false,
+      "warnings": 0,
+      "prospects": 6
+    },
+    "at": "2026-11-19T06:16:51.785Z"
+  },
+  {
+    "id": "act_3f26361a5032",
+    "type": "mission",
+    "text": "Misión iniciada: SIRI Velador (base alta) · Argentina.",
+    "meta": {
+      "missionId": "mis_8e389ee8aa48",
+      "demo": false
+    },
+    "at": "2026-11-19T06:16:10.884Z"
+  },
+  {
+    "id": "act_3304bfe47a7c",
+    "type": "mission",
+    "text": "Misión reintentada: SIRI Velador (base alta) · Argentina.",
+    "meta": {
+      "missionId": "mis_8e389ee8aa48"
+    },
+    "at": "2026-11-19T06:16:10.803Z"
+  },
+  {
+    "id": "act_c3576a1db586",
+    "type": "mission",
+    "text": "Misión completada: SIRI Velador (base alta) · España. 12 compradores verificados. 0 hilos en la bandeja.",
+    "meta": {
+      "missionId": "mis_2f26662fe27c",
+      "demo": false,
+      "warnings": 0,
+      "prospects": 12
+    },
+    "at": "2026-11-19T06:14:08.270Z"
+  },
+  {
+    "id": "act_a293b3a52c45",
+    "type": "mission",
+    "text": "Misión eliminada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_6db79905b862"
+    },
+    "at": "2026-11-19T06:13:50.931Z"
+  },
+  {
+    "id": "act_26e8a903fd8e",
+    "type": "mission",
+    "text": "Misión completada: SIRI Velador (base alta) · España. 12 compradores verificados. 4 hilos en la bandeja.",
+    "meta": {
+      "missionId": "mis_d3cfa818989f",
+      "demo": false,
+      "warnings": 0,
+      "prospects": 12
+    },
+    "at": "2026-11-19T06:13:07.394Z"
+  },
+  {
+    "id": "act_fe230a0fbe3b",
+    "type": "mission",
+    "text": "Misión iniciada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_2f26662fe27c",
+      "demo": false
+    },
+    "at": "2026-11-19T06:13:01.436Z"
+  },
+  {
+    "id": "act_bdade5d21e21",
+    "type": "mission",
+    "text": "Misión creada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_2f26662fe27c",
+      "demo": false
+    },
+    "at": "2026-11-19T06:13:01.352Z"
+  },
+  {
+    "id": "act_e10cfc02b84a",
+    "type": "mission",
+    "text": "Misión iniciada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_d3cfa818989f",
+      "demo": false
+    },
+    "at": "2026-11-19T06:11:29.979Z"
+  },
+  {
+    "id": "act_bc47e115ead3",
+    "type": "mission",
+    "text": "Misión creada: SIRI Velador (base alta) · España.",
+    "meta": {
+      "missionId": "mis_d3cfa818989f",
+      "demo": false
+    },
+    "at": "2026-11-19T06:11:29.890Z"
+  },
+  {
     "id": "act_a497b4b64a34",
     "type": "mission",
     "text": "Misión completada: SIRI Velador (base alta) · España. 12 compradores verificados. 3 hilos en la bandeja.",

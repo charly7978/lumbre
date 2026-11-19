@@ -1715,8 +1715,8 @@ function artifactBrief(a) {
 function artifactResearch(a) {
   return `<div class="artifact">
     ${a.panorama ? `<div class="artifact-lead">${esc(a.panorama)}</div>` : ''}
-    ${arr(a.tendencias).length ? `<div class="artifact-section"><h4>Tendencias</h4><div class="artifact-grid-2">${a.tendencias.map((t) => artifactCard(t.tendencia, `${esc(t.evidencia || '')}${t.fuente ? `<br>${sourceLink(t.fuente)}` : ''}`)).join('')}</div></div>` : ''}
-    ${arr(a.competidores).length ? `<div class="artifact-section"><h4>Competencia</h4>${tableBlock(['Competidor', 'País', 'Precio', 'Canal', 'Fortaleza', 'Hueco'], a.competidores.map((c) => [c.nombre, c.pais, c.precio, c.canal, c.fortaleza, c.hueco]))}</div>` : ''}
+    ${arr(a.tendencias).length ? `<div class="artifact-section"><h4>Tendencias</h4><div class="artifact-grid-2">${a.tendencias.map((t) => artifactCard(t.tendencia, `${esc(t.evidencia || '')}${t.fuente ? `<br>${sourceLink(t.fuente)}` : ''}`, t.fuente ? `<span class="badge ${t.fuente_verificada ? 'badge-ok' : 'badge-warn'}">${t.fuente_verificada ? 'Confirmado en fuente' : 'Hipótesis del modelo'}</span>` : '')).join('')}</div></div>` : ''}
+    ${arr(a.competidores).length ? `<div class="artifact-section"><h4>Competencia</h4>${tableBlock(['Competidor', 'País', 'Precio', 'Canal', 'Fortaleza', 'Hueco', 'Fuente'], a.competidores.map((c) => [c.nombre, c.pais, c.precio, c.canal, c.fortaleza, c.hueco, c.fuente ? `<span class="badge ${c.fuente_verificada ? 'badge-ok' : 'badge-warn'}">${c.fuente_verificada ? 'Confirmado' : 'Hipótesis'}</span>` : '—']))}</div>` : ''}
     ${obj(a.demanda).senales?.length || a.demanda?.temporadas || a.demanda?.terminos?.length ? `<div class="artifact-section"><h4>Demanda</h4>${listBlock(a.demanda.senales)}${a.demanda.temporadas ? `<p class="small"><b>Temporadas:</b> ${esc(a.demanda.temporadas)}</p>` : ''}${arr(a.demanda.terminos).length ? `<div class="artifact-chips">${a.demanda.terminos.map((t) => `<span class="artifact-chip">${esc(t)}</span>`).join('')}</div>` : ''}</div>` : ''}
     ${arr(a.canales).length ? `<div class="artifact-section"><h4>Canales</h4><div class="artifact-grid-2">${a.canales.map((c) => artifactCard(c.canal, `${esc(c.por_que || '')}${c.esfuerzo ? `<br><b>Esfuerzo:</b> ${esc(c.esfuerzo)}` : ''}`)).join('')}</div></div>` : ''}
     ${a.conclusion ? `<div class="artifact-callout"><b>Conclusión</b>${esc(a.conclusion)}</div>` : ''}
@@ -1728,7 +1728,7 @@ function artifactCustoms(a) {
   return `<div class="artifact">
     ${a.resumen ? `<div class="artifact-lead">${esc(a.resumen)}</div>` : ''}
     ${arr(a.paises).length ? `<div class="artifact-section"><h4>País por país</h4><div class="country-grid">${a.paises.map((p) => `<div class="country-card">
-      <div class="country-card-head"><h5>${esc(p.pais)}</h5>${riskBadge(p.riesgo)}</div>
+      <div class="country-card-head"><h5>${esc(p.pais)}</h5>${riskBadge(p.riesgo)}${p.fuente ? `<span class="badge ${p.fuente_verificada ? 'badge-ok' : 'badge-warn'}">${p.fuente_verificada ? 'Confirmado en fuente' : 'Hipótesis del modelo'}</span>` : ''}</div>
       <div class="country-line"><span>HS</span><b>${esc(p.codigo_hs || 'sin dato')}</b></div>
       <div class="country-line"><span>Arancel</span><b>${esc(p.arancel_estimado || 'sin dato')}</b></div>
       <div class="country-line"><span>Impuestos</span><b>${esc(p.impuestos || 'sin dato')}</b></div>
@@ -1751,7 +1751,7 @@ function artifactPricing(a) {
     ${scenarios.length ? `<div class="price-hero">${scenarios.slice(0, 3).map((s, i) => `<div class="price-tile ${i === 0 ? 'hot' : ''}"><span>${esc(s.canal || `Canal ${i + 1}`)}</span><b>${esc(money(s.precio, a.moneda || 'USD'))}</b><em>${num(s.margen_pct) ? `${num(s.margen_pct)}% margen` : ''}</em></div>`).join('')}</div>` : ''}
     ${obj(a.costos) && Object.keys(a.costos).length ? `<div class="artifact-section"><h4>Costos</h4><div class="artifact-kv">${Object.entries(a.costos).map(([k, v]) => `<div><dt>${esc(k.replace(/_/g, ' '))}</dt><dd>${esc(typeof v === 'number' ? money(v, a.moneda || 'USD') : v)}</dd></div>`).join('')}</div></div>` : ''}
     ${scenarios.length ? `<div class="artifact-section"><h4>Escenarios</h4><div class="scenario-grid">${scenarios.map((s) => `<div class="scenario"><h5>${esc(s.canal)}</h5><b>${esc(money(s.precio, a.moneda || 'USD'))}</b><div class="margin-pill">${num(s.margen_pct)}% margen</div><p>${esc(s.notas || '')}${s.ganancia ? `<br>Ganancia: ${esc(money(s.ganancia, a.moneda || 'USD'))}` : ''}</p></div>`).join('')}</div></div>` : ''}
-    ${arr(a.landed_cost).length ? `<div class="artifact-section"><h4>Costo aterrizado</h4>${tableBlock(['País', 'Costo', 'Supuestos'], a.landed_cost.map((l) => [l.pais, money(l.costo, a.moneda || 'USD'), l.supuestos]))}</div>` : ''}
+    ${arr(a.landed_cost).length ? `<div class="artifact-section"><h4>Costo aterrizado</h4>${tableBlock(['País', 'Costo puesto en destino', 'Supuestos', 'Fuente'], a.landed_cost.map((l) => [l.pais, money(l.costo_puesto_destino || l.costo, a.moneda || 'USD'), l.supuestos, '<span class="badge badge-ok">Calculado en código</span>']))}</div>` : ''}
     ${arr(a.descuentos).length ? `<div class="artifact-section"><h4>Descuentos</h4>${tableBlock(['Tipo', 'Condición', 'Límite'], a.descuentos.map((d) => [d.tipo, d.condicion, d.limite]))}</div>` : ''}
     ${a.psicologia ? `<div class="artifact-callout"><b>Psicología de precio</b>${esc(a.psicologia)}</div>` : ''}
     ${arr(a.supuestos).length ? `<div class="artifact-section"><h4>Supuestos del modelo</h4>${listBlock(a.supuestos)}</div>` : ''}

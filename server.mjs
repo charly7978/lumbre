@@ -6,7 +6,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { exec } from 'node:child_process';
 
-import { Store, maskSettings, settingsFlags } from './lib/store.mjs';
+import { Store, maskSettings, settingsFlags, SECRET_PATHS } from './lib/store.mjs';
 import {
   asArray, asNumber, asObject, asString, clamp, dataUrlToBuffer, localDayKey, nowISO,
   sniffImage, toCsv, truncate, uid,
@@ -869,13 +869,25 @@ async function walkFiles(dir, base = dir) {
   return out;
 }
 
-async function makeBackup() {
+async function makeBackup({ safe = false } = {}) {
   const bundle = store.exportBundle();
+  if (safe && bundle?.data?.settings) {
+    for (const path of SECRET_PATHS) {
+      // borrar la clave del bundle
+      const parts = path.split('.');
+      let cursor = bundle.data.settings;
+      for (let i = 0; i < parts.length - 1; i += 1) {
+        if (!cursor || typeof cursor !== 'object') { cursor = null; break; }
+        cursor = cursor[parts[i]];
+      }
+      if (cursor && typeof cursor === 'object') cursor[parts.at(-1)] = '';
+    }
+  }
   const entries = [
     { name: 'lumbre-data.json', data: Buffer.from(JSON.stringify(bundle, null, 2), 'utf8') },
     {
       name: 'LEEME-BACKUP.txt',
-      data: Buffer.from(`Copia de seguridad de Lumbre\nFecha: ${nowISO()}\n\nIncluye datos y fotos. Contiene claves de API en texto plano: guardala en un lugar privado.\nPara restaurar: Ajustes → Datos → Restaurar copia.\n`, 'utf8'),
+      data: Buffer.from(`Copia de seguridad de Lumbre${safe ? ' (sin claves)' : ''}\nFecha: ${nowISO()}\n\n${safe ? 'No incluye claves de API: cargalas de nuevo al restaurar.' : 'Incluye datos y fotos. Contiene claves de API en texto plano: guardala en un lugar privado.'}\nPara restaurar: Ajustes → Datos → Restaurar copia.\n`, 'utf8'),
     },
   ];
   const files = await walkFiles(store.mediaDir);
@@ -1036,6 +1048,17 @@ async function serveStatic(req, res, pathname) {
    ───────────────────────────────────────────────────────────── */
 
 async function handle(req, res) {
+  // Protección contra DNS rebinding: solo se aceptan Host locales.
+  const requestPath = String(req.url || '').split('?')[0];
+  const isWebhook = requestPath.startsWith('/api/webhooks/');
+  const hostHeader = String(req.headers.host || '').trim();
+  const hostName = hostHeader.split(':')[0].toLowerCase().replace(/^\[|\]$/g, '');
+  const allowedHosts = new Set(['localhost', '127.0.0.1', '::1']);
+  if (!isWebhook && hostName && !allowedHosts.has(hostName)) {
+    res.writeHead(403, { 'content-type': 'text/plain' });
+    res.end('Host no permitido.');
+    return;
+  }
   setCommonHeaders(res);
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const pathname = url.pathname;
@@ -1144,8 +1167,7 @@ async function handle(req, res) {
       const product = store.find('products', id);
       if (!product) throw new HttpError(404, 'Producto no encontrado.');
       for (const photo of product.photos || []) await store.removeMedia(photo.file);
-      store.set('products', store.get('products').filter((p) => p.id !== id));
-      await store.set('products', store.get('products'));
+      await store.set('products', store.get('products').filter((p) => p.id !== id));
       await store.activity('product', `Producto eliminado: ${product.name}.`, { productId: id });
       json(res, 200, { ok: true });
       return;
@@ -1197,8 +1219,7 @@ async function handle(req, res) {
     if (method === 'DELETE') {
       if (!mission) throw new HttpError(404, 'Misión no encontrada.');
       if (['running', 'queued'].includes(mission.status)) throw new HttpError(409, 'No se puede borrar una misión en curso.');
-      store.set('missions', store.get('missions').filter((m) => m.id !== id));
-      await store.set('missions', store.get('missions'));
+      await store.set('missions', store.get('missions').filter((m) => m.id !== id));
       await store.activity('mission', `Misión eliminada: ${mission.name}.`, { missionId: id });
       json(res, 200, { ok: true });
       return;
@@ -1307,8 +1328,7 @@ async function handle(req, res) {
       return;
     }
     if (method === 'DELETE') {
-      store.set('threads', store.get('threads').filter((t) => t.id !== id));
-      await store.set('threads', store.get('threads'));
+      await store.set('threads', store.get('threads').filter((t) => t.id !== id));
       await store.activity('reply', `Conversación eliminada: ${thread.contact?.company || id}.`, { threadId: id });
       json(res, 200, { ok: true });
       return;
@@ -1550,8 +1570,7 @@ async function handle(req, res) {
       return;
     }
     if (method === 'DELETE') {
-      store.set('content', store.get('content').filter((c) => c.id !== id));
-      await store.set('content', store.get('content'));
+      await store.set('content', store.get('content').filter((c) => c.id !== id));
       json(res, 200, { ok: true });
       return;
     }
@@ -1601,8 +1620,7 @@ async function handle(req, res) {
       return;
     }
     if (method === 'DELETE') {
-      store.set('learnings', store.get('learnings').filter((l) => l.id !== id));
-      await store.set('learnings', store.get('learnings'));
+      await store.set('learnings', store.get('learnings').filter((l) => l.id !== id));
       json(res, 200, { ok: true });
       return;
     }
@@ -1625,8 +1643,7 @@ async function handle(req, res) {
     const id = decodeURIComponent(suppressionMatch[1]);
     const item = store.find('suppressions', id);
     if (!item) throw new HttpError(404, 'Contacto no encontrado en la lista.');
-    store.set('suppressions', store.get('suppressions').filter((s) => s.id !== id));
-    await store.set('suppressions', store.get('suppressions'));
+    await store.set('suppressions', store.get('suppressions').filter((s) => s.id !== id));
     const release = await releaseSuppression(item);
     await store.activity('system', `Contacto reactivado: ${item.email || item.domain || item.company}.${release.released ? ` ${release.released} borrador(es) volvieron a revisión.` : ''}`, { suppressionId: id });
     json(res, 200, { ok: true, ...release });
@@ -1666,7 +1683,8 @@ async function handle(req, res) {
   }
 
   if (pathname === '/api/backup' && method === 'GET') {
-    const zip = await makeBackup();
+    const safe = url.searchParams.get('safe') === '1' || url.searchParams.get('secrets') === '0';
+    const zip = await makeBackup({ safe });
     const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     res.writeHead(200, {
       'content-type': 'application/zip',
@@ -1875,6 +1893,7 @@ if (!process.env.LUMBRE_NO_OPEN) {
 async function shutdown() {
   console.log('\nCerrando Lumbre…');
   notifier.stop();
+  try { await store.flushPending(); } catch { /* noop */ }
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(0), 2500).unref();
 }

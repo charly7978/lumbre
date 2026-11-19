@@ -13,7 +13,8 @@
     "test:core": "node tools/test-core.mjs",
     "test:guards": "node tools/test-guards.mjs",
     "test:flow": "node tools/test-flow.mjs",
-    "test:api": "node tools/run-api-test.mjs"
+    "test:api": "node tools/run-api-test.mjs",
+    "verify:directory": "node tools/verify-directory.mjs"
   },
   "engines": {
     "node": ">=20"

@@ -7,6 +7,7 @@ import {
   reconcileThreads, releaseInterruptedMissions, sanitizeLegacyThreads, verifyProspectArtifact,
 } from '../lib/agents.mjs';
 import { candidatesForMarkets, directorySize, SEED_BUYERS } from '../lib/directory.mjs';
+import { verifyWebsite } from '../lib/hunter.mjs';
 
 let passed = 0;
 const dirs = [];
@@ -280,6 +281,13 @@ ok(verifiedArtifact.descartados.some((item) => /fuente|sitio/i.test(item.motivo)
   const again = await releaseInterruptedMissions(store);
   ok(again.released === 0, 'la limpieza es idempotente');
 }
+/* 8. Verificación de compradores: un dominio con el nombre pero sin
+   contenido de iluminación (homónimo, estacionado, otro rubro) falla. */
+{
+  const r = await verifyWebsite('https://example.com', 'Example');
+  ok(!r.ok, 'un dominio que contiene el nombre pero no habla de iluminación falla', r.reason || r.status);
+}
+
 for (const dir of dirs) {
   await fs.rm(dir, { recursive: true, force: true });
 }
