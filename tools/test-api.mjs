@@ -70,6 +70,32 @@ await expectStatus('webhook con x-forwarded-for sin token', 403, () => api('/api
   body: JSON.stringify({ from: 'Marta <marta@luzdeautor.test>', to: 'hola@lumbre.test', subject: 'Consulta', text: 'Hola, me interesa.' }),
 }));
 
+/* 2b. Preparación comercial y seguridad de WhatsApp. */
+const productsAudit = await api('/api/products');
+if (!productsAudit.products.length || typeof productsAudit.products[0].readiness?.score !== 'number') {
+  throw new Error('La preparación comercial no está disponible en el catálogo.');
+}
+const sampleProduct = productsAudit.products[0];
+const changedProduct = await api(`/api/products/${sampleProduct.id}`, {
+  method: 'PUT',
+  body: JSON.stringify({ capacityPerWeek: 16, leadTimeDays: 5, minimumOrderQuantity: 2 }),
+});
+if (changedProduct.product.capacityPerWeek !== 16 || changedProduct.product.leadTimeDays !== 5 || changedProduct.product.minimumOrderQuantity !== 2) {
+  throw new Error('Los datos de producción no se conservan correctamente.');
+}
+console.log('ficha comercial y producción OK');
+await expectStatus('WhatsApp sin firma bloqueado', 401, () => api('/api/webhooks/whatsapp', {
+  method: 'POST', body: JSON.stringify({ object: 'whatsapp_business_account', entry: [] }),
+}));
+const crypto = await import('node:crypto');
+const waBody = JSON.stringify({ object: 'whatsapp_business_account', entry: [] });
+const signature = `sha256=${crypto.createHmac('sha256', 'test-app-secret').update(waBody).digest('hex')}`;
+const waOk = await fetch(`${base}/api/webhooks/whatsapp`, {
+  method: 'POST', headers: { 'content-type': 'application/json', 'x-hub-signature-256': signature }, body: waBody,
+});
+if (waOk.status !== 200) throw new Error('El webhook válido de WhatsApp se rechazó.');
+console.log('WhatsApp con firma válida OK');
+
 /* 3. Semántica de supresiones. */
 const byEmail = await api('/api/suppressions', { method: 'POST', body: JSON.stringify({ email: 'uno@dominio.test', company: 'Uno' }) });
 console.log('suppression email domain:', JSON.stringify(byEmail.suppression.domain), '| blocked domain?', Boolean(byEmail.suppression.domain));
