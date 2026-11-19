@@ -72,14 +72,19 @@ clearSearchCache();
 const noneDetail = await searchWebDetailed({ search: { provider: 'none' } }, 'tiendas de diseño Madrid');
 ok(noneDetail.results.length === 0 && noneDetail.errors.length === 0, 'proveedor none no inventa resultados ni errores');
 
-const tavilyDetail = await searchWebDetailed({ search: { provider: 'tavily', apiKey: '' } }, 'tiendas de diseño Madrid');
-ok(tavilyDetail.errors.some((e) => /Falta la clave/.test(e)), 'proveedor sin clave explica el error');
-
-let result = null;
+// Simulamos proveedores externos caídos sin depender de la disponibilidad
+// de las instancias públicas ni ralentizar la CI.
+const originalFetch = globalThis.fetch;
+globalThis.fetch = async () => { throw new Error('red no disponible (prueba controlada)'); };
 try {
-  result = await searchWeb({ search: { provider: 'tavily', apiKey: '' } }, 'tiendas de diseÃ±o Madrid');
-} catch { result = null; }
-ok(Array.isArray(result) || result === null, 'searchWeb con fallback devuelve lista o lanza');
+  const tavilyDetail = await searchWebDetailed({ search: { provider: 'tavily', apiKey: '' } }, 'tiendas de diseño Madrid');
+  ok(tavilyDetail.errors.some((e) => /Falta la clave/.test(e)), 'proveedor sin clave explica el error');
+  let result = null;
+  try { result = await searchWeb({ search: { provider: 'tavily', apiKey: '' } }, 'tiendas de diseño Madrid'); } catch { /* error explicito */ }
+  ok(Array.isArray(result) || result === null, 'searchWeb con fallback devuelve lista o informa error');
+} finally {
+  globalThis.fetch = originalFetch;
+}
 
 /* 413 de Groq por tokens por minuto: es cuota temporal, no un pedido
    imposible. Si se tratara como error fatal, el paso se cae y la misión
