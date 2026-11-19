@@ -220,6 +220,12 @@ function buildIntel(missions) {
       const key = String(country.pais || '').trim();
       if (!key) continue;
       const previous = countries.get(key);
+      const currentVerified = Boolean(country.fuente_verificada) || country.estado_fuente === 'confirmado';
+      const previousVerified = Boolean(previous?.fuente_verificada) || previous?.estado_fuente === 'confirmado';
+      // Elegir fuente verificada mas reciente; si ninguna, la mas reciente sin verificar.
+      const useCurrent = !previous || currentVerified || (!previousVerified);
+      const chosenFuente = useCurrent ? (country.fuente || previous?.fuente || '') : (previous?.fuente || '');
+      const chosenVerified = useCurrent ? currentVerified : previousVerified;
       countries.set(key, {
         pais: key,
         arancel: country.arancel_estimado || previous?.arancel || '',
@@ -230,7 +236,9 @@ function buildIntel(missions) {
         courier: country.courier || previous?.courier || '',
         incoterm: country.incoterm || previous?.incoterm || '',
         notas: country.notas || previous?.notas || '',
-        fuente: country.fuente || previous?.fuente || '',
+        fuente: chosenFuente,
+        fuente_verificada: chosenVerified,
+        estado_fuente: chosenVerified ? 'confirmado' : 'no_verificado',
         misiones: [...(previous?.misiones || []), mission.name].slice(0, 5),
         demo: previous ? previous.demo && Boolean(mission.demo) : Boolean(mission.demo),
         actualizado: mission.finishedAt || mission.updatedAt,
@@ -278,10 +286,11 @@ function broadcast(missionId, event) {
 
 const notifier = new Notifier({
   store,
-  ask: async (question) => {
-    const result = await askTeam({ question, agentId: 'director', store });
+  ask: async (question, channel = 'web', history = []) => {
+    const result = await askTeam({ question, agentId: 'director', store, history, channel });
     return result.demo ? `(Modo demo) ${result.answer}` : result.answer;
   },
+  actions: { createMission, sendThreadMessage },
 });
 notifier.start();
 
@@ -1095,7 +1104,11 @@ async function handle(req, res) {
 
   if (pathname === '/api/settings' && method === 'PUT') {
     const body = await readJson(req);
+    const prevToken = store.settings()?.notify?.telegram?.token;
     const settings = await store.saveSettings(body);
+    if (body?.notify?.telegram?.token && body.notify.telegram.token !== prevToken) {
+      await store.setMeta({ telegramOffset: 0 });
+    }
     notifier.refresh();
     await store.activity('settings', 'Ajustes actualizados.');
     json(res, 200, { settings: maskSettings(settings), flags: settingsFlags(settings) });
@@ -1893,7 +1906,7 @@ if (!process.env.LUMBRE_NO_OPEN) {
 async function shutdown() {
   console.log('\nCerrando Lumbre…');
   notifier.stop();
-  try { await store.flushPending(); } catch { /* noop */ }
+  try { await store.flush(); } catch { /* noop */ }
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(0), 2500).unref();
 }

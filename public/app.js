@@ -3058,7 +3058,7 @@ function renderMarkets() {
 
 function marketCountryCard(country) {
   return `<div class="country-card">
-    <div class="country-card-head"><h5>${esc(country.pais)} ${demoBadge(country.demo)}</h5>${riskBadge(country.riesgo)}</div>
+    <div class="country-card-head"><h5>${esc(country.pais)} ${demoBadge(country.demo)}</h5>${riskBadge(country.riesgo)}<span class="badge ${country.fuente_verificada ? 'badge-ok' : 'badge-warn'}">${country.fuente_verificada ? 'Confirmado en fuente' : 'Hipótesis del modelo'}</span></div>
     <div class="country-line"><span>Arancel</span><b>${esc(country.arancel || 'sin dato')}</b></div>
     <div class="country-line"><span>Impuestos</span><b>${esc(country.impuestos || 'sin dato')}</b></div>
     <div class="country-line"><span>Incoterm</span><b>${esc(country.incoterm || 'sin dato')}</b></div>
@@ -3068,7 +3068,7 @@ function marketCountryCard(country) {
     ${country.notas ? `<p class="tiny muted mt-2">${esc(country.notas)}</p>` : ''}
     <div class="between mt-2" style="align-items:flex-end;gap:6px;flex-wrap:wrap">
       <span class="tiny muted">${esc(arr(country.misiones).length ? `Misiones: ${country.misiones.join(' · ')}` : '')}</span>
-      ${country.fuente ? sourceLink(country.fuente) : ''}
+      ${country.fuente && country.fuente_verificada ? sourceLink(country.fuente) : ''}
     </div>
   </div>`;
 }
@@ -3380,6 +3380,7 @@ function settingsSearchHTML() {
       <div class="field full"><label for="search-key">Clave del proveedor (si corresponde)</label><div class="secret-row"><input class="input" id="search-key" name="searchApiKey" type="password" value="${attr(search.apiKey || '')}" placeholder="Solo para Tavily, Brave o Serper" autocomplete="new-password"><button class="btn btn-ghost btn-sm" type="button" data-action="clear-secret" data-path="search.apiKey">Borrar</button></div></div>
       <div class="field full"><label for="search-searx">Instancia SearXNG propia (opcional)</label><input class="input" id="search-searx" name="searxUrl" value="${attr(search.searxUrl || '')}" placeholder="https://searx.tu-dominio.com"><p class="field-hint">Se consulta antes que las instancias públicas. Sirve para que la búsqueda no dependa de terceros.</p></div>
       <div class="field"><label for="search-results">Resultados por consulta</label><input class="input" id="search-results" name="maxResults" type="number" min="1" max="10" step="1" value="${attr(search.maxResults || 8)}"><p class="field-hint">Más resultados = más contexto y más tiempo.</p></div>
+      <div class="field"><label for="search-depth">Profundidad de prospeccion</label><select class="input" id="search-depth" name="prospectingDepth"><option value="advanced" ${search.prospectingDepth !== 'basic' ? 'selected' : ''}>Avanzada (recomendado)</option><option value="basic" ${search.prospectingDepth === 'basic' ? 'selected' : ''}>Basica (menos creditos)</option></select></div>
     </div>
     ${testResultBox('search')}
 
@@ -3515,6 +3516,7 @@ function settingsMissionHTML() {
       <div class="field"><label for="mission-max">Compradores por misión</label><input class="input" id="mission-max" name="missionMaxProspects" type="number" min="1" max="40" value="${attr(mission.maxProspects || 12)}"></div>
       <div class="field"><label for="mission-currency">Moneda de trabajo</label><select class="select" id="mission-currency" name="missionCurrency">${currencyOptions(mission.currency || 'USD')}</select></div>
       <div class="field"><label class="switch" style="margin-top:22px"><input type="checkbox" name="autoCreateThreads" ${mission.autoCreateThreads !== false ? 'checked' : ''}><span class="track"></span><span>Crear conversaciones en la bandeja</span></label></div>
+      <div class="field"><label class="switch" style="margin-top:22px"><input type="checkbox" name="reviewDirectory" ${mission.reviewDirectory !== false ? 'checked' : ''}><span class="track"></span><span>Revisar compradores del directorio antes de enviar</span></label></div>
       <div class="field"><label class="switch" style="margin-top:22px"><input type="checkbox" name="researchPages" ${mission.researchPages !== false ? 'checked' : ''}><span class="track"></span><span>Leer páginas encontradas</span></label></div>
     </div>
     <div class="artifact-callout info mt-3"><b>Una misión no es una campaña</b>Cada misión es una pasada completa con un objetivo. Después podés repetirla con otra lámpara o ajustar el rumbo con lo que aprendió el equipo.</div>`;
@@ -3563,6 +3565,7 @@ function settingsDataHTML() {
     <div class="data-card">
       <div><h4>Copia de seguridad completa</h4><p>Productos, misiones, conversaciones, contenido, aprendizajes, ajustes y fotos en un ZIP. Incluye las claves en texto plano: guardalo en un lugar privado.</p></div>
       <a class="btn btn-primary btn-sm" href="/api/backup" download>${icon('download')} Descargar copia</a>
+      <a class="btn btn-ghost btn-sm" href="/api/backup?safe=1" download>${icon('download')} Descargar copia sin claves</a>
     </div>
     <div class="data-card">
       <div><h4>Restaurar una copia</h4><p>Reemplaza los datos actuales por los del archivo. No se puede restaurar mientras hay una misión en curso.</p></div>
@@ -3757,6 +3760,7 @@ async function saveSettings(form) {
         apiKey: val('searchApiKey'),
         searxUrl: val('searxUrl'),
         maxResults: Math.max(1, Math.min(10, Math.round(num(val('maxResults'), 8)))),
+        prospectingDepth: val('prospectingDepth') === 'basic' ? 'basic' : 'advanced',
       },
       hunter: {
         enabled: check('hunterEnabled'),
@@ -3814,6 +3818,7 @@ async function saveSettings(form) {
         currency: val('missionCurrency') || 'USD',
         maxProspects: Math.max(1, Math.min(40, Math.round(num(val('missionMaxProspects'), 12)))),
         autoCreateThreads: check('autoCreateThreads'),
+        reviewDirectory: check('reviewDirectory'),
         researchPages: check('researchPages'),
       },
     };

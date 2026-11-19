@@ -15,8 +15,8 @@ source_confidence: 0.780
 source_commit: "7ea677c83029"
 source_content_hash: "e7f9fd42c0455b1f6fe4c9c4d1e0b9379018663647a5be9c7af0fdc8ccd4347a"
 review_needed: true
-occurrences: 3
-last_observed: "2026-11-19T05:05:10.164260600+00:00"
+occurrences: 5
+last_observed: "2026-11-19T06:56:34.283197200+00:00"
 ---
 
 Git co-change pattern: .refact/buddy/runtime_queue.jsonl + .refact/buddy/state.json
