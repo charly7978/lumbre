@@ -984,6 +984,7 @@ async function executeStep(stepId, ctx, deps) {
     images,
     expects: 'object',
     attempts: ['compliance', 'redteam', 'synthesis', 'outreach'].includes(stepId) ? 4 : 3,
+    fallback: ctx.fallback || null,
   }));
 
   let result;
@@ -1001,6 +1002,7 @@ async function executeStep(stepId, ctx, deps) {
         model: cfg.model,
         expects: 'object',
         attempts: 3,
+        fallback: ctx.fallback || null,
       }));
     } else {
       recordAiFailure(error);
@@ -2025,6 +2027,7 @@ async function runMissionNow(missionId, deps) {
     artifacts: mission.artifacts || {},
     learnings: relevantLearnings,
     search: null,
+    fallback: settings.fallback?.ollama || null,
   };
   mission.artifacts = ctx.artifacts;
   const usage = [];
@@ -2297,13 +2300,44 @@ function askContext(store) {
   };
 }
 
+function offlineStatusAnswer(store, question = '') {
+  const products = store.get('products') || [];
+  const missions = store.get('missions') || [];
+  const threads = store.get('threads') || [];
+  const content = store.get('content') || [];
+  const active = missions.filter((m) => ['running', 'queued'].includes(m.status));
+  const drafts = threads.flatMap((t) => t.drafts || []).filter((d) => d.status === 'listo');
+  const review = threads.flatMap((t) => t.drafts || []).filter((d) => d.status === 'revisar');
+  const hot = threads.filter((t) => ['interesado', 'negociando', 'respondio'].includes(t.stage));
+  const won = threads.filter((t) => t.stage === 'ganado');
+  const ideas = content.filter((c) => c.status === 'idea' || c.status === 'borrador');
+  const lines = [
+    `📊 *Lucian — estado real de hoy*`,
+    ``,
+    `Productos en catálogo: ${products.length}`,
+    `Misiones activas: ${active.length}${active.length ? ` (${active[0].name}${active[0].progress ? ` ${active[0].progress}%` : ''})` : ''}`,
+    `Leads calientes: ${hot.length}`,
+    `Ventas cerradas: ${won.length}`,
+    `Borradores listos para enviar: ${drafts.length}`,
+    `Borradores por aprobar: ${review.length}`,
+    `Piezas de contenido listas: ${ideas.length}`,
+  ];
+  if (active.length) lines.push(`\nEn curso: ${active.map((m) => `${m.name} (${m.progress || 0}%)`).join(', ')}`);
+  lines.push(`\n⚠️ La IA está sin saldo, así que este resumen sale directo de tus datos. Para volver a conversar con el equipo, cargá crédito en el proveedor o configurá un modelo local con memoria disponible.`);
+  return lines.join('\n');
+}
+
 export async function askTeam({ question, agentId = 'director', store, history = [], channel = 'web', images = [] }) {
   const settings = store.settings();
   const agent = getAgent(agentId);
   if (!isAIReady(settings)) {
     return { ...demoAsk(agentId, question), agent };
   }
-  const cfg = resolveAIConfig(settings);
+  const aiChoice = resolveAIWithFallback(settings);
+  const cfg = aiChoice.cfg;
+  if (aiChoice.isFallback) {
+    await store.activity('system', `Agente ${agent.name} usando IA de respaldo: ${aiChoice.reason}`);
+  }
   const context = askContext(store);
   if (channel === 'telegram') {
     const q = String(question || '').toLowerCase();
@@ -2323,13 +2357,23 @@ export async function askTeam({ question, agentId = 'director', store, history =
       };
     }
   }
-  const result = await aiGate(() => chat(cfg, {
-    system: systemFor(agent.id),
-    prompt: askPrompt(agent.id, question, context, { history, channel }),
-    temperature: channel === 'telegram' ? 0.5 : 0.55,
-    maxTokens: channel === 'telegram' ? 1800 : 1300,
-    images: Array.isArray(images) ? images : [],
-  }));
+  let result;
+  try {
+    result = await aiGate(() => chat(cfg, {
+      system: systemFor(agent.id),
+      prompt: askPrompt(agent.id, question, context, { history, channel }),
+      temperature: channel === 'telegram' ? 0.5 : 0.55,
+      maxTokens: channel === 'telegram' ? 1800 : 1300,
+      images: Array.isArray(images) ? images : [],
+      fallback: settings.fallback?.ollama || null,
+    }));
+  } catch (error) {
+    // Si la IA (y su respaldo) fallan, responder con un resumen REAL de los
+    // datos en vez de un error. El dueño nunca se queda sin respuesta.
+    const summary = offlineStatusAnswer(store, question);
+    await store.activity('system', `Agente respondió en modo sin IA: ${error.message.slice(0, 120)}`);
+    return { answer: summary, agent, demo: true, offline: true, usage: null, note: 'IA sin saldo: respuesta basada en datos reales de Lucian.' };
+  }
   await store.trackAgent(agent.id);
   return {
     answer: result.text.trim(),
@@ -2357,6 +2401,7 @@ export async function analyzeThread({ thread, store, apply = true }) {
       maxTokens: 1400,
       expects: 'object',
       attempts: 3,
+      fallback: settings.fallback?.ollama || null,
     }));
     analysis = asObject(result.data);
     await store.trackAgent('analista');

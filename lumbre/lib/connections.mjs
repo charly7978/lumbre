@@ -60,7 +60,7 @@ export function resolveAIWithFallback(settings) {
 
   // Si el fallo es reciente (< 10 min) y hay fallback, usarlo
   const recentFailure = aiState.lastFailureAt && (Date.now() - aiState.lastFailureAt) < 10 * 60 * 1000;
-  if (recentFailure && aiState.primaryFailures >= 2 && ollamaEnabled) {
+  if (recentFailure && aiState.primaryFailures >= 1 && ollamaEnabled) {
     return {
       cfg: {
         provider: 'ollama',

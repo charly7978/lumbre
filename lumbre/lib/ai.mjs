@@ -202,7 +202,9 @@ export function isRateLimitError(error) {
   const message = String(error?.message || '');
   const status = Number(message.match(/^(\d{3})/)?.[1] || 0);
   if (status === 429) return true;
-  if (/tokens per minute|rate limit|quota/i.test(message)) return true;
+  // 402 = saldo agotado. Debe activar el fallback igual que un rate limit.
+  if (status === 402) return true;
+  if (/tokens per minute|rate limit|quota|credit balance|saldo|insufficient|balance/i.test(message)) return true;
   return status === 413 && /request too large/i.test(message);
 }
 
@@ -287,6 +289,7 @@ export async function chat(cfg, options = {}) {
     maxTokens = cfg.maxTokens ?? 3200,
     model = cfg.model,
     images = [],
+    fallback = null,
   } = options;
 
   if (!cfg.baseUrl) throw new Error('Falta la dirección del proveedor de IA');
@@ -388,6 +391,25 @@ export async function chat(cfg, options = {}) {
     }
   }
 
+  // Último recurso: si el proveedor principal falló (saldo/cuota) y hay
+  // un fallback configurado, reintentamos UNA vez con él (Ollama local).
+  if (fallback && fallback.baseUrl && fallback.model && isRateLimitError(lastError)) {
+    try {
+      const fbCfg = {
+        provider: 'ollama',
+        baseUrl: fallback.baseUrl,
+        model: fallback.model,
+        apiKey: '',
+        temperature: 0.5,
+        maxTokens: Math.min(4000, maxTokens),
+      };
+      const fb = await chat(fbCfg, { system, prompt, history, json, temperature, maxTokens: fbCfg.maxTokens, model: fallback.model });
+      return { ...fb, provider: 'ollama-fallback', fallbackUsed: true };
+    } catch (fbError) {
+      lastError = fbError;
+    }
+  }
+
   throw new Error(humanError(lastError));
 }
 
@@ -423,6 +445,7 @@ export async function generateJson(cfg, options = {}) {
     images = [],
     expects = 'object',
     attempts = 3,
+    fallback = null,
   } = options;
 
   const contract = [
@@ -456,6 +479,7 @@ export async function generateJson(cfg, options = {}) {
         maxTokens: lastBudget,
         model,
         images: attempt === 0 ? images : [],
+        fallback,
       });
     } catch (error) {
       lastError = error;
