@@ -1950,6 +1950,39 @@ async function handle(req, res) {
   const pathname = url.pathname;
   const method = req.method || 'GET';
 
+  // ── Autenticación obligatoria en modo red/túnel ───────────────
+  // En local (loopback) no se pide nada. Cuando se comparte por red
+  // o túnel, todas las rutas /api/* (excepto webhooks y /login)
+  // exigen la clave que se muestra al arrancar. Sin esto, cualquiera
+  // con la URL podría leer secretos o borrar datos.
+  const isLocalHost = allowedHosts.has(hostName) || !hostName;
+  const needsAuth = !isLocalHost && !isWebhook && pathname.startsWith('/api/') && pathname !== '/api/login';
+  if (needsAuth) {
+    const provided = req.headers['x-lucian-access']
+      || url.searchParams.get('access')
+      || (String(req.headers.cookie || '').match(/lucian_access=([^;]+)/) || [])[1]
+      || '';
+    if (!webhookTokenMatches(provided, ACCESS_TOKEN)) {
+      fail(res, 401, 'Se requiere clave de acceso. Pegala en la pantalla de Lucian.');
+      return;
+    }
+  }
+
+  if (pathname === '/api/login' && method === 'POST') {
+    const body = await readJson(req).catch(() => ({}));
+    const provided = String(body.token || '');
+    if (webhookTokenMatches(provided, ACCESS_TOKEN)) {
+      res.writeHead(200, {
+        'content-type': 'application/json; charset=utf-8',
+        'set-cookie': `lucian_access=${ACCESS_TOKEN}; HttpOnly; SameSite=Lax; Path=/`,
+      });
+      res.end(JSON.stringify({ ok: true }));
+    } else {
+      fail(res, 401, 'Clave incorrecta.');
+    }
+    return;
+  }
+
   if (method === 'OPTIONS') {
     res.writeHead(204);
     res.end();
@@ -2816,7 +2849,10 @@ async function handle(req, res) {
   }
 
   if (pathname === '/api/backup' && method === 'GET') {
-    const safe = url.searchParams.get('safe') === '1' || url.searchParams.get('secrets') === '0';
+    // Por defecto el backup NO incluye secretos. Para exportar claves hace
+    // falta pedirlo explícitamente con ?secrets=1 (y estar en local).
+    const includeSecrets = url.searchParams.get('secrets') === '1' && url.searchParams.get('safe') !== '1';
+    const safe = !includeSecrets;
     const zip = await makeBackup({ safe });
     const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     res.writeHead(200, {
@@ -2973,9 +3009,17 @@ for (let attempt = 0; attempt < 8; attempt += 1) {
 }
 
 const url = `http://localhost:${port}`;
-const lanUrl = HOST === '0.0.0.0' || HOST === '::'
+const lanMode = HOST === '0.0.0.0' || HOST === '::';
+const lanUrl = lanMode
   ? `http://<IP-de-esta-PC>:${port}`
   : '';
+// Clave de acceso obligatoria cuando la app se expone fuera de la PC.
+// Se genera al arrancar y se muestra en consola. En local no se pide.
+const ACCESS_TOKEN = crypto.randomBytes(12).toString('base64url');
+// Escribir la clave en un archivo para que el script de túnel la muestre
+if (lanMode) {
+  try { await import('node:fs/promises').then((m) => m.writeFile(path.join(__dirname, 'access-key.txt'), ACCESS_TOKEN, 'utf8')); } catch { /* noop */ }
+}
 const settings = store.settings();
 const aiLabel = isAIReady(settings) ? `${settings.ai.provider} · ${resolveAIConfig(settings).model}` : 'modo demo (sin clave de IA)';
 
@@ -3019,7 +3063,15 @@ function readinessLines() {
 console.log('');
 console.log('  LUCIAN · sistema de ventas para lámparas de diseño');
 console.log(`  ${url}`);
-if (lanUrl) console.log(`  Desde otra PC de la red: ${lanUrl}`);
+if (lanUrl) {
+  console.log(`  Desde otra PC de la red: ${lanUrl}`);
+  console.log('');
+  console.log('  ┌──────────────────────────────────────────────────────────┐');
+  console.log('  │  CLAVE DE ACCESO (pedila en esta PC para abrir Lucian)  │');
+  console.log(`  │           ${ACCESS_TOKEN}           │`);
+  console.log('  └──────────────────────────────────────────────────────────┘');
+  console.log('  Sin esta clave, nadie puede usar la API desde otra PC.');
+}
 console.log('  Ctrl+C para cerrar.');
 console.log('');
 for (const line of readinessLines()) console.log(line);
