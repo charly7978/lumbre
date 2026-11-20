@@ -19,3 +19,15 @@ node_modules/
 # Sistema
 .DS_Store
 Thumbs.db
+
+# Tunel y archivos generados al abrir Lucian
+cloudflared.exe
+tunnel.log
+url.txt
+DIRECCION-LUCIAN.txt
+access-key.txt
+DOMINIO.txt
+_lucian_start.cmd
+_lucian_tunnel.cmd
+lumbrecloudflared.exe
+lumbreurl.txt

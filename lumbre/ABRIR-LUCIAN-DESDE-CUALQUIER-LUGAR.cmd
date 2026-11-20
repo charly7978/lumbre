@@ -1,65 +1,109 @@
 @echo off
-chcp 65001 >nul
-title LUCIAN // ACCESO REMOTO
-cd /d "%~dp0lumbre"
-set LUCIAN_PORT=4321
-set LUCIAN_HOST=127.0.0.1
-color 0F
+title LUCIAN - Acceso desde cualquier lugar
+
+rem --- Ruta fija a la carpeta real de Lucian ---
+set "BASE=C:\Users\carlo.ROLITO\Downloads\Sistema-Ventas-Lamparas\lumbre\"
+cd /d "%BASE%"
 
 cls
-powershell -NoProfile -Command "Write-Host ''; Write-Host '  _     ___  _   _  ___  _   _  ___  _   _  ___  ' -ForegroundColor Cyan; Write-Host ' | |   |_ _|| \ | |/ __|| \ | |/ __|| | | |/ __| ' -ForegroundColor Cyan; Write-Host ' | |__  | | |  \| |\__ \|  \| |\__ \| |_| |\__ \ ' -ForegroundColor Cyan; Write-Host ' |____||___||_|\__||___/|_|\__||___/ \___/ |___/ ' -ForegroundColor Cyan; Write-Host ''; Write-Host '  >>> SISTEMA DE VENTAS / ACCESO REMOTO <<<' -ForegroundColor Green; Write-Host '  --------------------------------------------------------' -ForegroundColor DarkGray; Write-Host ''"
+echo.
+echo  ============================================================
+echo   LUCIAN - ACCESO DESDE CUALQUIER LUGAR
+echo  ============================================================
+echo.
+echo  Preparando... no toques nada.
+echo.
 
 where node >nul 2>nul
 if errorlevel 1 goto SINNODE
-if not exist "cloudflared.exe" goto SINTUNNEL
 
-powershell -NoProfile -Command "Write-Host '  [1/3] Encendiendo el nucleo del sistema...' -ForegroundColor Yellow"
-start "LUCIAN-SERVIDOR" /MIN cmd /c "node server.mjs"
+echo  Cerrando conexiones anteriores...
+powershell -NoProfile -Command "$c=Get-NetTCPConnection -LocalPort 4321 -State Listen -ErrorAction SilentlyContinue; foreach($p in $c){Stop-Process -Id $p.OwningProcess -Force -ErrorAction SilentlyContinue}; Get-CimInstance Win32_Process -Filter \"name='node.exe'\" | Where-Object { $_.CommandLine -like '*server.mjs*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }; Get-Process cloudflared -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue" >nul 2>&1
+ping -n 4 127.0.0.1 >nul
+
+if not exist "%BASE%cloudflared.exe" (
+  echo  Descargando el conector ^(primera vez^)...
+  powershell -NoProfile -Command "$ProgressPreference='SilentlyContinue'; Invoke-WebRequest -Uri 'https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe' -OutFile '%BASE%cloudflared.exe' -TimeoutSec 300"
+)
+
+rem --- Archivos auxiliares con rutas absolutas (evita servidores vacios) ---
+> "%BASE%\_lucian_start.cmd" echo @echo off
+>> "%BASE%\_lucian_start.cmd" echo cd /d "%BASE%"
+>> "%BASE%\_lucian_start.cmd" echo set "LUCIAN_DATA_DIR=%BASE%data"
+>> "%BASE%\_lucian_start.cmd" echo set "LUCIAN_HOST=0.0.0.0"
+>> "%BASE%\_lucian_start.cmd" echo set "LUCIAN_PORT=4321"
+>> "%BASE%\_lucian_start.cmd" echo set "LUCIAN_NO_OPEN=1"
+>> "%BASE%\_lucian_start.cmd" echo node "%BASE%server.mjs"
+
+> "%BASE%\_lucian_tunnel.cmd" echo @echo off
+>> "%BASE%\_lucian_tunnel.cmd" echo cd /d "%BASE%"
+>> "%BASE%\_lucian_tunnel.cmd" echo "%BASE%cloudflared.exe" tunnel --url http://localhost:4321 ^> "%BASE%tunnel.log" 2^>^&1
+
+echo  [1/3] Encendiendo Lucian...
+start "LUCIAN-SERVIDOR" /MIN "%BASE%_lucian_start.cmd"
 ping -n 7 127.0.0.1 >nul
 
-powershell -NoProfile -Command "Write-Host '  [2/3] Estableciendo tunel seguro...' -ForegroundColor Yellow"
-if exist "tunnel.log" del "tunnel.log" /f /q
-if exist "url.txt" del "url.txt" /f /q
-start "LUCIAN-TUNEL" /MIN cmd /c "cloudflared.exe tunnel --url http://localhost:4321 > tunnel.log 2>&1"
+echo  [2/3] Abriendo la conexion...
+if exist "%BASE%url.txt" del "%BASE%url.txt" /f /q
+start "LUCIAN-TUNEL" /MIN "%BASE%_lucian_tunnel.cmd"
 
-powershell -NoProfile -Command "Write-Host '  [3/3] Sincronizando direccion publica...' -ForegroundColor Yellow"
+echo  [3/3] Buscando la direccion...
 set INTENTOS=0
 :ESPERAR
 set /a INTENTOS+=1
 if %INTENTOS% GTR 45 goto SINURL
 set "URL="
-if exist "url.txt" del "url.txt" /f /q
-powershell -NoProfile -Command "$t=Get-Content tunnel.log -Raw -ErrorAction SilentlyContinue; if($t -match 'https://[a-z0-9-]+\.trycloudflare\.com'){Write-Output $matches[0]}" > "url.txt" 2>nul
-set /p URL=<"url.txt"
+if exist "%BASE%url.txt" del "%BASE%url.txt" /f /q
+powershell -NoProfile -Command "$t=Get-Content '%BASE%tunnel.log' -Raw -ErrorAction SilentlyContinue; if($t -match 'https://[a-z0-9-]+\.trycloudflare\.com'){Write-Output $matches[0]}" > "%BASE%url.txt" 2>nul
+set /p URL=<"%BASE%url.txt"
 if defined URL goto MOSTRAR
-powershell -NoProfile -Command "Write-Host ('       ... esperando senal ' + '.' * (%INTENTOS% %% 4)) -ForegroundColor DarkCyan"
+echo        esperando... (%INTENTOS%)
 ping -n 3 127.0.0.1 >nul
 goto ESPERAR
 
 :MOSTRAR
 cls
-powershell -NoProfile -Command "$u=Get-Content url.txt -Raw; $u=$u.Trim(); Write-Host ''; Write-Host '  ================================================================' -ForegroundColor Cyan; Write-Host '                                                                ' -ForegroundColor Cyan; Write-Host '     [*] LUCIAN ESTA ONLINE' -ForegroundColor Green; Write-Host '                                                                ' -ForegroundColor Cyan; Write-Host '     TU DIRECCION PUBLICA:' -ForegroundColor DarkCyan; Write-Host ''; Write-Host ('        ' + $u) -ForegroundColor Yellow; Write-Host ''; Write-Host '     Copia esa direccion y mandala por WhatsApp.' -ForegroundColor White; Write-Host '     Se abrio un Bloc de notas con el mismo texto.' -ForegroundColor DarkGray; Write-Host ''; Write-Host '  [!] NO cierres esta ventana mientras alguien use Lucian.' -ForegroundColor Magenta; Write-Host '                                                                ' -ForegroundColor Cyan; Write-Host '  ================================================================' -ForegroundColor Cyan; Write-Host ''"
-echo DIRECCION PARA ABRIR LUCIAN DESDE CUALQUIER LUGAR> "DIRECCION-LUCIAN.txt"
-echo.>> "DIRECCION-LUCIAN.txt"
-echo %URL%>> "DIRECCION-LUCIAN.txt"
-echo.>> "DIRECCION-LUCIAN.txt"
-echo Copia esa direccion y mandala por WhatsApp.>> "DIRECCION-LUCIAN.txt"
-echo NO cierres la ventana negra mientras alguien use Lucian.>> "DIRECCION-LUCIAN.txt"
-start notepad "DIRECCION-LUCIAN.txt"
-pause
-exit /b 0
+echo.
+echo  ============================================================
+echo.
+echo    LUCIAN ESTA LISTO
+echo.
+echo    Esta es la direccion para el celular:
+echo.
+echo           %URL%
+echo.
+echo    Copiala y mandala por WhatsApp.
+echo    Al abrirla, entra directo. Sin clave.
+echo.
+echo    NO cierres esta ventana ni apagues la PC.
+echo.
+echo  ============================================================
+echo.
+>"%BASE%DIRECCION-LUCIAN.txt" echo DIRECCION DE LUCIAN PARA EL CELULAR
+>>"%BASE%DIRECCION-LUCIAN.txt" echo.
+>>"%BASE%DIRECCION-LUCIAN.txt" echo %URL%
+>>"%BASE%DIRECCION-LUCIAN.txt" echo.
+>>"%BASE%DIRECCION-LUCIAN.txt" echo Copia esa direccion y mandala por WhatsApp.
+>>"%BASE%DIRECCION-LUCIAN.txt" echo NO cierres la ventana negra ni apagues la PC.
+start notepad "%BASE%DIRECCION-LUCIAN.txt"
+start "" "%URL%"
+
+:VIGILAR
+ping -n 20 127.0.0.1 >nul
+tasklist /FI "IMAGENAME eq cloudflared.exe" 2>nul | find /i "cloudflared.exe" >nul
+if errorlevel 1 (
+  echo  Reconectando...
+  if exist "%BASE%tunnel.log" del "%BASE%tunnel.log" /f /q
+  start "LUCIAN-TUNEL" /MIN "%BASE%_lucian_tunnel.cmd"
+)
+goto VIGILAR
 
 :SINNODE
-powershell -NoProfile -Command "Write-Host '  [X] No se encontro Node.js. Instalalo desde https://nodejs.org' -ForegroundColor Red; Write-Host ''"
-pause
-exit /b 1
-
-:SINTUNNEL
-powershell -NoProfile -Command "Write-Host '  [X] No se encontro cloudflared.exe en la carpeta lumbre.' -ForegroundColor Red; Write-Host ''"
+echo  Falta Node.js. Instalalo desde https://nodejs.org
 pause
 exit /b 1
 
 :SINURL
-powershell -NoProfile -Command "Write-Host '  [X] No se pudo obtener la direccion. Revisa internet y proba de nuevo.' -ForegroundColor Red; Write-Host ''"
+echo  No se pudo obtener la direccion. Revisa internet y proba de nuevo.
 pause
 exit /b 1
