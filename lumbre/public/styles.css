@@ -2063,3 +2063,16 @@ a { transition: color var(--dur-fast) var(--ease); }
 }
 .product-select input { width: 14px; height: 14px; cursor: pointer; accent-color: var(--amber); }
 .product-card.selected { outline: 2px solid var(--amber); outline-offset: -2px; }
+
+/* Centro de publicacion - botones de redes sociales */
+.social-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.social-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 16px; border-radius: 12px;
+  border: 1px solid var(--net); color: var(--net);
+  background: color-mix(in srgb, var(--net) 10%, transparent);
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: transform .15s ease, background .15s ease;
+}
+.social-btn:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--net) 22%, transparent); }
+.publish-hub .message-card { background: var(--paper-3); border-radius: 12px; padding: 12px; }

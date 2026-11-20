@@ -3219,7 +3219,13 @@ function bindInbox() {
    15. Contenido
    ───────────────────────────────────────────────────────────── */
 
-const CONTENT_PLATFORMS = ['Instagram', 'TikTok', 'Pinterest', 'LinkedIn', 'YouTube', 'Newsletter', 'Feria', 'Otro'];
+const CONTENT_PLATFORMS = ['Instagram', 'TikTok', 'Pinterest', 'Facebook', 'LinkedIn', 'YouTube', 'Newsletter', 'Feria', 'Otro'];
+const SOCIAL_NETWORKS = [
+  { id: 'Instagram', label: 'Instagram', color: '#e1306c', url: 'https://www.instagram.com/' },
+  { id: 'TikTok', label: 'TikTok', color: '#25f4ee', url: 'https://www.tiktok.com/upload' },
+  { id: 'Pinterest', label: 'Pinterest', color: '#e60023', url: 'https://www.pinterest.com/pin/create/' },
+  { id: 'Facebook', label: 'Facebook', color: '#4267b2', url: 'https://www.facebook.com/' },
+];
 const CONTENT_TONES = { idea: 'neutral', borrador: 'amber', publicado: 'ok', archivado: 'neutral' };
 
 function filteredContent() {
@@ -3336,21 +3342,64 @@ function contentCardHTML(item) {
   </article>`;
 }
 
+function publishText(item) {
+  return [item.hook || '', item.caption || '', arr(item.hashtags).join(' ')].filter(Boolean).join('\n\n');
+}
+
 function openPublishModal(item) {
+  const text = publishText(item);
   openModal({
-    title: 'Marcar como publicada',
-    subtitle: item.platform || 'Contenido',
-    size: 'modal-sm',
-    body: `<form id="publish-form" data-id="${attr(item.id)}">
-      <div class="form-grid">
-        <div class="field full"><label for="pub-url">Enlace de la publicación (opcional)</label><input class="input" id="pub-url" name="publishedUrl" type="url" value="${attr(item.publishedUrl || '')}" placeholder="https://instagram.com/p/..."></div>
-        <div class="field full"><label for="pub-date">Publicado el</label><input class="input" id="pub-date" name="publishedAt" type="datetime-local" value="${attr(dateTimeLocal(item.publishedAt || new Date().toISOString()))}"></div>
+    title: 'Centro de publicación',
+    subtitle: item.hook || item.platform || 'Contenido listo para publicar',
+    size: 'modal-lg',
+    body: `<div class="publish-hub">
+      <div class="artifact-callout info"><b>Cómo funciona:</b> tocá una red → se copia el texto automáticamente y se abre la web de esa red. Pegás el texto, subís la foto y publicás. Después volvés acá y marcás dónde la publicaste.</div>
+
+      <div class="form-section">
+        <p class="form-section-title">1. Elegí la red (copia el texto y abre la red)</p>
+        <div class="social-buttons">
+          ${SOCIAL_NETWORKS.map((net) => `<button class="social-btn" type="button" data-action="social-open" data-network="${attr(net.id)}" data-url="${attr(net.url)}" style="--net:${net.color}">
+            ${icon('external')} <span>${esc(net.label)}</span>
+          </button>`).join('')}
+        </div>
       </div>
-      <p class="field-hint mt-2">Si no tenés el enlace todavía, dejalo vacío: se anota la fecha y después podés agregarlo desde Editar.</p>
-    </form>`,
-    footer: `<button class="btn btn-ghost" type="button" data-action="close-modal">Cancelar</button>
-      <button class="btn btn-primary" type="button" data-action="save-publish" data-id="${attr(item.id)}">${icon('check')} Marcar publicada</button>`,
+
+      <div class="form-section">
+        <div class="between">
+          <p class="form-section-title" style="margin:0">2. Texto listo para pegar</p>
+          ${copyButton(text, 'Copiar texto')}
+        </div>
+        <div class="message-card mt-2"><div class="message-body" style="max-height:170px;overflow:auto;white-space:pre-wrap">${esc(text)}</div></div>
+      </div>
+
+      <form id="publish-form" data-id="${attr(item.id)}">
+        <div class="form-section">
+          <p class="form-section-title">3. Registrá dónde la publicaste</p>
+          <div class="form-grid">
+            <div class="field"><label for="pub-platform">Red donde se publicó</label>
+              <select class="select" id="pub-platform" name="platform">
+                ${SOCIAL_NETWORKS.map((net) => `<option value="${attr(net.id)}" ${(item.platform || '') === net.id ? 'selected' : ''}>${esc(net.label)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="field"><label for="pub-date">Fecha</label><input class="input" id="pub-date" name="publishedAt" type="datetime-local" value="${attr(dateTimeLocal(item.publishedAt || new Date().toISOString()))}"></div>
+            <div class="field full"><label for="pub-url">Enlace de la publicación (opcional)</label><input class="input" id="pub-url" name="publishedUrl" type="url" value="${attr(item.publishedUrl || '')}" placeholder="https://instagram.com/p/..."></div>
+          </div>
+        </div>
+      </form>
+    </div>`,
+    footer: `<button class="btn btn-ghost" type="button" data-action="close-modal">Cerrar</button>
+      <button class="btn btn-accent" type="button" data-action="save-publish" data-id="${attr(item.id)}">${icon('check')} Ya la publiqué</button>`,
   });
+}
+
+async function socialOpen(network, url) {
+  // Abrir la red PRIMERO (sin await) para que no se bloquee si el
+  // portapapeles tarda o falla. Después copiamos el texto en segundo plano.
+  const target = safeUrl(url);
+  if (target) window.open(target, '_blank', 'noopener,noreferrer');
+  const item = arr(S.state.content).find((c) => c.id === $('#publish-form')?.dataset.id);
+  const text = item ? publishText(item) : '';
+  if (text) copyToClipboard(text, `Texto copiado. Pegalo en ${network}.`).catch(() => {});
 }
 
 async function savePublish(id) {
@@ -3358,11 +3407,13 @@ async function savePublish(id) {
   if (!form) return;
   const data = Object.fromEntries(new FormData(form).entries());
   const url = String(data.publishedUrl || '').trim();
+  const item = arr(S.state.content).find((c) => c.id === id);
   try {
     const result = await api(`/api/content/${encodeURIComponent(id)}`, {
       method: 'PATCH',
       body: {
         status: 'publicado',
+        platform: data.platform || item?.platform || '',
         publishedUrl: url,
         publishedAt: data.publishedAt ? new Date(data.publishedAt).toISOString() : undefined,
       },
@@ -5217,6 +5268,7 @@ async function handleAction(action, el) {
       return;
     }
     case 'save-publish': await savePublish(el.dataset.id); return;
+    case 'social-open': await socialOpen(el.dataset.network, el.dataset.url); return;
     case 'content-edit': {
       const item = arr(S.state.content).find((c) => c.id === el.dataset.id);
       if (item) openContentModal(item);
