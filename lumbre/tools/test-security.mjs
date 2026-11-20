@@ -91,7 +91,7 @@ async function waitForServer(child = server, targetPort = port) {
     if (child.exitCode !== null) throw new Error('El servidor de prueba se cerró.');
     try {
       const res = await request('/api/health', { targetPort });
-      if (res.ok) return;
+      if (res.ok || (child !== server && res.status === 401)) return;
     } catch { /* booting */ }
     await new Promise((resolve) => setTimeout(resolve, 150));
   }
