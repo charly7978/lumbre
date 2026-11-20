@@ -4,6 +4,7 @@ cd /d "%~dp0lumbre"
 set LUCIAN_PORT=4321
 set LUCIAN_HOST=127.0.0.1
 
+cls
 echo.
 echo  ============================================================
 echo   LUCIAN - ACCESO DESDE CUALQUIER LUGAR
@@ -16,31 +17,27 @@ where node >nul 2>nul
 if errorlevel 1 goto SINNODE
 if not exist "cloudflared.exe" goto SINTUNNEL
 
-rem --- Arrancar Lucian en una ventana aparte (minimizada) ---
+echo  [1/3] Encendiendo el sistema...
 start "LUCIAN-SERVIDOR" /MIN cmd /c "node server.mjs"
+ping -n 7 127.0.0.1 >nul
 
-rem --- Esperar a que Lucian este listo ---
-echo  Encendiendo el sistema...
-timeout /t 6 >nul
-
-rem --- Limpiar archivos viejos ---
+echo  [2/3] Abriendo la conexion segura...
 if exist "tunnel.log" del "tunnel.log" /f /q
 if exist "url.txt" del "url.txt" /f /q
-
-rem --- Arrancar el tunel de Cloudflare ---
-echo  Abriendo la conexion segura...
 start "LUCIAN-TUNEL" /MIN cmd /c "cloudflared.exe tunnel --url http://localhost:4321 > tunnel.log 2>&1"
 
-rem --- Esperar a que aparezca la direccion publica ---
+echo  [3/3] Buscando la direccion publica...
 set INTENTOS=0
 :ESPERAR
 set /a INTENTOS+=1
-if %INTENTOS% GTR 40 goto SINURL
+if %INTENTOS% GTR 45 goto SINURL
 set "URL="
-powershell -NoProfile -Command "$t=Get-Content tunnel.log -Raw -ErrorAction SilentlyContinue; if($t -match 'https://[a-z0-9-]+\.trycloudflare\.com'){Write-Output $matches[0]}" > url.txt 2>nul
-set /p URL=<url.txt
+if exist "url.txt" del "url.txt" /f /q
+powershell -NoProfile -Command "$t=Get-Content tunnel.log -Raw -ErrorAction SilentlyContinue; if($t -match 'https://[a-z0-9-]+\.trycloudflare\.com'){Write-Output $matches[0]}" > "url.txt" 2>nul
+set /p URL=<"url.txt"
 if defined URL goto MOSTRAR
-timeout /t 2 >nul
+echo        esperando... (%INTENTOS%)
+ping -n 3 127.0.0.1 >nul
 goto ESPERAR
 
 :MOSTRAR
