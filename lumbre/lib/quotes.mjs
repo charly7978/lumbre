@@ -146,6 +146,17 @@ export function buildQuote({ thread, product, brand, quote }) {
       })
     : [`${totals.quantity} × ${productName}${code ? ` (${code})` : ''} — ${unit} c/u = ${subtotal}`];
 
+  const condLines = [
+    quote.payTerms ? (language === 'en' ? `Payment terms: ${quote.payTerms}` : `Condiciones de pago: ${quote.payTerms}`) : null,
+    quote.volumeNote ? (language === 'en' ? `Volume discount: ${quote.volumeNote}` : `Descuento por volumen: ${quote.volumeNote}`) : null,
+    quote.shipNote ? (language === 'en' ? `Shipping details: ${quote.shipNote}` : `Detalle de envío: ${quote.shipNote}`) : null,
+    quote.notes || null,
+  ].filter(Boolean);
+  const lineNotes = hasItems ? totals.items.map((l) => [
+    l.color ? (language === 'en' ? `Color/finish: ${l.color}` : `Color/acabado: ${l.color}`) : null,
+    l.lineNote || null,
+  ].filter(Boolean).map((x) => '  - ' + x).join('\n')) : '';
+
   const lines = language === 'en'
     ? [
       `Hi${thread?.contact?.name ? ` ${thread.contact.name.split(' ')[0]}` : ''}.`,
@@ -166,7 +177,8 @@ export function buildQuote({ thread, product, brand, quote }) {
         ? `To confirm the order you can pay here: ${quote.paymentLink}`
         : 'To confirm, reply to this email and I will send you the payment link.',
       capacityNote,
-      quote.notes ? `\n${quote.notes}` : '',
+      lineNotes ? `\n${lineNotes}` : '',
+      ...condLines,
       '',
       'If the quantity or destination changes, tell me and I will update the quote.',
       signature,
@@ -190,7 +202,8 @@ export function buildQuote({ thread, product, brand, quote }) {
         ? `Para confirmar el pedido podés pagar acá: ${quote.paymentLink}`
         : 'Para confirmar, respondé este correo y te paso el link de pago.',
       capacityNote,
-      quote.notes ? `\n${quote.notes}` : '',
+      lineNotes ? `\n${lineNotes}` : '',
+      ...condLines,
       '',
       'Si cambia la cantidad o el destino, decime y actualizo la cotización.',
       signature,

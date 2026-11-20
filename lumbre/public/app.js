@@ -2862,20 +2862,25 @@ function quotePreviewHTML(data, currency) {
 
 function quoteLineHTML(product, index, currency) {
   const p = product || {};
-  const settings = S.state.settings || {};
-  const brand = S.state.brand || {};
   const cur = p.currency || currency;
+  const colores = String(p.colors || p.Colores || '').trim();
   return `<div class="quote-line" data-quote-line="${index}" style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px">
     <div class="between" style="margin-bottom:8px">
-      <b style="font-size:13px">${esc(p.name || 'Lámpara')}</b>
+      <div style="min-width:0;flex:1">
+        <b style="font-size:13px">${esc(p.name || 'Lámpara')}</b>
+        ${p.code ? `<span class="tiny muted" style="margin-left:6px">${esc(p.code)}</span>` : ''}
+        ${num(p.capacityPerWeek) > 0 ? `<span class="tiny muted" style="margin-left:6px">${num(p.capacityPerWeek)}/sem</span>` : ''}
+      </div>
       <button class="btn btn-ghost btn-xs" type="button" data-action="quote-remove-line" data-index="${index}" ${index === 0 ? 'disabled title="Dejá al menos una lámpara"' : ''}>${icon('trash')} Quitar</button>
     </div>
     <div class="form-grid">
-      <input type="hidden" name="productId" value="${attr(p.id || '')}">
       <div class="field"><label>Cantidad</label><input class="input" name="qty" type="number" min="1" step="1" value="1" data-qfield="quantity"></div>
       <div class="field"><label>Precio unitario (${esc(cur)})</label><input class="input" name="unit" type="number" min="0" step="0.01" value="${attr(num(p.price, 0))}" data-qfield="unitPrice"></div>
       <div class="field"><label>Descuento (${esc(cur)})</label><input class="input" name="disc" type="number" min="0" step="0.01" value="0" data-qfield="discount"></div>
       <div class="field"><label>Subtotal</label><div class="input line-subtotal" style="display:flex;align-items:center">—</div></div>
+      <div class="field"><label>Color / acabado</label><input class="input" name="color" value="${attr(colores)}" placeholder="Ej.: hueso, terracota"></div>
+      <div class="field"><label>Plazo (días)</label><input class="input" name="lead" type="number" min="0" step="1" value="${attr(num(p.leadTimeDays, 0))}" placeholder="Según ficha"></div>
+      <div class="field full"><label>Nota de esta lámpara</label><input class="input" name="lineNote" value="" placeholder="Ej.: incluye difusor opalino, medidas especiales…"></div>
     </div>
   </div>`;
 }
@@ -2895,7 +2900,10 @@ function openQuoteModal(thread) {
       <p class="form-section-title">Lámparas de la cotización</p>
       <p class="form-section-sub">Agregá una o varias. El precio, la cantidad y el descuento se calculan por línea. El envío y los impuestos son globales.${capacity > 0 ? ` Capacidad: ${capacity} por semana.` : ''}</p>
       <div id="quote-lines">${quoteLineHTML(first, 0, currency)}</div>
-      <button class="btn btn-ghost btn-sm mt-2" type="button" data-action="quote-add-line">${icon('plus')} Agregar otra lámpara</button>
+      <div class="cluster mt-2">
+        <button class="btn btn-ghost btn-sm" type="button" data-action="quote-add-line">${icon('plus')} Agregar otra lámpara</button>
+        ${products.length > 1 ? `<button class="btn btn-accent btn-sm" type="button" data-action="quote-add-all">${icon('layers')} Agregar TODAS las lámparas (${products.length})</button>` : ''}
+      </div>
       ${products.length > 1 ? `<div class="field mt-3"><label>Agregar rápido desde el catálogo</label><select class="select" id="quote-product-pick"><option value="">Elegir lámpara…</option>${products.map((p) => `<option value="${attr(p.id)}">${esc(p.name)} · ${esc(money(p.price, p.currency || currency))}</option>`).join('')}</select></div>` : ''}
     </div>
     <div class="form-section">
@@ -2906,6 +2914,9 @@ function openQuoteModal(thread) {
         <div class="field"><label for="q-valid">Validez (días)</label><input class="input" name="validDays" type="number" min="1" max="120" step="1" value="${attr(validDays)}"></div>
         <div class="field"><label for="q-currency">Moneda</label><input class="input" name="currency" value="${attr(currency)}" maxlength="6"></div>
         <div class="field full"><label for="q-payment">Link de pago</label><input class="input" name="paymentLink" type="url" value="${attr(paymentLink)}" placeholder="https://…"><p class="field-hint">Si lo dejás vacío, el correo pide confirmación y el link se envía después.</p></div>
+        <div class="field"><label for="q-payterms">Condiciones de pago</label><input class="input" name="payTerms" value="" placeholder="Ej.: 50% seña, 50% contra entrega"></div>
+        <div class="field"><label for="q-volume">Descuento por volumen</label><input class="input" name="volumeNote" value="" placeholder="Ej.: 10% desde 6 unidades"></div>
+        <div class="field full"><label for="q-shipnote">Detalle de envío</label><input class="input" name="shipNote" value="" placeholder="Ej.: flete a cargo del comprador, despacho en 3 días"></div>
         <div class="field full"><label for="q-notes">Nota para el comprador</label><textarea class="textarea" name="notes" rows="3" placeholder="Condiciones, color, embalaje, fecha de entrega…"></textarea></div>
       </div>
     </div>
@@ -2946,6 +2957,9 @@ function readQuoteForm() {
     quantity: num(el.querySelector('[name="qty"]')?.value, 1),
     unitPrice: num(el.querySelector('[name="unit"]')?.value, 0),
     discount: num(el.querySelector('[name="disc"]')?.value, 0),
+    color: String(el.querySelector('[name="color"]')?.value || '').trim(),
+    leadTimeDays: num(el.querySelector('[name="lead"]')?.value, 0),
+    lineNote: String(el.querySelector('[name="lineNote"]')?.value || '').trim(),
     productName: el.querySelector('b')?.textContent || 'Lámpara',
   }));
   return {
@@ -2955,6 +2969,9 @@ function readQuoteForm() {
     validDays: num(form.querySelector('[name="validDays"]')?.value, 15),
     currency: String(form.querySelector('[name="currency"]')?.value || 'USD').trim().toUpperCase().slice(0, 6),
     paymentLink: String(form.querySelector('[name="paymentLink"]')?.value || '').trim(),
+    payTerms: String(form.querySelector('[name="payTerms"]')?.value || '').trim(),
+    volumeNote: String(form.querySelector('[name="volumeNote"]')?.value || '').trim(),
+    shipNote: String(form.querySelector('[name="shipNote"]')?.value || '').trim(),
     notes: String(form.querySelector('[name="notes"]')?.value || ''),
     approve: Boolean(form.querySelector('[name="approve"]')?.checked),
   };
@@ -2991,6 +3008,9 @@ async function saveQuote(threadId) {
         validDays: data.validDays,
         currency: data.currency,
         paymentLink: data.paymentLink,
+        payTerms: data.payTerms,
+        volumeNote: data.volumeNote,
+        shipNote: data.shipNote,
         notes: data.notes,
         approve: data.approve,
       },
@@ -5432,6 +5452,20 @@ async function handleAction(action, el) {
       return;
     }
     case 'save-quote': await saveQuote(el.dataset.id); return;
+    case 'quote-add-all': {
+      const products = arr(S.state.products).filter((p) => p.status !== 'archivado');
+      const lines = $('#quote-lines');
+      if (!lines || !products.length) return;
+      const existing = new Set([...lines.querySelectorAll('[name="productId"]')].map((i) => i.value));
+      const missing = products.filter((p) => !existing.has(p.id));
+      if (!missing.length) { toast('Ya están todas las lámparas en la cotización.', 'info'); return; }
+      missing.forEach((p, i) => {
+        lines.insertAdjacentHTML('beforeend', quoteLineHTML(p, lines.querySelectorAll('[data-quote-line]').length, p.currency || S.state.brand?.currency || 'USD'));
+      });
+      refreshQuotePreview();
+      toast(`Se agregaron ${missing.length} lámparas. Ajustá cantidades y precios a tu gusto.`);
+      return;
+    }
     case 'quote-add-line': {
       const products = arr(S.state.products).filter((p) => p.status !== 'archivado');
       if (!products.length) { toast('No hay lámparas en el catálogo.', 'error'); return; }
