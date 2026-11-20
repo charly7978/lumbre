@@ -1998,8 +1998,11 @@ async function handle(req, res) {
   // forwarded y su dominio público deben obligar a autenticarse.
   const peer = String(req.socket.remoteAddress || '').replace(/^::ffff:/, '');
   const isLoopbackPeer = peer === '127.0.0.1' || peer === '::1';
-  const isLocalHost = allowedHosts.has(hostName) && isLoopbackPeer
-    && !req.headers['x-forwarded-for'] && !req.headers['x-forwarded-host'];
+  const isLocalHost = process.env.LUCIAN_REQUIRE_AUTH !== '1'
+    && allowedHosts.has(hostName) && isLoopbackPeer
+    && !req.headers['x-forwarded-for'] && !req.headers['x-forwarded-host']
+    && !req.headers.forwarded && !req.headers['x-real-ip']
+    && !req.headers['cf-connecting-ip'];
   const needsAuth = !isLocalHost && !isWebhook && pathname.startsWith('/api/') && pathname !== '/api/login';
   if (needsAuth) {
     const provided = req.headers['x-lucian-access']
