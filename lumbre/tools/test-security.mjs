@@ -116,7 +116,14 @@ try {
   assert.equal((await request(url + '?hub.mode=subscribe&hub.verify_token=test-verify-token&hub.challenge=ok')).status, 200);
   console.log('OK: autorización local/remota, Host falsificado, firma Meta, consentimiento e idempotencia Resend.');
 } finally {
-  server.kill();
-  await new Promise((resolve) => server.once('exit', resolve));
+  if (server.exitCode === null) {
+    const closed = new Promise((resolve) => {
+      server.once('exit', resolve);
+      setTimeout(resolve, 2500).unref();
+    });
+    server.kill();
+    await closed;
+    if (server.exitCode === null) server.kill('SIGKILL');
+  }
   await fs.rm(dataDir, { recursive: true, force: true });
 }
