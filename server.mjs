@@ -25,6 +25,7 @@ import {
 } from './lib/agents.mjs';
 import { DEPTHS, STEPS } from './lib/prompts.mjs';
 import { clearDemo, seedDemo } from './lib/demo.mjs';
+import { generateJson } from './lib/ai.mjs';
 import { Outbox } from './lib/outbox.mjs';
 import { productReadiness } from './lib/readiness.mjs';
 import { buildQuote, quoteLanguage, quoteNumber, quoteTotals, validUntilDate } from './lib/quotes.mjs';
@@ -1759,6 +1760,49 @@ async function handle(req, res) {
     const body = await readJson(req);
     await store.clearSecret(asString(body.path));
     json(res, 200, { settings: maskSettings(store.settings()), flags: settingsFlags(store.settings()) });
+    return;
+  }
+
+  if (pathname === '/api/settings/ai-configure' && method === 'POST') {
+    const body = await readJson(req);
+    const settings = store.settings();
+    if (!isAIReady(settings)) throw new HttpError(400, 'Configurá una IA primero en Ajustes → Inteligencia artificial.');
+    const cfg = resolveAIConfig(settings);
+    const goal = String(body?.goal || '').trim().slice(0, 500);
+    const context = {
+      brand: settings.brand,
+      products: store.get('products').length,
+      missions: store.get('missions').length,
+      threads: store.get('threads').length,
+      current: {
+        ai: settings.ai?.provider,
+        search: settings.search?.provider,
+        email: settings.email?.provider,
+        dailyLimit: settings.email?.dailyLimit,
+        warmup: settings.email?.warmup,
+        markets: settings.mission?.markets,
+        depth: settings.mission?.depth,
+        maxProspects: settings.mission?.maxProspects,
+      },
+    };
+    const result = await generateJson(cfg, {
+      system: 'Sos un asistente de configuración de Lumbre. Devolvés un JSON con un parche de ajustes y un resumen. El parche solo puede tocar: mission (markets, depth, maxProspects, tone, currency, contactCooldownDays), email (dailyLimit, warmup, autopilotEnabled, autopilotSpacingMin, followUps, postSales), sales (paymentLink, quoteValidityDays), onboarding. No toques claves ni URLs de proveedores. Español rioplatense.',
+      prompt: `El dueño quiere que configures Lumbre. Pedido: "${goal || 'configuración óptima para empezar a vender lámparas de diseño'}".\nContexto actual: ${JSON.stringify(context)}.\nDevolvé: { "patch": { ... }, "summary": "qué cambiaste y por qué (máx 4 frases)" }.`,
+      temperature: 0.4,
+      maxTokens: 1200,
+      expects: 'object',
+    });
+    const data = asObject(result.data);
+    const patch = isObject(data.patch) ? data.patch : {};
+    // Sanitizar: solo campos permitidos.
+    const allowed = new Set(['mission', 'email', 'sales', 'onboarding']);
+    const safePatch = {};
+    for (const key of Object.keys(patch)) {
+      if (allowed.has(key) && isObject(patch[key])) safePatch[key] = patch[key];
+    }
+    const updated = await store.saveSettings(safePatch);
+    await store.activity('settings', `Configuración asistida por IA: ${String(data.summary || 'aplicada').slice(0, 200)}`);
+    json(res, 200, { settings: maskSettings(updated), flags: settingsFlags(updated), summary: data.summary || 'Configuración aplicada.', patch: safePatch });
     return;
   }
 

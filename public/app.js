@@ -3550,6 +3550,7 @@ function settingsForm(tab, title, subtitle, body, note = '') {
     </div>
     <div class="form-actions">
       <button class="btn btn-primary" type="submit">${icon('check')} Guardar cambios</button>
+      <button class="btn btn-ghost" type="button" data-action="ai-configure">${icon('wand')} Configurar con IA</button>
       <span class="form-note">${note}</span>
     </div>
   </form>`;
@@ -3997,6 +3998,23 @@ function bindSettings() {
   if (restore) restore.addEventListener('change', restoreBackupFile);
 }
 
+async function aiConfigureSettings() {
+  const goal = window.prompt('¿Qué querés que la IA configure? (ej: "optimizar para vender lámparas de diseño en España y México, 12 prospectos por misión")', '');
+  if (goal === null) return;
+  const button = $('[data-action="ai-configure"]');
+  if (button) { button.disabled = true; button.innerHTML = `${icon('refresh', 'spin')} Configurando…`; }
+  try {
+    const result = await api('/api/settings/ai-configure', { method: 'POST', body: JSON.stringify({ goal: goal || '' }) });
+    await loadState({ silent: true, render: false });
+    render();
+    toast(result.summary || 'Configuración aplicada por la IA.');
+    if (result.summary) openModal({ title: 'Configuración aplicada', subtitle: 'La IA ajustó los parámetros de Lumbre.', body: `<p>${esc(result.summary)}</p>`, footer: `<button class="btn btn-primary" type="button" data-action="close-modal">Entendido</button>` });
+  } catch (error) {
+    toast(error.message, 'error');
+  } finally {
+    if (button) { button.disabled = false; button.innerHTML = `${icon('wand')} Configurar con IA`; }
+  }
+}
 async function saveSettings(form) {
   const tab = form.dataset.settingsTab || 'marca';
   const fd = new FormData(form);
@@ -4630,11 +4648,7 @@ async function handleAction(action, el) {
       return;
     }
     case 'save-contact': await saveContact(el.dataset.id); return;
-    case 'new-quote': {
-      if (!S.thread?.thread) return;
-      openQuoteModal(S.thread.thread);
-      return;
-    }
+    case 'ai-configure': await aiConfigureSettings(); return;
     case 'save-quote': await saveQuote(el.dataset.id); return;
     case 'quote-status': await setQuoteStatusUI(el.dataset.id, el.dataset.quoteId, el.dataset.status); return;
     case 'new-draft': {
