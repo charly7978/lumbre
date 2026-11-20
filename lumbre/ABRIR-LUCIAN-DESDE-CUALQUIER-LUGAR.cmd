@@ -30,6 +30,7 @@ if errorlevel 1 (
 set "LUCIAN_HOST=127.0.0.1"
 set "LUCIAN_PORT=4321"
 set "LUCIAN_NO_OPEN=1"
+set "LUCIAN_REQUIRE_AUTH=1"
 echo.
 echo Iniciando Lucian y un tunel HTTPS.
 echo La URL publica NO concede acceso sin la clave de esta PC.
