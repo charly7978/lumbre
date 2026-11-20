@@ -205,6 +205,8 @@ function threadSummary(thread, suppressions = []) {
     createdAt: quote.createdAt || null,
     sentAt: quote.sentAt || null,
     acceptedAt: quote.acceptedAt || null,
+    paymentReceived: quotePaymentTotals(quote).received,
+    paymentRemaining: quotePaymentTotals(quote).remaining,
     draftId: quote.draftId || null,
   }));
   return {
@@ -301,20 +303,38 @@ const QUOTE_STATUS_LABELS = {
   rechazada: 'Rechazada',
 };
 
+/* Aceptacion no equivale a cobro. Registro manual sin conciliacion bancaria. */
+function quotePaymentTotals(quote) {
+  const total = quote.status === 'aceptada' ? Math.max(0, Number(quote.total) || 0) : 0;
+  const records = Array.isArray(quote.payments) ? quote.payments : [];
+  const received = roundMoney(records.reduce((sum, item) => sum + (Number(item.amount) || 0), 0));
+  return { received, remaining: roundMoney(Math.max(0, total - received)), records: records.length };
+}
+
 function buildSales(threads, products, currency = 'USD') {
   const productName = (id) => products.find((product) => product.id === id)?.name || 'Producto';
   const quotes = threads.flatMap((thread) => (thread.quotes || []).map((quote) => ({
     ...quote,
+    demo: Boolean(thread.demo),
     threadId: thread.id,
     company: thread.contact?.company || thread.contact?.name || 'Contacto',
     productId: thread.productId,
     productName: productName(thread.productId),
     stage: thread.stage,
   })));
-  const accepted = quotes.filter((quote) => quote.status === 'aceptada');
-  const revenue = roundMoney(accepted.reduce((acc, quote) => acc + (Number(quote.total) || 0), 0));
+  const realQuotes = quotes.filter((quote) => !quote.demo);
+  const accepted = realQuotes.filter((quote) => quote.status === 'aceptada');
+  const paymentsByCurrency = {};
+  const outstandingByCurrency = {};
+  for (const quote of accepted) {
+    const moneyCurrency = String(quote.currency || currency).toUpperCase();
+    const amount = quotePaymentTotals(quote);
+    paymentsByCurrency[moneyCurrency] = roundMoney((paymentsByCurrency[moneyCurrency] || 0) + amount.received);
+    outstandingByCurrency[moneyCurrency] = roundMoney((outstandingByCurrency[moneyCurrency] || 0) + amount.remaining);
+  }
+  const revenue = paymentsByCurrency[currency] || 0;
   const wonThreads = threads
-    .filter((thread) => thread.stage === 'ganado')
+    .filter((thread) => !thread.demo && thread.stage === 'ganado')
     .map((thread) => {
       const quote = (thread.quotes || []).find((item) => item.status === 'aceptada') || (thread.quotes || [])[0];
       return {
@@ -326,15 +346,17 @@ function buildSales(threads, products, currency = 'USD') {
         total: Number(quote?.total) || 0,
         currency: quote?.currency || currency,
         acceptedAt: quote?.acceptedAt || null,
+        paymentReceived: quote && quote.status === 'aceptada' ? quotePaymentTotals(quote).received : 0,
+        paymentRemaining: quote && quote.status === 'aceptada' ? quotePaymentTotals(quote).remaining : 0,
         at: quote?.acceptedAt || thread.updatedAt || thread.createdAt,
       };
     })
     .sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
-  const openQuotes = quotes
+  const openQuotes = realQuotes
     .filter((quote) => ['borrador', 'enviada'].includes(quote.status))
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
   const byProduct = {};
-  for (const quote of quotes) {
+  for (const quote of realQuotes) {
     const key = quote.productId || 'sin-producto';
     const bucket = byProduct[key] || {
       productId: key,
@@ -347,11 +369,11 @@ function buildSales(threads, products, currency = 'USD') {
     bucket.quotes += 1;
     if (quote.status === 'aceptada') {
       bucket.accepted += 1;
-      bucket.revenue = roundMoney(bucket.revenue + (Number(quote.total) || 0));
+      bucket.revenue = roundMoney(bucket.revenue + quotePaymentTotals(quote).received);
     }
     byProduct[key] = bucket;
   }
-  for (const thread of threads.filter((item) => item.stage === 'ganado')) {
+  for (const thread of threads.filter((item) => !item.demo && item.stage === 'ganado')) {
     const key = thread.productId || 'sin-producto';
     const bucket = byProduct[key] || {
       productId: key,
@@ -368,9 +390,13 @@ function buildSales(threads, products, currency = 'USD') {
     currency,
     sold: wonThreads.length,
     revenue,
+    revenueMeaning: 'Cobros informados por el usuario; no conciliados con el banco',
+    paymentsByCurrency,
+    outstandingByCurrency,
+    unpaidAcceptedQuotes: accepted.filter((q) => quotePaymentTotals(q).remaining > 0).length,
     acceptedQuotes: accepted.length,
     openQuotes: openQuotes.length,
-    quotesByStatus: quotes.reduce((acc, quote) => {
+    quotesByStatus: realQuotes.reduce((acc, quote) => {
       acc[quote.status] = (acc[quote.status] || 0) + 1;
       return acc;
     }, {}),
@@ -1287,6 +1313,10 @@ async function setQuoteStatus(threadId, quoteId, status) {
   if (!thread) throw new HttpError(404, 'Conversación no encontrada.');
   const quote = (thread.quotes || []).find((item) => item.id === quoteId);
   if (!quote) throw new HttpError(404, 'Cotización no encontrada.');
+  if (Array.isArray(quote.payments) && quote.payments.length && status !== 'aceptada') {
+    throw new HttpError(409, 'Esta cotización tiene cobros registrados. No se puede rechazar o reabrir sin conciliarlos antes.');
+  }
+  if (quote.status === status) return { quote, thread };
   const now = nowISO();
   quote.status = status;
   quote.updatedAt = now;
@@ -1312,6 +1342,41 @@ async function setQuoteStatus(threadId, quoteId, status) {
   await store.set('threads', threads);
   await store.activity('outreach', `Cotización ${quote.number}: ${status}.`, { threadId: thread.id, quoteId: quote.id });
   return { quote, thread };
+}
+
+async function recordQuotePayment(threadId, quoteId, body) {
+  const threads = store.get('threads');
+  const thread = threads.find((item) => item.id === threadId);
+  if (!thread) throw new HttpError(404, 'Conversación no encontrada.');
+  if (thread.demo) throw new HttpError(400, 'No se registran cobros reales en conversaciones de demostración.');
+  const quote = (thread.quotes || []).find((item) => item.id === quoteId);
+  if (!quote) throw new HttpError(404, 'Cotización no encontrada.');
+  if (quote.status !== 'aceptada') throw new HttpError(409, 'Primero se debe registrar la aceptación de la cotización.');
+  if (body?.confirm !== true) throw new HttpError(400, 'Debés confirmar expresamente que ya recibiste el dinero.');
+  const method = asString(body.method).trim().toLowerCase();
+  if (!['transferencia', 'mercadopago', 'efectivo', 'otro'].includes(method)) throw new HttpError(400, 'Método de cobro inválido.');
+  const reference = asString(body.reference).trim().slice(0, 120);
+  if (reference.length < 4) throw new HttpError(400, 'Ingresá una referencia verificable del cobro (mínimo 4 caracteres).');
+  const amountRaw = body.amount;
+  const amount = Number(amountRaw);
+  if (amountRaw === null || amountRaw === '' || !Number.isFinite(amount) || amount <= 0 || Math.abs(amount * 100 - Math.round(amount * 100)) > 0.00001) {
+    throw new HttpError(400, 'El importe cobrado debe ser positivo y tener hasta dos decimales.');
+  }
+  quote.payments = Array.isArray(quote.payments) ? quote.payments : [];
+  const existing = quote.payments.find((item) => item.method === method && item.reference.toLowerCase() === reference.toLowerCase());
+  if (existing) {
+    if (existing.amount !== amount) throw new HttpError(409, 'Esa referencia ya existe con otro importe. No se duplicó el cobro.');
+    return { payment: existing, quote, totals: quotePaymentTotals(quote), alreadyRecorded: true };
+  }
+  const current = quotePaymentTotals(quote);
+  if (roundMoney(amount) > current.remaining + 0.001) throw new HttpError(409, 'El importe excede el saldo de la cotización.');
+  const payment = { id: uid('pay'), method, reference, amount: roundMoney(amount), currency: quote.currency || 'USD', at: nowISO(), source: 'manual', verifiedByProvider: false };
+  quote.payments.push(payment);
+  quote.updatedAt = payment.at;
+  thread.updatedAt = payment.at;
+  await store.set('threads', threads);
+  await store.activity('outreach', `Cobro informado manualmente para ${quote.number || quote.id}: ${payment.amount} ${payment.currency}. No conciliado.`, { threadId: thread.id, quoteId: quote.id, paymentId: payment.id });
+  return { payment, quote, totals: quotePaymentTotals(quote), alreadyRecorded: false };
 }
 
 async function sendThreadMessage(threadId, body) {
@@ -2583,6 +2648,14 @@ async function handle(req, res) {
     const body = await readJson(req);
     const result = await setQuoteStatus(id, quoteId, asString(body.status));
     json(res, 200, result);
+    return;
+  }
+
+  const paymentMatch = pathname.match(/^\/api\/threads\/([^/]+)\/quotes\/([^/]+)\/payments$/);
+  if (paymentMatch && method === 'POST') {
+    const body = await readJson(req);
+    const result = await recordQuotePayment(decodeURIComponent(paymentMatch[1]), decodeURIComponent(paymentMatch[2]), body);
+    json(res, result.alreadyRecorded ? 200 : 201, result);
     return;
   }
 
