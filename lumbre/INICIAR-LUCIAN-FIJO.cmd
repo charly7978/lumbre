@@ -1,6 +1,5 @@
 @echo off
-chcp 65001 >nul
-title LUCIAN - Dirección fija
+title LUCIAN - Direccion fija
 cd /d "%~dp0"
 set LUCIAN_PORT=4321
 set LUCIAN_HOST=0.0.0.0
@@ -8,7 +7,7 @@ set LUCIAN_HOST=0.0.0.0
 cls
 echo.
 echo  ============================================================
-echo   LUCIAN · DIRECCION FIJA
+echo   LUCIAN - DIRECCION FIJA
 echo  ============================================================
 echo.
 
@@ -17,7 +16,7 @@ if exist "DOMINIO.txt" set /p DOMINIO=<"DOMINIO.txt"
 if "%DOMINIO%"=="" set "DOMINIO=lucian.tudominio.com"
 
 where node >nul 2>nul
-if errorlevel 1 goto :SINNODE
+if errorlevel 1 goto SINNODE
 
 echo  [1/3] Encendiendo el sistema...
 tasklist /FI "IMAGENAME eq node.exe" 2>nul | find /i "node.exe" >nul
