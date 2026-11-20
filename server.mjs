@@ -291,8 +291,8 @@ function broadcast(missionId, event) {
 
 const notifier = new Notifier({
   store,
-  ask: async (question, channel = 'web', history = []) => {
-    const result = await askTeam({ question, agentId: 'director', store, history, channel });
+  ask: async (question, channel = 'web', history = [], images = []) => {
+    const result = await askTeam({ question, agentId: 'director', store, history, channel, images });
     return result.demo ? `(Modo demo) ${result.answer}` : result.answer;
   },
   actions: { createMission, sendThreadMessage },
