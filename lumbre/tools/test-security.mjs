@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import http from 'node:http';
 import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -52,7 +53,6 @@ try {
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lucian-security-'));
 const port = 45000 + Math.floor(Math.random() * 12000);
-const base = 'http://127.0.0.1:' + port;
 const accessToken = 'test-access-token-for-security-suite-2026';
 const server = spawn(process.execPath, ['server.mjs'], {
   cwd: root,
@@ -62,8 +62,29 @@ const server = spawn(process.execPath, ['server.mjs'], {
     META_VERIFY_TOKEN: 'test-verify-token' },
   stdio: 'ignore',
 });
-async function request(route, options = {}) {
-  return fetch(base + route, { redirect: 'manual', ...options });
+// undici/fetch overrides the Host header. Use raw HTTP so Host spoofing tests are real.
+async function request(route, { method = 'GET', headers = {}, body = null } = {}) {
+  return await new Promise((resolve, reject) => {
+    const client = http.request({
+      hostname: '127.0.0.1', port, path: route, method, headers,
+    }, (res) => {
+      const chunks = [];
+      res.on('data', (chunk) => chunks.push(chunk));
+      res.on('end', () => {
+        const status = res.statusCode || 0;
+        resolve({
+          status,
+          ok: status >= 200 && status < 300,
+          headers: { get: (key) => res.headers[String(key).toLowerCase()] || null },
+          text: async () => Buffer.concat(chunks).toString('utf8'),
+        });
+      });
+      res.on('error', reject);
+    });
+    client.on('error', reject);
+    if (body !== null) client.write(body);
+    client.end();
+  });
 }
 async function waitForServer() {
   for (let attempt = 0; attempt < 60; attempt += 1) {
