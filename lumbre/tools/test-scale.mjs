@@ -10,6 +10,8 @@ import { clearSearchCache, searchWebDetailed } from '../lib/search.mjs';
 import { Outbox, buildFollowUp } from '../lib/outbox.mjs';
 import { ensureCompliance } from '../lib/email.mjs';
 
+const TEST_PERMISSION = { status: 'opted_in', source: 'manual', evidence: 'Formulario con consentimiento verificable', capturedAt: '2026-11-20T10:00:00.000Z' };
+
 let passed = 0;
 const dirs = [];
 function ok(condition, label, detail = '') {
@@ -71,7 +73,7 @@ async function freshStore() {
   const draft = { id: 'drf_scale', channel: 'email', status: 'listo', subject: 'Aurora', body: 'Hola' };
   const thread = {
     id: 'thr_scale', missionId: mission.id, productId: product.id, demo: false, stage: 'nuevo',
-    contact: { company: 'Luz de Autor', email: 'compras@luzdeautor.test' }, drafts: [draft], messages: [],
+    contact: { company: 'Luz de Autor', email: 'compras@luzdeautor.test', permission: TEST_PERMISSION }, drafts: [draft], messages: [],
   };
   await store.set('products', [product]);
   await store.set('missions', [mission]);
@@ -113,7 +115,7 @@ async function freshStore() {
   const draft = { id: 'drf_sup', channel: 'email', status: 'listo', subject: 'Hola', body: 'Hola' };
   const thread = {
     id: 'thr_sup', missionId: 'mis_sup', demo: false, stage: 'nuevo',
-    contact: { company: 'Casa Sup', email: 'hola@casasup.test' }, drafts: [draft], messages: [],
+    contact: { company: 'Casa Sup', email: 'hola@casasup.test', permission: TEST_PERMISSION }, drafts: [draft], messages: [],
   };
   await store.set('threads', [thread]);
   await store.set('suppressions', [{ id: 'sup_1', email: 'hola@casasup.test', reason: 'pidió baja' }]);
@@ -136,7 +138,7 @@ async function freshStore() {
   const sentAt = new Date(Date.now() - 5 * 86400000).toISOString();
   const thread = {
     id: 'thr_follow', missionId: mission.id, productId: product.id, demo: false, stage: 'contactado',
-    contact: { company: 'Luz de Autor', email: 'compras@luzdeautor.test', country: 'España' },
+    contact: { company: 'Luz de Autor', email: 'compras@luzdeautor.test', country: 'España', permission: TEST_PERMISSION },
     drafts: [{ id: 'drf_first', channel: 'email', status: 'enviado', subject: 'Siri para tu tienda', body: 'Hola', source: 'mision' }],
     messages: [{ direction: 'out', at: sentAt, subject: 'Siri para tu tienda' }],
     followUpCount: 0,
@@ -181,7 +183,7 @@ async function freshStore() {
   const mkDraft = (id) => ({ id, channel: 'email', status: 'listo', subject: 'Hola', body: 'Hola' });
   const mkThread = (id, stage) => ({
     id, stage, missionId: 'mis_stage', demo: false,
-    contact: { company: `Casa ${id}`, email: `hola${id}@casadeprueba.test` },
+    contact: { company: `Casa ${id}`, email: `hola${id}@casadeprueba.test`, permission: TEST_PERMISSION },
     drafts: [mkDraft(`drf_${id}`)], messages: [],
   });
   const threads = [mkThread('a', 'interesado'), mkThread('b', 'respondio'), mkThread('c', 'ganado'), mkThread('d', 'perdido')];
@@ -216,7 +218,7 @@ async function freshStore() {
   });
   const mkThread = (id) => ({
     id, stage: 'nuevo', missionId: 'mis_spacing', demo: false,
-    contact: { company: `Casa ${id}`, email: `hola${id}@espaciado.test` },
+    contact: { company: `Casa ${id}`, email: `hola${id}@espaciado.test`, permission: TEST_PERMISSION },
     drafts: [{ id: `drf_${id}`, channel: 'email', status: 'listo', subject: 'Hola', body: 'Hola' }], messages: [],
   });
   const threads = [mkThread('uno'), mkThread('dos')];
@@ -251,7 +253,7 @@ async function freshStore() {
   const mission = { id: 'mis_post', demo: false, status: 'done', artifacts: { outreach: { secuencia: [] } } };
   const mkThread = (id, overrides = {}) => ({
     id, stage: 'ganado', missionId: mission.id, productId: product.id, demo: false,
-    contact: { company: `Casa ${id}`, email: `hola${id}@postventa.test`, country: 'España' },
+    contact: { company: `Casa ${id}`, email: `hola${id}@postventa.test`, country: 'España', permission: TEST_PERMISSION },
     drafts: [], messages: [{ direction: 'out', at: new Date(Date.now() - 40 * 86400000).toISOString(), subject: 'Siri' }],
     postSaleCount: 0,
     postSaleAt: new Date(Date.now() - 5 * 86400000).toISOString(),
@@ -319,7 +321,7 @@ async function freshStore() {
   const mission = { id: 'mis_ap', demo: false, status: 'done', artifacts: { outreach: { secuencia: [] } } };
   const thread = {
     id: 'thr_ap', stage: 'ganado', missionId: mission.id, productId: product.id, demo: false,
-    contact: { company: 'Casa Aprobada', email: 'compras@casaaprobada.test', country: 'España' },
+    contact: { company: 'Casa Aprobada', email: 'compras@casaaprobada.test', country: 'España', permission: TEST_PERMISSION },
     drafts: [], messages: [{ direction: 'out', at: new Date(Date.now() - 40 * 86400000).toISOString(), subject: 'Siri' }],
     postSaleCount: 0, postSaleAt: new Date(Date.now() - 5 * 86400000).toISOString(),
   };
@@ -348,7 +350,7 @@ async function freshStore() {
   // Si el cliente escribe entre la encolación y el envío, no sale.
   const thread2 = {
     id: 'thr_ap2', stage: 'ganado', missionId: mission.id, productId: product.id, demo: false,
-    contact: { company: 'Casa Cambio', email: 'compras@casacambio.test', country: 'España' },
+    contact: { company: 'Casa Cambio', email: 'compras@casacambio.test', country: 'España', permission: TEST_PERMISSION },
     drafts: [{ id: 'drf_ap2', channel: 'email', status: 'listo', subject: 'Re: Siri', body: 'Hola', source: 'postventa' }],
     messages: [],
     postSaleAt: new Date(Date.now() - 5 * 86400000).toISOString(),
