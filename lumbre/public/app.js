@@ -2834,113 +2834,178 @@ function quotesHTML(thread) {
 }
 
 function quotePreviewHTML(data, currency) {
-  const quantity = Math.max(1, Math.floor(num(data.quantity, 1)));
-  const unit = Math.max(0, num(data.unitPrice, 0));
+  const items = Array.isArray(data.items) ? data.items : [];
+  const singleQty = Math.max(1, Math.floor(num(data.quantity, 1)));
+  const singleUnit = Math.max(0, num(data.unitPrice, 0));
+  const lines = items.length
+    ? items.map((it) => {
+        const qty = Math.max(1, Math.floor(num(it.quantity, 1)));
+        const unit = Math.max(0, num(it.unitPrice, 0));
+        const gross = qty * unit;
+        const disc = Math.min(gross, Math.max(0, num(it.discount, 0)));
+        return { qty, unit, gross, disc, total: gross - disc, name: it.productName || 'Pieza' };
+      })
+    : [{ qty: singleQty, unit: singleUnit, gross: singleQty * singleUnit, disc: Math.min(singleQty * singleUnit, Math.max(0, num(data.discount, 0))), total: 0, name: 'Pieza' }];
+  if (!items.length) lines[0].total = lines[0].gross - lines[0].disc;
+  const subtotal = lines.reduce((a, l) => a + l.total, 0);
+  const discount = lines.reduce((a, l) => a + l.disc, 0);
   const shipping = Math.max(0, num(data.shipping, 0));
-  const subtotal = quantity * unit;
-  const discount = Math.min(subtotal, Math.max(0, num(data.discount, 0)));
   const taxRate = Math.max(0, Math.min(100, num(data.taxRate, 0)));
-  const taxable = subtotal - discount + shipping;
-  const tax = taxable * taxRate / 100;
-  const total = taxable + tax;
-  return `<div class="between"><span>${quantity} × ${esc(money(unit, currency))}</span><b>${esc(money(subtotal, currency))}</b></div>
+  const tax = (subtotal + shipping) * taxRate / 100;
+  const total = subtotal + shipping + tax;
+  return `${lines.map((l) => `<div class="between"><span>${l.qty} × ${esc(l.name)}</span><b>${esc(money(l.total, currency))}</b></div>`).join('')}
+    ${discount > 0 ? `<div class="between"><span>Descuentos</span><b>−${esc(money(discount, currency))}</b></div>` : ''}
     ${shipping > 0 ? `<div class="between"><span>Envío</span><b>${esc(money(shipping, currency))}</b></div>` : ''}
-    ${discount > 0 ? `<div class="between"><span>Descuento</span><b>−${esc(money(discount, currency))}</b></div>` : ''}
     ${tax > 0 ? `<div class="between"><span>Impuestos (${taxRate}%)</span><b>${esc(money(tax, currency))}</b></div>` : ''}
     <div class="between" style="border-top:1px solid var(--line);margin-top:6px;padding-top:8px"><b>Total</b><b>${esc(money(total, currency))}</b></div>`;
 }
 
-function openQuoteModal(thread) {
-  const product = arr(S.state.products).find((item) => item.id === thread.productId) || {};
+function quoteLineHTML(product, index, currency) {
+  const p = product || {};
   const settings = S.state.settings || {};
   const brand = S.state.brand || {};
-  const currency = product.currency || brand.currency || 'USD';
-  const paymentLink = product.paymentLink || settings.sales?.paymentLink || '';
+  const cur = p.currency || currency;
+  return `<div class="quote-line" data-quote-line="${index}" style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px">
+    <div class="between" style="margin-bottom:8px">
+      <b style="font-size:13px">${esc(p.name || 'Lámpara')}</b>
+      <button class="btn btn-ghost btn-xs" type="button" data-action="quote-remove-line" data-index="${index}" ${index === 0 ? 'disabled title="Dejá al menos una lámpara"' : ''}>${icon('trash')} Quitar</button>
+    </div>
+    <div class="form-grid">
+      <input type="hidden" name="productId" value="${attr(p.id || '')}">
+      <div class="field"><label>Cantidad</label><input class="input" name="qty" type="number" min="1" step="1" value="1" data-qfield="quantity"></div>
+      <div class="field"><label>Precio unitario (${esc(cur)})</label><input class="input" name="unit" type="number" min="0" step="0.01" value="${attr(num(p.price, 0))}" data-qfield="unitPrice"></div>
+      <div class="field"><label>Descuento (${esc(cur)})</label><input class="input" name="disc" type="number" min="0" step="0.01" value="0" data-qfield="discount"></div>
+      <div class="field"><label>Subtotal</label><div class="input line-subtotal" style="display:flex;align-items:center">—</div></div>
+    </div>
+  </div>`;
+}
+
+function openQuoteModal(thread) {
+  const first = arr(S.state.products).find((item) => item.id === thread.productId) || arr(S.state.products)[0] || {};
+  const settings = S.state.settings || {};
+  const brand = S.state.brand || {};
+  const currency = first.currency || brand.currency || 'USD';
+  const paymentLink = first.paymentLink || settings.sales?.paymentLink || '';
   const validDays = num(settings.sales?.quoteValidityDays, 15) || 15;
+  const products = arr(S.state.products).filter((p) => p.status !== 'archivado');
+  const leadTime = num(first.leadTimeDays, 0);
+  const capacity = num(first.capacityPerWeek, 0);
   const body = `<form id="quote-form" data-thread-id="${attr(thread.id)}">
     <div class="form-section">
-      <p class="form-section-title">${esc(product.name || 'Producto del hilo')}</p>
-      <p class="form-section-sub">La cotización se arma con estos datos, sin IA: precio, cantidad, plazo y link de pago salen de tu ficha.${num(product.capacityPerWeek) > 0 ? ` Capacidad: ${num(product.capacityPerWeek)} por semana.` : ''}${num(product.leadTimeDays) > 0 ? ` Plazo: ${num(product.leadTimeDays)} días.` : ''}</p>
+      <p class="form-section-title">Lámparas de la cotización</p>
+      <p class="form-section-sub">Agregá una o varias. El precio, la cantidad y el descuento se calculan por línea. El envío y los impuestos son globales.${capacity > 0 ? ` Capacidad: ${capacity} por semana.` : ''}</p>
+      <div id="quote-lines">${quoteLineHTML(first, 0, currency)}</div>
+      <button class="btn btn-ghost btn-sm mt-2" type="button" data-action="quote-add-line">${icon('plus')} Agregar otra lámpara</button>
+      ${products.length > 1 ? `<div class="field mt-3"><label>Agregar rápido desde el catálogo</label><select class="select" id="quote-product-pick"><option value="">Elegir lámpara…</option>${products.map((p) => `<option value="${attr(p.id)}">${esc(p.name)} · ${esc(money(p.price, p.currency || currency))}</option>`).join('')}</select></div>` : ''}
+    </div>
+    <div class="form-section">
+      <p class="form-section-title">Condiciones generales</p>
       <div class="form-grid">
-        <div class="field"><label for="q-quantity">Cantidad</label><input class="input" id="q-quantity" name="quantity" type="number" min="1" step="1" value="1" required></div>
-        <div class="field"><label for="q-price">Precio unitario (${esc(currency)})</label><input class="input" id="q-price" name="unitPrice" type="number" min="0" step="0.01" value="${attr(num(product.price, 0))}" required></div>
-        <div class="field"><label for="q-shipping">Envío</label><input class="input" id="q-shipping" name="shipping" type="number" min="0" step="0.01" value="0"><p class="field-hint">Dejalo en 0 si el envío se cotiza aparte.</p></div>
-        <div class="field"><label for="q-discount">Descuento</label><input class="input" id="q-discount" name="discount" type="number" min="0" step="0.01" value="0"></div>
-        <div class="field"><label for="q-tax">Impuestos (%)</label><input class="input" id="q-tax" name="taxRate" type="number" min="0" max="100" step="0.1" value="0"></div>
-        <div class="field"><label for="q-valid">Validez (días)</label><input class="input" id="q-valid" name="validDays" type="number" min="1" max="120" step="1" value="${attr(validDays)}"></div>
-        <div class="field full"><label for="q-payment">Link de pago</label><input class="input" id="q-payment" name="paymentLink" type="url" value="${attr(paymentLink)}" placeholder="https://”¦"><p class="field-hint">Si lo dejás vacío, el correo pide confirmación y el link se envía después.</p></div>
-        <div class="field full"><label for="q-notes">Nota para el comprador</label><textarea class="textarea" id="q-notes" name="notes" rows="3" placeholder="Condiciones especiales, color, embalaje, fecha de entrega”¦"></textarea></div>
+        <div class="field"><label for="q-shipping">Envío (${esc(currency)})</label><input class="input" name="shipping" type="number" min="0" step="0.01" value="0"></div>
+        <div class="field"><label for="q-tax">Impuestos (%)</label><input class="input" name="taxRate" type="number" min="0" max="100" step="0.1" value="0"></div>
+        <div class="field"><label for="q-valid">Validez (días)</label><input class="input" name="validDays" type="number" min="1" max="120" step="1" value="${attr(validDays)}"></div>
+        <div class="field"><label for="q-currency">Moneda</label><input class="input" name="currency" value="${attr(currency)}" maxlength="6"></div>
+        <div class="field full"><label for="q-payment">Link de pago</label><input class="input" name="paymentLink" type="url" value="${attr(paymentLink)}" placeholder="https://…"><p class="field-hint">Si lo dejás vacío, el correo pide confirmación y el link se envía después.</p></div>
+        <div class="field full"><label for="q-notes">Nota para el comprador</label><textarea class="textarea" name="notes" rows="3" placeholder="Condiciones, color, embalaje, fecha de entrega…"></textarea></div>
       </div>
     </div>
-    <div class="soft" id="quote-preview" style="margin-top:12px">${quotePreviewHTML({ quantity: 1, unitPrice: num(product.price, 0) }, currency)}</div>
-    <label class="checkbox mt-3"><input type="checkbox" name="approve" value="1"><span>Dejar el borrador listo para enviar (revisé precio, envío y plazo).</span></label>
+    <div class="soft" id="quote-preview" style="margin-top:12px">${quotePreviewHTML({ items: [{ productName: first.name, quantity: 1, unitPrice: num(first.price, 0), discount: 0 }] }, currency)}</div>
+    <label class="checkbox mt-3"><input type="checkbox" name="approve" value="1"><span>Dejar el borrador listo para enviar (revisé precios, envío y plazo).</span></label>
   </form>`;
   openModal({
     title: 'Preparar cotización',
-    subtitle: 'Un precio claro y un link de pago convierten el interés en pedido.',
+    subtitle: 'Una o varias lámparas, un solo correo claro con precio y link de pago.',
     size: 'modal-lg',
     body,
     footer: `<button class="btn btn-ghost" type="button" data-action="close-modal">Cancelar</button>
       <button class="btn btn-primary" type="button" data-action="save-quote" data-id="${attr(thread.id)}">${icon('dollar')} Preparar cotización</button>`,
     onMount: (root) => {
-      const form = $('#quote-form', root);
-      const preview = $('#quote-preview', root);
-      if (!form || !preview) return;
-      const update = () => {
-        const data = Object.fromEntries(new FormData(form).entries());
-        preview.innerHTML = quotePreviewHTML(data, currency);
-      };
-      ['quantity', 'unitPrice', 'shipping', 'discount', 'taxRate'].forEach((name) => {
-        form.querySelector(`[name="${name}"]`)?.addEventListener('input', update);
+      refreshQuotePreview();
+      root.addEventListener('input', (e) => {
+        if (e.target.closest('#quote-form')) refreshQuotePreview();
+      });
+      const pick = root.querySelector('#quote-product-pick');
+      if (pick) pick.addEventListener('change', () => {
+        const p = arr(S.state.products).find((x) => x.id === pick.value);
+        if (!p) return;
+        const lines = root.querySelector('#quote-lines');
+        const idx = lines.querySelectorAll('[data-quote-line]').length;
+        lines.insertAdjacentHTML('beforeend', quoteLineHTML(p, idx, p.currency || currency));
+        pick.value = '';
+        refreshQuotePreview();
       });
     },
   });
 }
 
-async function saveQuote(threadId) {
+function readQuoteForm() {
   const form = $('#quote-form');
-  if (!form) return;
-  const data = Object.fromEntries(new FormData(form).entries());
+  if (!form) return null;
+  const lines = [...form.querySelectorAll('[data-quote-line]')].map((el) => ({
+    productId: el.querySelector('[name="productId"]')?.value || '',
+    quantity: num(el.querySelector('[name="qty"]')?.value, 1),
+    unitPrice: num(el.querySelector('[name="unit"]')?.value, 0),
+    discount: num(el.querySelector('[name="disc"]')?.value, 0),
+    productName: el.querySelector('b')?.textContent || 'Lámpara',
+  }));
+  return {
+    lines,
+    shipping: num(form.querySelector('[name="shipping"]')?.value, 0),
+    taxRate: num(form.querySelector('[name="taxRate"]')?.value, 0),
+    validDays: num(form.querySelector('[name="validDays"]')?.value, 15),
+    currency: String(form.querySelector('[name="currency"]')?.value || 'USD').trim().toUpperCase().slice(0, 6),
+    paymentLink: String(form.querySelector('[name="paymentLink"]')?.value || '').trim(),
+    notes: String(form.querySelector('[name="notes"]')?.value || ''),
+    approve: Boolean(form.querySelector('[name="approve"]')?.checked),
+  };
+}
+
+function refreshQuotePreview() {
+  const data = readQuoteForm();
+  const preview = $('#quote-preview');
+  if (!data || !preview) return;
+  const items = data.lines.map((l) => ({ ...l, productName: l.productName }));
+  preview.innerHTML = quotePreviewHTML({ items, shipping: data.shipping, taxRate: data.taxRate }, data.currency);
+  data.lines.forEach((l, i) => {
+    const el = $(`[data-quote-line="${i}"] .line-subtotal`);
+    if (el) el.textContent = money(l.quantity * l.unitPrice - l.discount, data.currency);
+  });
+}
+
+async function saveQuote(threadId) {
+  const data = readQuoteForm();
+  if (!data) return;
+  if (!data.lines.length || data.lines.some((l) => !(l.unitPrice > 0))) {
+    toast('Revisá los precios: todos deben ser mayores a cero.', 'error'); return;
+  }
   const button = $('[data-action="save-quote"]');
-  if (button) { button.disabled = true; button.innerHTML = `${icon('refresh', 'spin')} Preparando”¦`; }
+  if (button) { button.disabled = true; button.innerHTML = `${icon('refresh', 'spin')} Preparando…`; }
   try {
     const result = await api(`/api/threads/${encodeURIComponent(threadId)}/quotes`, {
       method: 'POST',
       body: {
-        quantity: num(data.quantity, 1),
-        unitPrice: num(data.unitPrice, 0),
-        shipping: num(data.shipping, 0),
-        discount: num(data.discount, 0),
-        taxRate: num(data.taxRate, 0),
-        validDays: num(data.validDays, 15),
-        paymentLink: String(data.paymentLink || '').trim(),
-        notes: String(data.notes || ''),
-        approve: data.approve === '1',
+        productId: data.lines[0].productId,
+        items: data.lines,
+        shipping: data.shipping,
+        taxRate: data.taxRate,
+        validDays: data.validDays,
+        currency: data.currency,
+        paymentLink: data.paymentLink,
+        notes: data.notes,
+        approve: data.approve,
       },
     });
     closeModal();
     await loadState({ silent: true, render: false });
-    await refreshThread();
-    toast(`Cotización ${result.quote.number} preparada. Revisá el borrador y enviá cuando esté listo.`);
+    if (S.thread?.thread?.id === threadId) await loadThread(threadId, { force: true });
+    render();
+    toast(`Cotización ${result.quote?.number || ''} preparada con ${data.lines.length} lámpara${data.lines.length === 1 ? '' : 's'}.`);
   } catch (error) {
     toast(error.message, 'error');
     if (button) { button.disabled = false; button.innerHTML = `${icon('dollar')} Preparar cotización`; }
   }
 }
 
-async function setQuoteStatusUI(threadId, quoteId, status) {
-  try {
-    await api(`/api/threads/${encodeURIComponent(threadId)}/quotes/${encodeURIComponent(quoteId)}`, {
-      method: 'PATCH',
-      body: { status },
-    });
-    await loadState({ silent: true, render: false });
-    await refreshThread();
-    toast(status === 'aceptada' ? 'Venta cerrada. La postventa arranca hoy.' : 'Estado de la cotización actualizado.');
-  } catch (error) {
-    toast(error.message, 'error');
-  }
-}
 
 function openContactModal(thread) {
   const contact = thread.contact || {};
@@ -5361,7 +5426,30 @@ async function handleAction(action, el) {
     }
     case 'save-contact': await saveContact(el.dataset.id); return;
     case 'ai-configure': await aiConfigureSettings(); return;
+    case 'new-quote': {
+      if (!S.thread?.thread) return;
+      openQuoteModal(S.thread.thread);
+      return;
+    }
     case 'save-quote': await saveQuote(el.dataset.id); return;
+    case 'quote-add-line': {
+      const products = arr(S.state.products).filter((p) => p.status !== 'archivado');
+      if (!products.length) { toast('No hay lámparas en el catálogo.', 'error'); return; }
+      const lines = $('#quote-lines');
+      if (!lines) return;
+      const idx = lines.querySelectorAll('[data-quote-line]').length;
+      lines.insertAdjacentHTML('beforeend', quoteLineHTML(products[0], idx, S.state.brand?.currency || 'USD'));
+      refreshQuotePreview();
+      return;
+    }
+    case 'quote-remove-line': {
+      const el2 = document.querySelector(`[data-quote-line="${el.dataset.index}"]`);
+      if (!el2) return;
+      if (document.querySelectorAll('[data-quote-line]').length <= 1) { toast('Dejá al menos una lámpara.', 'info'); return; }
+      el2.remove();
+      refreshQuotePreview();
+      return;
+    }
     case 'quote-status': await setQuoteStatusUI(el.dataset.id, el.dataset.quoteId, el.dataset.status); return;
     case 'new-draft': {
       if (!S.thread?.thread) return;

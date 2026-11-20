@@ -28,7 +28,7 @@ import { clearDemo, seedDemo } from './lib/demo.mjs';
 import { generateJson } from './lib/ai.mjs';
 import { Outbox } from './lib/outbox.mjs';
 import { productReadiness } from './lib/readiness.mjs';
-import { buildQuote, quoteLanguage, quoteNumber, quoteTotals, roundMoney, validUntilDate } from './lib/quotes.mjs';
+import { buildQuote, quoteLanguage, quoteNumber, quoteTotals, quoteTotalsMulti, roundMoney, validUntilDate } from './lib/quotes.mjs';
 import { createZip, readZip } from './lib/zip.mjs';
 import { fetchNewEmails } from './lib/imap.mjs';
 import { diagnoseConnections, testConnection, getAiFailoverState, resetAiFailover } from './lib/connections.mjs';
@@ -1193,15 +1193,35 @@ async function createQuote(threadId, body = {}) {
   if (!product) throw new HttpError(400, 'Elegí un producto válido para cotizar.');
   if (product.status === 'archivado') throw new HttpError(400, 'Ese producto está archivado.');
 
-  const unitPrice = body.unitPrice === undefined ? Number(product.price || 0) : asNumber(body.unitPrice);
-  if (!(unitPrice > 0)) throw new HttpError(400, 'El producto necesita un precio mayor a cero para cotizar.');
-  const totals = quoteTotals({
-    quantity: body.quantity,
-    unitPrice,
-    shipping: body.shipping,
-    discount: body.discount,
-    taxRate: body.taxRate,
-  });
+  const hasItems = Array.isArray(body.items) && body.items.length > 0;
+  let totals;
+  let normalizedItems = null;
+  if (hasItems) {
+    normalizedItems = body.items.slice(0, 40).map((item) => {
+      const itemProduct = store.find('products', asString(item.productId)) || product;
+      const unitPrice = item.unitPrice === undefined ? Number(itemProduct.price || 0) : asNumber(item.unitPrice);
+      if (!(unitPrice > 0)) throw new HttpError(400, `Precio inválido para ${itemProduct.name || 'una pieza'}.`);
+      return {
+        productId: itemProduct.id,
+        productName: itemProduct.name,
+        code: itemProduct.code || '',
+        quantity: asNumber(item.quantity, 1),
+        unitPrice,
+        discount: asNumber(item.discount, 0),
+      };
+    });
+    totals = quoteTotalsMulti({ items: normalizedItems, shipping: body.shipping, taxRate: body.taxRate });
+  } else {
+    const unitPrice = body.unitPrice === undefined ? Number(product.price || 0) : asNumber(body.unitPrice);
+    if (!(unitPrice > 0)) throw new HttpError(400, 'El producto necesita un precio mayor a cero para cotizar.');
+    totals = quoteTotals({
+      quantity: body.quantity,
+      unitPrice,
+      shipping: body.shipping,
+      discount: body.discount,
+      taxRate: body.taxRate,
+    });
+  }
   const validDays = body.validDays === undefined
     ? Number(settings.sales?.quoteValidityDays || 15)
     : asNumber(body.validDays, 15);
@@ -1214,7 +1234,8 @@ async function createQuote(threadId, body = {}) {
     id: uid('qte'),
     number: await nextQuoteNumber(),
     productId: product.id,
-    productName: product.name,
+    productName: hasItems ? `${totals.items.length} piezas` : product.name,
+    items: normalizedItems,
     currency,
     language: quoteLanguage(thread),
     ...totals,
@@ -1249,7 +1270,7 @@ async function createQuote(threadId, body = {}) {
   thread.nextStep = `Revisar y enviar la cotización ${quote.number}.`;
   thread.updatedAt = now;
   await store.set('threads', threads);
-  await store.activity('outreach', `Cotización ${quote.number} preparada para ${thread.contact?.company || thread.contact?.email || 'el contacto'}: ${totals.quantity} × ${product.name}.`, { threadId: thread.id, quoteId: quote.id });
+  await store.activity('outreach', `Cotización ${quote.number} preparada para ${thread.contact?.company || thread.contact?.email || 'el contacto'}: ${hasItems ? `${totals.items.length} piezas` : `${totals.quantity} × ${product.name}`}.`, { threadId: thread.id, quoteId: quote.id });
   return { quote, draft, thread };
 }
 

@@ -4,6 +4,7 @@ import { asNumber, asString } from './util.mjs';
    Cotizaciones: convierten una conversación en un pedido concreto.
    El texto se arma determinista (sin IA) para que precio, cantidad,
    plazo y link de pago no puedan inventarse ni desviarse.
+   Soporta UNA o VARIAS lámparas en la misma cotización.
    ───────────────────────────────────────────────────────────── */
 
 export function roundMoney(value) {
@@ -24,6 +25,35 @@ export function quoteTotals({ quantity, unitPrice, shipping = 0, discount = 0, t
     unitPrice: roundMoney(unit),
     subtotal,
     discount: discountAmount,
+    shipping: roundMoney(ship),
+    taxRate: rate,
+    taxAmount,
+    total: roundMoney(taxable + taxAmount),
+  };
+}
+
+/* Totales para una cotización con VARIAS líneas de producto.
+   Cada línea: { quantity, unitPrice, discount }. El envío y los
+   impuestos globales se aplican sobre el subtotal de todas las líneas. */
+export function quoteTotalsMulti({ items = [], shipping = 0, taxRate = 0 } = {}) {
+  const lines = (Array.isArray(items) ? items : []).map((item) => {
+    const qty = Math.max(1, Math.min(100000, Math.floor(asNumber(item.quantity, 1))));
+    const unit = Math.max(0, asNumber(item.unitPrice, 0));
+    const gross = roundMoney(qty * unit);
+    const discount = roundMoney(Math.min(gross, Math.max(0, asNumber(item.discount, 0))));
+    return { ...item, quantity: qty, unitPrice: unit, gross, discount, lineTotal: roundMoney(gross - discount) };
+  });
+  const subtotal = roundMoney(lines.reduce((acc, l) => acc + l.lineTotal, 0));
+  const totalDiscount = roundMoney(lines.reduce((acc, l) => acc + l.discount, 0));
+  const ship = Math.max(0, asNumber(shipping, 0));
+  const rate = Math.max(0, Math.min(100, asNumber(taxRate, 0)));
+  const taxable = roundMoney(subtotal + ship);
+  const taxAmount = roundMoney(taxable * rate / 100);
+  return {
+    items: lines,
+    quantity: lines.reduce((acc, l) => acc + l.quantity, 0),
+    subtotal,
+    discount: totalDiscount,
     shipping: roundMoney(ship),
     taxRate: rate,
     taxAmount,
@@ -76,7 +106,8 @@ export function validUntilDate(days = 15, from = new Date()) {
 export function buildQuote({ thread, product, brand, quote }) {
   const language = quote.language || quoteLanguage(thread);
   const currency = quote.currency || product?.currency || brand?.currency || 'USD';
-  const totals = quoteTotals(quote);
+  const hasItems = Array.isArray(quote.items) && quote.items.length > 0;
+  const totals = hasItems ? quoteTotalsMulti(quote) : quoteTotals(quote);
   const productName = String(product?.name || quote.productName || 'la pieza').trim();
   const code = String(product?.code || '').trim();
   const unit = formatMoney(totals.unitPrice, currency);
@@ -101,16 +132,30 @@ export function buildQuote({ thread, product, brand, quote }) {
       : '');
 
   const subject = language === 'en'
-    ? `Quote ${quote.number} · ${productName}`
-    : `Cotización ${quote.number} · ${productName}`;
+    ? `Quote ${quote.number} · ${hasItems ? `${totals.items.length} pieces` : productName}`
+    : `Cotización ${quote.number} · ${hasItems ? `${totals.items.length} piezas` : productName}`;
+
+  const itemLines = hasItems
+    ? totals.items.map((l) => {
+        const name = String(l.productName || l.name || 'Pieza').trim();
+        const lineCode = String(l.code || '').trim();
+        const lineUnit = formatMoney(l.unitPrice, currency);
+        const lineTotal = formatMoney(l.lineTotal, currency);
+        return `${l.quantity} × ${name}${lineCode ? ` (${lineCode})` : ''} — ${lineUnit} c/u = ${lineTotal}`
+          + (l.discount > 0 ? ` [desc. -${formatMoney(l.discount, currency)}]` : '');
+      })
+    : [`${totals.quantity} × ${productName}${code ? ` (${code})` : ''} — ${unit} c/u = ${subtotal}`];
 
   const lines = language === 'en'
     ? [
       `Hi${thread?.contact?.name ? ` ${thread.contact.name.split(' ')[0]}` : ''}.`,
       '',
-      `Thank you for your interest in ${productName}. Here is the formal quote.`,
+      hasItems
+        ? `Thank you for your interest. Here is the formal quote for the ${totals.items.length} pieces below.`
+        : `Thank you for your interest in ${productName}. Here is the formal quote.`,
       '',
-      `${totals.quantity} × ${productName}${code ? ` (${code})` : ''} — ${unit} each = ${subtotal}`,
+      ...itemLines,
+      hasItems ? `Subtotal: ${subtotal}` : null,
       totals.shipping > 0 ? `Shipping: ${shipping}` : 'Shipping: to be confirmed by destination.',
       totals.discount > 0 ? `Discount: -${discount}` : '',
       totals.taxAmount > 0 ? `Tax (${totals.taxRate}%): ${tax}` : '',
@@ -129,9 +174,12 @@ export function buildQuote({ thread, product, brand, quote }) {
     : [
       `Hola${thread?.contact?.name ? ` ${thread.contact.name.split(' ')[0]}` : ''}.`,
       '',
-      `Gracias por el interés en ${productName}. Te paso la cotización formal.`,
+      hasItems
+        ? `Gracias por tu interés. Te paso la cotización formal de las ${totals.items.length} piezas:`
+        : `Gracias por el interés en ${productName}. Te paso la cotización formal.`,
       '',
-      `${totals.quantity} × ${productName}${code ? ` (${code})` : ''} — ${unit} c/u = ${subtotal}`,
+      ...itemLines,
+      hasItems ? `Subtotal: ${subtotal}` : null,
       totals.shipping > 0 ? `Envío estimado: ${shipping}` : 'Envío: a confirmar según destino.',
       totals.discount > 0 ? `Descuento: -${discount}` : '',
       totals.taxAmount > 0 ? `Impuestos (${totals.taxRate}%): ${tax}` : '',
