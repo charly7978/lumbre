@@ -3164,6 +3164,51 @@ async function saveQuote(threadId) {
 }
 
 
+async function setQuoteStatusUI(threadId, quoteId, status) {
+  try {
+    const confirmed = await confirmAction({ title: 'Cambiar estado de cotización', message: status === 'aceptada' ? '¿Confirmás que el cliente aceptó? Esto NO confirma un pago.' : '¿Confirmás que la rechazó?', confirmLabel: 'Actualizar cotización' });
+    if (!confirmed) return;
+    await api(`/api/threads/${encodeURIComponent(threadId)}/quotes/${encodeURIComponent(quoteId)}`, { method: 'PATCH', body: { status } });
+    await loadState({ silent: true, render: false });
+    await refreshThread();
+    toast(status === 'aceptada' ? 'Cotización aceptada. Registrá un cobro cuando efectivamente ingrese.' : 'Cotización rechazada.');
+  } catch (error) { toast(error.message, 'error'); }
+}
+
+function openPaymentModal(threadId, quoteId) {
+  const quote = arr(S.thread?.thread?.quotes).find((item) => item.id === quoteId);
+  if (!quote || quote.status !== 'aceptada') { toast('Primero se debe aceptar la cotización.', 'error'); return; }
+  const received = arr(quote.payments).reduce((sum, item) => sum + num(item.amount, 0), 0);
+  const remaining = Math.max(0, Math.round((num(quote.total) - received) * 100) / 100);
+  if (!remaining) { toast('La cotización ya figura cobrada por completo.', 'info'); return; }
+  openModal({
+    title: 'Registrar cobro recibido',
+    subtitle: 'Registro manual. No consulta Mercado Pago ni el banco: comprobá la acreditación antes de confirmar.',
+    body: `<form id="payment-form" class="form-grid">
+      <div class="field"><label>Importe recibido (${esc(quote.currency || 'USD')})</label><input class="input" type="number" name="amount" step="0.01" min="0.01" max="${attr(String(remaining))}" value="${attr(String(remaining))}" required></div>
+      <div class="field"><label>Medio de cobro</label><select class="select" name="method"><option value="transferencia">Transferencia</option><option value="mercadopago">Mercado Pago</option><option value="efectivo">Efectivo</option><option value="otro">Otro</option></select></div>
+      <div class="field full"><label>Número de operación o referencia</label><input class="input" name="reference" maxlength="120" placeholder="ID de operación / número de comprobante" required></div>
+      <div class="field full"><label><input type="checkbox" name="confirm"> Confirmo que comprobé personalmente que este importe ingresó. Entiendo que Lucian no lo concilia automáticamente.</label></div>
+    </form>`,
+    footer: `<button class="btn btn-ghost" data-action="close-modal">Cancelar</button><button class="btn btn-primary" data-action="save-payment" data-id="${attr(threadId)}" data-quote-id="${attr(quoteId)}">Guardar cobro manual</button>`,
+  });
+}
+
+async function savePaymentUI(threadId, quoteId) {
+  const form = $('#payment-form');
+  if (!form) return;
+  const values = new FormData(form);
+  try {
+    await api(`/api/threads/${encodeURIComponent(threadId)}/quotes/${encodeURIComponent(quoteId)}/payments`, {
+      method: 'POST', body: { amount: Number(values.get('amount')), method: values.get('method'), reference: String(values.get('reference') || '').trim(), confirm: values.get('confirm') === 'on' },
+    });
+    closeModal();
+    await loadState({ silent: true, render: false });
+    await refreshThread();
+    toast('Cobro informado guardado. No fue verificado con el proveedor bancario.');
+  } catch (error) { toast(error.message, 'error'); }
+}
+
 function openContactModal(thread) {
   const contact = thread.contact || {};
   openModal({
