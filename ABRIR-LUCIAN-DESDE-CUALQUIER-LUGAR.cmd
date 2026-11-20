@@ -47,22 +47,23 @@ ping -n 3 127.0.0.1 >nul
 goto ESPERAR
 
 :MOSTRAR
-echo  [5/5] Leyendo la clave de acceso...
+echo  [5/5] Armando la direccion directa...
 set "CLAVE="
 if exist "access-key.txt" set /p CLAVE=<"access-key.txt"
-if "%CLAVE%"=="" set "CLAVE=(la clave aparece en la ventana negra LUCIAN-SERVIDOR)"
-set LUCIAN_CLAVE=%CLAVE%
+set "URLFINAL=%URL%"
+if not "%CLAVE%"=="" set "URLFINAL=%URL%?access=%CLAVE%"
 
+set LUCIAN_URLFINAL=%URLFINAL%
 cls
-powershell -NoProfile -Command "$u=Get-Content url.txt -Raw; $u=$u.Trim(); $k=$env:LUCIAN_CLAVE; Write-Host ''; Write-Host '  ================================================================' -ForegroundColor Cyan; Write-Host '                                                                ' -ForegroundColor Cyan; Write-Host '     [*] LUCIAN ESTA ONLINE' -ForegroundColor Green; Write-Host '                                                                ' -ForegroundColor Cyan; Write-Host '     TU DIRECCION PUBLICA:' -ForegroundColor DarkCyan; Write-Host ''; Write-Host ('        ' + $u) -ForegroundColor Yellow; Write-Host ''; Write-Host '     CLAVE DE ACCESO (pedila en la PC de origen):' -ForegroundColor DarkCyan; Write-Host ('        ' + $k) -ForegroundColor Magenta; Write-Host ''; Write-Host '     En la otra PC: abrir la direccion, pegar la clave' -ForegroundColor White; Write-Host '     y mandarme el texto que aparece.' -ForegroundColor White; Write-Host ''; Write-Host '  [!] NO cierres esta ventana mientras alguien use Lucian.' -ForegroundColor Red; Write-Host '                                                                ' -ForegroundColor Cyan; Write-Host '  ================================================================' -ForegroundColor Cyan; Write-Host ''"
-echo DIRECCION PARA ABRIR LUCIAN DESDE CUALQUIER LUGAR> "DIRECCION-LUCIAN.txt"
+powershell -NoProfile -Command "$u=$env:LUCIAN_URLFINAL; Write-Host ''; Write-Host '  ================================================================' -ForegroundColor Cyan; Write-Host '                                                                ' -ForegroundColor Cyan; Write-Host '     [*] LUCIAN ESTA ONLINE' -ForegroundColor Green; Write-Host '                                                                ' -ForegroundColor Cyan; Write-Host '     TU DIRECCION PARA ABRIR EN EL CELULAR:' -ForegroundColor DarkCyan; Write-Host ''; Write-Host ('        ' + $u) -ForegroundColor Yellow; Write-Host ''; Write-Host '     Copia TODA esa direccion y mandala por WhatsApp.' -ForegroundColor White; Write-Host '     Al abrirla, entra directo. NO hay que escribir clave.' -ForegroundColor White; Write-Host ''; Write-Host '  [!] NO cierres esta ventana ni apagues la PC mientras' -ForegroundColor Red; Write-Host '      alguien use Lucian. Si se corta, la guardia reconecta.' -ForegroundColor Red; Write-Host '                                                                ' -ForegroundColor Cyan; Write-Host '  ================================================================' -ForegroundColor Cyan; Write-Host ''" 2>nul
+set LUCIAN_URLFINAL=%URLFINAL%
+echo DIRECCION PARA ABRIR LUCIAN EN EL CELULAR> "DIRECCION-LUCIAN.txt"
 echo.>> "DIRECCION-LUCIAN.txt"
-echo %URL%>> "DIRECCION-LUCIAN.txt"
+echo %URLFINAL%>> "DIRECCION-LUCIAN.txt"
 echo.>> "DIRECCION-LUCIAN.txt"
-echo Clave de acceso: %CLAVE%>> "DIRECCION-LUCIAN.txt"
-echo.>> "DIRECCION-LUCIAN.txt"
-echo Copia esto y mandalo por WhatsApp.>> "DIRECCION-LUCIAN.txt"
-echo NO cierres la ventana negra mientras alguien use Lucian.>> "DIRECCION-LUCIAN.txt"
+echo Copia TODA esa direccion y mandala por WhatsApp.>> "DIRECCION-LUCIAN.txt"
+echo Al abrirla entra directo, sin escribir clave.>> "DIRECCION-LUCIAN.txt"
+echo NO cierres la ventana negra ni apagues la PC.>> "DIRECCION-LUCIAN.txt"
 start notepad "DIRECCION-LUCIAN.txt"
 pause
 exit /b 0

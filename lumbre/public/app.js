@@ -5810,6 +5810,19 @@ function bindView(route) {
    ───────────────────────────────────────────────────────────── */
 
 function init() {
+  // Si la dirección viene con ?access=CLAVE (la que manda el script del túnel),
+  // la guardamos en una cookie y la quitamos de la URL. Así se entra directo,
+  // sin pedirla, igual que cuando se usaba sin clave.
+  try {
+    const params = new URLSearchParams(location.search);
+    const token = params.get('access');
+    if (token) {
+      document.cookie = `lucian_access=${encodeURIComponent(token)}; path=/; max-age=2592000; SameSite=Lax`;
+      params.delete('access');
+      const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+      history.replaceState(null, '', clean);
+    }
+  } catch { /* noop */ }
   document.addEventListener('click', onGlobalClick);
   document.addEventListener('change', onGlobalChange);
   document.addEventListener('submit', onGlobalSubmit);
