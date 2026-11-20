@@ -839,7 +839,7 @@ function renderPanel() {
     <section class="stat-grid">
       ${statCard('Por aprobar', counts.draftsToReview || 0, 'mail', counts.draftsToReview ? 'borradores esperando tu OK' : 'nada pendiente', '#/bandeja?filtro=revisar', counts.draftsToReview ? 'warm' : '')}
       ${statCard('Te escribieron', counts.awaitingReply || 0, 'message', counts.awaitingReply ? 'respuestas por leer' : 'sin novedades', '#/bandeja?filtro=responder', counts.awaitingReply ? 'warm' : '')}
-      ${statCard('Ventas cerradas', S.state.sales?.sold || 0, 'dollar', S.state.sales?.revenue ? `${money(S.state.sales.revenue, S.state.sales.currency)} ingresados` : 'todavía ninguna', '#/ventas', (S.state.sales?.sold || 0) ? 'warm' : '')}
+      ${statCard('Ventas cerradas', S.state.sales?.sold || 0, 'dollar', S.state.sales?.revenue ? `${money(S.state.sales.revenue, S.state.sales.currency)} cobros informados` : 'todavía ninguna', '#/ventas', (S.state.sales?.sold || 0) ? 'warm' : '')}
       ${statCard('Piezas de contenido', counts.content || 0, 'image', 'ideas, borradores y publicadas', '#/contenido')}
     </section>
 
@@ -1004,6 +1004,8 @@ function renderVentas() {
   const won = arr(sales.won);
   const open = arr(sales.open);
   const byProduct = arr(sales.byProduct);
+  const agenda = S.state.salesAgenda || { tasks: [], total: 0, counts: {} };
+  const agendaTasks = arr(agenda.tasks);
   return `<div class="page-head">
     <div class="page-head-main">
       <p class="eyebrow">Ventas</p>
@@ -1021,6 +1023,27 @@ function renderVentas() {
     ${statCard('Cobros informados', money(sales.revenue || 0, currency), 'chart', 'manual · sin conciliación bancaria', '', '')}
     ${statCard('Cotizaciones abiertas', sales.openQuotes || 0, 'mail', open.length ? 'borrador o enviada' : 'ninguna', '', sales.openQuotes ? 'warm' : '')}
     ${statCard('Cotizaciones aceptadas', sales.acceptedQuotes || 0, 'check', `${sales.unpaidAcceptedQuotes || 0} con saldo pendiente`, '', '')}
+  </section>
+
+  <section class="section" id="agenda-comercial">
+    <div class="section-head">
+      <div><h2 class="section-title">Agenda comercial priorizada</h2><p class="section-sub">Qué conviene revisar primero para avanzar ventas reales. No envía mensajes ni acredita cobros.</p></div>
+      <span class="badge badge-info">${num(agenda.total)} tarea${num(agenda.total) === 1 ? '' : 's'}</span>
+    </div>
+    ${agendaTasks.length ? `<div class="card" style="padding:6px 0">
+      ${agendaTasks.map((task) => `<a class="thread-row" href="#/bandeja/${encodeURIComponent(task.threadId)}" style="text-decoration:none">
+        <div class="thread-row-top">
+          <span class="avatar sm">${esc(initials(task.company || '?'))}</span>
+          <div style="min-width:0;flex:1">
+            <div class="thread-company">${esc(task.company)} <span class="badge badge-${task.priority >= 85 ? 'warn' : 'info'}">${esc(task.title)}</span></div>
+            <div class="thread-person">${esc(task.productName)}${task.amount > 0 ? ` · Saldo: ${esc(money(task.amount, task.currency))}` : ''}</div>
+          </div>
+          ${icon('chevronRight')}
+        </div>
+        <div class="thread-preview">${esc(task.detail)}</div>
+      </a>`).join('')}
+    </div>
+    ${agenda.total > agendaTasks.length ? `<p class="tiny muted mt-2">Mostrando las ${agendaTasks.length} prioridades principales de ${num(agenda.total)}. Revisá el resto desde Conversaciones.</p>` : ''}` : `<div class="card card-pad"><p class="small muted">No hay tareas urgentes detectadas con los datos actuales. Revisá los contactos verificados y las propuestas antes de iniciar nuevos seguimientos.</p></div>`}
   </section>
 
   <div class="section" style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,1fr);gap:22px">
