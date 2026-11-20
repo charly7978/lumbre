@@ -1933,7 +1933,10 @@ async function handle(req, res) {
   // de la red local para que otra PC pueda abrir la interfaz.
   const lanMode = HOST === '0.0.0.0' || HOST === '::';
   const isLanHost = lanMode && /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.)/.test(hostName);
-  if (!isWebhook && hostName && !allowedHosts.has(hostName) && !isLanHost) {
+  // Túneles (Cloudflare/ngrok) llegan con su propio dominio. Se permiten
+  // porque el tráfico ya viene autenticado por el túnel, no directo a internet.
+  const isTunnelHost = /\.trycloudflare\.com$/.test(hostName) || /\.ngrok(-free)?\.app$/.test(hostName);
+  if (!isWebhook && hostName && !allowedHosts.has(hostName) && !isLanHost && !isTunnelHost) {
     res.writeHead(403, { 'content-type': 'text/plain' });
     res.end('Host no permitido.');
     return;

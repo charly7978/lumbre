@@ -59,6 +59,14 @@ echo    mientras alguien este usando Lucian.
 echo.
 echo  ============================================================
 echo.
+rem Guardar la direccion en un archivo y abrirlo en el Bloc de notas
+echo DIRECCION PARA ABRIR LUCIAN DESDE CUALQUIER LUGAR> "DIRECCION-LUCIAN.txt"
+echo.>> "DIRECCION-LUCIAN.txt"
+echo %URL%>> "DIRECCION-LUCIAN.txt"
+echo.>> "DIRECCION-LUCIAN.txt"
+echo Copia esa direccion y mandala por WhatsApp.>> "DIRECCION-LUCIAN.txt"
+echo NO cierres la ventana negra mientras alguien use Lucian.>> "DIRECCION-LUCIAN.txt"
+start notepad "DIRECCION-LUCIAN.txt"
 pause
 exit /b 0
 
