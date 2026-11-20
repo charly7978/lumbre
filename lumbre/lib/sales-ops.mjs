@@ -1,5 +1,6 @@
 /* Agenda comercial determinista. No envía mensajes ni modifica datos. */
 import { isSuppressed } from './email.mjs';
+import { productReadiness } from './readiness.mjs';
 
 const DAY = 86400000;
 const ACTIVE_STAGES = new Set(['nuevo', 'contactado', 'respondio', 'interesado', 'negociando']);
@@ -65,4 +66,24 @@ export function buildSalesAgenda({ threads = [], products = [], suppressions = [
   tasks.sort((a, b) => b.priority - a.priority || (dateValue(a.dueAt) || clock) - (dateValue(b.dueAt) || clock) || b.score - a.score || a.threadId.localeCompare(b.threadId));
   const counts = tasks.reduce((acc, task) => { acc[task.category] = (acc[task.category] || 0) + 1; return acc; }, {});
   return { total: tasks.length, counts, tasks: tasks.slice(0, Math.max(1, Math.min(50, Number(limit) || 15))), policy: 'Agenda sugerida para revisión humana: no envía mensajes, no acredita pagos y excluye demos y contactos suprimidos.' };
+}
+
+/** Diagnóstico no destructivo de la capacidad mínima de prospección. */
+export function buildCatalogHealth(products = []) {
+  const active = products.filter((item) => item && item.id && item.status !== 'archivado');
+  const rows = active.map((product) => {
+    const check = productReadiness(product);
+    return { id: product.id, name: String(product.name || 'Producto sin nombre'), score: check.score,
+      readyForProspecting: check.readyForProspecting,
+      criticalMissing: check.missing.filter((item) => item.critical).map((item) => item.label),
+      recommendedMissing: check.missing.filter((item) => !item.critical).map((item) => item.label) };
+  });
+  rows.sort((a, b) => Number(a.readyForProspecting) - Number(b.readyForProspecting) || a.score - b.score || a.name.localeCompare(b.name));
+  return { total: rows.length,
+    ready: rows.filter((item) => item.readyForProspecting).length,
+    blocked: rows.filter((item) => !item.readyForProspecting).length,
+    missingPhotos: rows.filter((item) => item.criticalMissing.some((message) => message.includes('foto'))).length,
+    missingPrices: rows.filter((item) => item.criticalMissing.some((message) => message.includes('precio'))).length,
+    toImprove: rows.filter((item) => !item.readyForProspecting || item.recommendedMissing.length).slice(0, 8),
+    note: 'Criterios internos de ficha para iniciar misiones; no verifican calidad de foto, viabilidad de fabricación ni requisitos eléctricos.' };
 }
