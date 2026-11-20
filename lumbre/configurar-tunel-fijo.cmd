@@ -25,12 +25,25 @@ set /p DOMINIO="Escribi tu dominio (ej: lucian.tudominio.com): "
 if "%DOMINIO%"=="" goto SINDOMINIO
 
 echo.
-echo  Paso 1/3: Abriendo la pagina de Cloudflare...
+echo  Paso 1/3: Iniciando sesion en Cloudflare...
+echo  Se va a abrir el navegador. Inicia sesion y autoriza
+echo  el dominio que quieras usar. Despues vuelve aca.
+echo.
+echo  Presiona cualquier tecla para abrir el navegador...
+pause >nul
 start "" "https://dash.cloudflare.com/login"
+echo.
+echo  Esperando a que termines el login en el navegador...
+echo  Cuando ya autorizaste el dominio, presiona cualquier tecla.
+pause >nul
 
 echo.
-echo  Paso 2/3: cuando ya iniciaste sesion, apreta cualquier tecla.
-pause >nul
+echo  Paso 2/3: Verificando el certificado...
+if not exist "%USERPROFILE%\.cloudflared\cert.pem" (
+  echo  Falta el certificado. Vuelve a intentar el login.
+  goto ERRORCREAR
+)
+echo  Certificado OK.
 
 echo.
 echo  Paso 3/3: Creando el tunel llamado "lucian"...
