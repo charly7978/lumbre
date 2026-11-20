@@ -34,6 +34,7 @@ import { fetchNewEmails } from './lib/imap.mjs';
 import { diagnoseConnections, testConnection, getAiFailoverState, resetAiFailover } from './lib/connections.mjs';
 import { startAutopilot, runAutopilot, getAutopilotState } from './lib/autopilot.mjs';
 import { verifyMetaSignature, hasDocumentedOptIn, resendIdempotencyKey } from './lib/security.mjs';
+import { buildSalesAgenda } from './lib/sales-ops.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.LUCIAN_DATA_DIR ? path.resolve(process.env.LUCIAN_DATA_DIR) : path.join(__dirname, 'data');
@@ -676,6 +677,7 @@ function statePayload() {
     },
     limits: dailyLimitInfo(settings, threads),
     sales: buildSales(threads, products, settings.brand?.currency || 'USD'),
+    salesAgenda: buildSalesAgenda({ threads, products, suppressions }),
     outbox: outbox.status(),
     usage: meta.agentUsage || {},
     intel: buildIntel(missions),
