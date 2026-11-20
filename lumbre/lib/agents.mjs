@@ -4,6 +4,7 @@ import {
   sleep, sniffImage, truncate, uid, uniqueBy,
 } from './util.mjs';
 import { chat, generateJson, isAIReady, resolveAIConfig } from './ai.mjs';
+import { resolveAIWithFallback, recordAiFailure, recordAiSuccess } from './connections.mjs';
 import { searchMany } from './search.mjs';
 import { enrichProspect, GENERIC_NAME_TOKENS, normalizeText, verifyWebsite } from './hunter.mjs';
 import { candidatesForMarkets } from './directory.mjs';
@@ -1002,10 +1003,12 @@ async function executeStep(stepId, ctx, deps) {
         attempts: 3,
       }));
     } else {
+      recordAiFailure(error);
       throw error;
     }
   }
 
+  recordAiSuccess();
   const output = normalizeArtifact(stepId, result.data, ctx);
   if (ctx.search?.results?.length) {
     const consulted = uniqueBy(ctx.search.results.map((r) => ({ titulo: r.title || '', url: r.url })), (r) => r.url).slice(0, 10);
@@ -1939,7 +1942,11 @@ async function runMissionNow(missionId, deps) {
   }
 
   const settings = store.settings();
-  const cfg = resolveAIConfig(settings);
+  const aiChoice = resolveAIWithFallback(settings);
+  const cfg = aiChoice.cfg;
+  if (aiChoice.isFallback && mission.status !== 'queued') {
+    await logMission(store, broadcast, mission, `IA de respaldo activa: ${aiChoice.reason}`);
+  }
   const demo = Boolean(mission.demo || mission.mode === 'demo');
 
   // Si el dueño canceló la misión mientras estaba en cola, no debe arrancar

@@ -2076,3 +2076,7 @@ a { transition: color var(--dur-fast) var(--ease); }
 }
 .social-btn:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--net) 22%, transparent); }
 .publish-hub .message-card { background: var(--paper-3); border-radius: 12px; padding: 12px; }
+
+/* Centro de conexiones */
+.conn-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.conn-row:last-child { border-bottom: 0; }

@@ -31,6 +31,7 @@ import { productReadiness } from './lib/readiness.mjs';
 import { buildQuote, quoteLanguage, quoteNumber, quoteTotals, roundMoney, validUntilDate } from './lib/quotes.mjs';
 import { createZip, readZip } from './lib/zip.mjs';
 import { fetchNewEmails } from './lib/imap.mjs';
+import { diagnoseConnections, testConnection, getAiFailoverState, resetAiFailover } from './lib/connections.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.LUCIAN_DATA_DIR ? path.resolve(process.env.LUCIAN_DATA_DIR) : path.join(__dirname, 'data');
@@ -1955,6 +1956,25 @@ async function handle(req, res) {
 
   if (!pathname.startsWith('/api/')) {
     await serveStatic(req, res, pathname);
+    return;
+  }
+
+  if (pathname === '/api/connections' && method === 'GET') {
+    json(res, 200, await diagnoseConnections(store.settings(), store));
+    return;
+  }
+
+  if (pathname === '/api/connections/test' && method === 'POST') {
+    const body = await readJson(req);
+    const id = String(body?.id || '');
+    const result = await testConnection(id, store.settings());
+    json(res, 200, result);
+    return;
+  }
+
+  if (pathname === '/api/connections/failover/reset' && method === 'POST') {
+    resetAiFailover();
+    json(res, 200, { ok: true, state: getAiFailoverState() });
     return;
   }
 

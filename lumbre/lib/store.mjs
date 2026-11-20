@@ -48,6 +48,15 @@ export const DEFAULT_SETTINGS = {
     apiKey: '',
     enabled: false,
   },
+  // IA de respaldo: cuando el proveedor principal se queda sin cuota,
+  // Lucian cambia automáticamente a Ollama local (gratis e ilimitado).
+  fallback: {
+    enabled: true,
+    ollama: {
+      baseUrl: 'http://localhost:11434/v1',
+      model: 'qwen2.5:3b',
+    },
+  },
   email: {
     provider: 'manual',
     resendKey: '',

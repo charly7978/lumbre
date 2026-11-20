@@ -280,6 +280,7 @@ function rangeDays(days) {
 
 const S = {
   state: null,
+  connections: null,
   route: { view: 'panel', id: null, query: new URLSearchParams() },
   mission: null,
   missionES: null,
@@ -297,6 +298,8 @@ const S = {
     contentFilter: 'todos',
     contentPlatform: 'todas',
     contentProduct: 'todos',
+    connGoal: '',
+    connResult: '',
     settingsTab: 'marca',
     openSteps: new Set(),
     ask: { agentId: 'director', question: '', result: null, loading: false },
@@ -500,6 +503,7 @@ const VIEW_META = {
   contenido: ['Contenido', 'Narrativa y redes'],
   equipo: ['Equipo', 'Once especialistas'],
   mercados: ['Mercados', 'Inteligencia acumulada'],
+  conexiones: ['Conexiones', 'Estado de tus integraciones'],
   ajustes: ['Ajustes', 'Tu sistema'],
 };
 
@@ -577,6 +581,7 @@ function render() {
       case 'contenido': html = renderContent(); break;
       case 'equipo': html = renderTeam(); break;
       case 'mercados': html = renderMarkets(); break;
+      case 'conexiones': html = renderConnections(); break;
       case 'ajustes': html = renderSettings(); break;
       default: html = emptyState({ iconName: 'sun', title: 'Esa página no existe', text: 'Volvé al panel para seguir.', actions: '<a class="btn btn-primary" href="#/panel">Ir al panel</a>' });
     }
@@ -4366,6 +4371,127 @@ function settingsHelpHTML() {
   </div>`;
 }
 
+function renderConnections() {
+  const data = S.connections || { connections: [], aiFailover: {} };
+  const conns = arr(data.connections);
+  const okCount = conns.filter((c) => c.ok).length;
+  const fo = data.aiFailover || {};
+  return `<div class="page-head">
+    <div class="page-head-main">
+      <p class="eyebrow">Conexiones</p>
+      <h2 class="page-title">Tus integraciones, bajo control.</h2>
+      <p class="page-sub">Los agentes diagnostican cada conexión y cambian automáticamente a la IA de respaldo si tu proveedor se queda sin cuota. Vos solo intervenís cuando falta una clave.</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-ghost" type="button" data-action="connections-refresh">${icon('refresh')} Volver a diagnosticar</button>
+      <a class="btn btn-primary" href="#/ajustes?tab=ia">${icon('settings')} Configurar</a>
+    </div>
+  </div>
+
+  ${fo.fallbackActive || fo.primaryFailures >= 2 ? `<div class="artifact-callout warn"><b>IA de respaldo activa</b>El proveedor principal tuvo ${fo.primaryFailures} fallo(s): ${esc(fo.lastError || 'cuota agotada')}. Lucian está usando Ollama local (gratis e ilimitado). ${fo.lastFailureAt ? `Último fallo: ${relTime(new Date(fo.lastFailureAt).toISOString())}.` : ''}</div>` : ''}
+
+  <section class="stat-grid">
+    ${statCard('Conexiones listas', `${okCount}/${conns.length}`, 'check', 'funcionando', '', '')}
+    ${statCard('IA de respaldo', fo.fallbackActive ? 'Activa' : 'En espera', 'spark', fo.fallbackActive ? 'cambió de proveedor' : ' lista para activarse', '', fo.fallbackActive ? 'warm' : '')}
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><h2 class="section-title">Estado de cada conexión</h2><p class="section-sub">Clic en "Probar" para verificarla en tiempo real.</p></div></div>
+    <div class="card" style="padding:6px 0">
+      ${conns.map((c) => `<div class="conn-row">
+        <span class="status-dot ${c.ok ? 'ok' : 'muted'}"></span>
+        <div style="min-width:0;flex:1">
+          <b style="font-size:13px">${esc(c.name)}</b>
+          <div class="tiny muted">${esc(c.detail || '')}</div>
+        </div>
+        <span class="badge badge-${c.ok ? 'ok' : 'warn'}">${c.ok ? 'Listo' : 'Pendiente'}</span>
+        <button class="btn btn-ghost btn-xs" type="button" data-action="connection-test" data-id="${attr(c.id)}">${icon('refresh')} Probar</button>
+      </div>`).join('')}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><h2 class="section-title">Configurar con IA (lenguaje natural)</h2><p class="section-sub">Contale qué querés lograr y los agentes ajustan mercados, tono, límites y seguimientos por vos.</p></div></div>
+    <div class="card card-pad">
+      <div class="field"><label for="conn-goal">¿Qué querés que logre?</label>
+        <textarea class="textarea" id="conn-goal" rows="3" placeholder="Ej.: quiero vender lámparas de diseño en España y México a tiendas boutique, con un tono cercano y sin gastar mucho en correos">${esc(S.ui.connGoal || '')}</textarea>
+      </div>
+      <div class="cluster mt-3">
+        <button class="btn btn-accent" type="button" data-action="conn-configure">${icon('wand')} Que lo configure la IA</button>
+        ${S.ui.connResult ? `<span class="tiny">${esc(S.ui.connResult)}</span>` : ''}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><h2 class="section-title">Calendario de redes (próximos 7 días)</h2><p class="section-sub">Los agentes organizan qué publicar cada día. Vos solo copiás y pegás en la red.</p></div>
+      <a class="section-link" href="#/contenido">Ver piezas ${icon('arrowRight')}</a>
+    </div>
+    <div class="plan-days">${contentCalendarHTML()}</div>
+  </section>`;
+}
+
+function contentCalendarHTML() {
+  const items = arr(S.state.content).filter((c) => c.status === 'idea').slice(0, 7);
+  if (!items.length) return '<p class="muted small">No hay piezas pendientes de publicar. Lanzá una misión para generar contenido.</p>';
+  return items.map((c, i) => {
+    const day = c.day || `Día ${i + 1}`;
+    const net = SOCIAL_NETWORKS.find((n) => n.id.toLowerCase() === String(c.platform || '').toLowerCase());
+    return `<div class="plan-day">
+      <span class="plan-num">${esc(day.replace(/\D/g, '') || String(i + 1))}</span>
+      <div class="plan-content">
+        <h5>${net ? esc(net.label) : esc(c.platform || 'Red')} · ${esc(c.format || 'Pieza')}</h5>
+        <p>${esc(c.hook || '')}</p>
+        <button class="btn btn-ghost btn-xs mt-2" type="button" data-action="content-quick-publish" data-id="${attr(c.id)}">${icon('send')} Preparar publicación</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function fetchConnections() {
+  // Solo renderiza en la PRIMERA carga. Si renderizara siempre, bindView
+  // volvería a llamarla y se generaría un bucle que reinicia la animación.
+  const firstLoad = !S.connections;
+  try {
+    S.connections = await api('/api/connections', { silent: true });
+    if (firstLoad && S.route.view === 'conexiones') render();
+  } catch { /* silencio */ }
+}
+
+async function loadConnections() {
+  // Para el botón "Volver a diagnosticar": trae datos y actualiza la vista.
+  await fetchConnections();
+  if (S.route.view === 'conexiones') render();
+}
+
+async function testConnectionUI(id, button) {
+  const original = button?.innerHTML;
+  if (button) { button.disabled = true; button.innerHTML = `${icon('refresh', 'spin')} Probando…`; }
+  try {
+    const result = await api('/api/connections/test', { method: 'POST', body: { id } });
+    toast(result.ok ? `${id}: ${result.detail}` : `${id}: ${result.detail}`, result.ok ? 'ok' : 'error');
+    await loadConnections();
+  } catch (error) {
+    toast(error.message, 'error');
+  } finally {
+    if (button) { button.disabled = false; button.innerHTML = original; }
+  }
+}
+
+async function connConfigure() {
+  const goal = String($('#conn-goal')?.value || '').trim();
+  if (!goal) { toast('Contale qué querés lograr.', 'error'); return; }
+  try {
+    const result = await api('/api/settings/ai-configure', { method: 'POST', body: { goal } });
+    await loadState({ silent: true, render: false });
+    S.ui.connResult = result.summary || 'Configuración aplicada por la IA.';
+    render();
+    toast('Configuración aplicada por la IA.');
+  } catch (error) {
+    toast(error.message, 'error');
+  }
+}
+
 function renderSettings() {
   const tab = settingsTabID();
   const panels = {
@@ -5269,6 +5395,14 @@ async function handleAction(action, el) {
     }
     case 'save-publish': await savePublish(el.dataset.id); return;
     case 'social-open': await socialOpen(el.dataset.network, el.dataset.url); return;
+    case 'connections-refresh': await loadConnections(); toast('Diagnóstico actualizado.'); return;
+    case 'connection-test': await testConnectionUI(el.dataset.id, el); return;
+    case 'conn-configure': await connConfigure(); return;
+    case 'content-quick-publish': {
+      const item = arr(S.state.content).find((c) => c.id === el.dataset.id);
+      if (item) openPublishModal(item);
+      return;
+    }
     case 'content-edit': {
       const item = arr(S.state.content).find((c) => c.id === el.dataset.id);
       if (item) openContentModal(item);
@@ -5387,6 +5521,7 @@ function bindView(route) {
   else if (route.view === 'bandeja') bindInbox();
   else if (route.view === 'contenido') bindContent();
   else if (route.view === 'equipo') bindTeam();
+  else if (route.view === 'conexiones') fetchConnections();
   else if (route.view === 'ajustes') bindSettings();
 }
 
