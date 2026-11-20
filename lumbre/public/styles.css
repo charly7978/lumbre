@@ -2080,3 +2080,5 @@ a { transition: color var(--dur-fast) var(--ease); }
 /* Centro de conexiones */
 .conn-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
 .conn-row:last-child { border-bottom: 0; }
+
+.product-pick-list { max-height: 220px; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }

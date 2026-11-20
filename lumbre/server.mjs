@@ -2357,6 +2357,45 @@ async function handle(req, res) {
     }
   }
 
+  if (pathname === '/api/threads' && method === 'POST') {
+    const body = await readJson(req);
+    const contact = isObject(body.contact) ? body.contact : {};
+    const email = asString(contact.email).trim();
+    if (!email || !isValidEmail(email)) throw new HttpError(400, 'El comprador necesita un email válido.');
+    const now = nowISO();
+    const thread = {
+      id: uid('thr'),
+      demo: false,
+      missionId: null,
+      productId: asString(body.productId) || null,
+      contact: {
+        company: asString(contact.company || contact.name, 'Cliente potencial'),
+        name: asString(contact.name, ''),
+        email,
+        country: asString(contact.country, ''),
+      },
+      verification: null,
+      unverified: false,
+      stage: 'negociando',
+      score: 50,
+      source: 'Cotización de catálogo',
+      notes: asString(body.notes).slice(0, 8000),
+      drafts: [],
+      messages: [],
+      nextStep: 'Revisar y enviar la cotización preparada.',
+      nextFollowUp: null,
+      lastActivityAt: now,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const threads = store.get('threads');
+    threads.unshift(thread);
+    await store.set('threads', threads);
+    await store.activity('reply', `Nueva conversación: ${thread.contact.company}.`, { threadId: thread.id });
+    json(res, 201, { thread });
+    return;
+  }
+
   if (pathname === '/api/threads' && method === 'GET') {
     json(res, 200, { threads: store.get('threads').map((thread) => threadSummary(thread, store.get('suppressions'))) });
     return;

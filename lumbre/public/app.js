@@ -1186,6 +1186,7 @@ function renderProducts() {
     <div class="page-actions">
       <button class="btn btn-ghost" type="button" data-action="import-products">${icon('upload')} Importar CSV</button>
       <button class="btn btn-ghost" type="button" data-action="campaign-catalog" ${products.length ? '' : 'disabled'}>${icon('spark')} Campaña de catálogo</button>
+      <button class="btn btn-accent" type="button" data-action="quote-catalog" ${products.length ? '' : 'disabled'}>${icon('dollar')} Cotizar todo el catálogo</button>
       ${S.ui.selectedProducts.length ? `<button class="btn btn-accent" type="button" data-action="campaign-selected">${icon('spark')} Poner a la venta (${S.ui.selectedProducts.length})</button>` : ''}
       <button class="btn btn-primary" type="button" data-action="new-product">${icon('plus')} Nueva lámpara</button>
     </div>
@@ -2883,6 +2884,124 @@ function quoteLineHTML(product, index, currency) {
       <div class="field full"><label>Nota de esta lámpara</label><input class="input" name="lineNote" value="" placeholder="Ej.: incluye difusor opalino, medidas especiales…"></div>
     </div>
   </div>`;
+}
+
+function openCatalogQuoteModal() {
+  const products = arr(S.state.products).filter((p) => p.status !== 'archivado');
+  if (!products.length) { toast('No hay lámparas en el catálogo.', 'error'); return; }
+  openModal({
+    title: 'Cotizar todo el catálogo',
+    subtitle: 'Armá una propuesta con todas tus lámparas para enviar por correo o WhatsApp.',
+    size: 'modal-lg',
+    body: `<div class="artifact-callout info"><b>Cómo funciona:</b> elegís el destinatario y se arma una cotización con las ${products.length} lámparas (o las que elijas). Después la revisás y la mandás desde tu correo.</div>
+      <div class="form-section">
+        <p class="form-section-title">1. ¿A quién va la propuesta?</p>
+        <div class="form-grid">
+          <div class="field"><label for="cat-email">Email del comprador (opcional)</label><input class="input" id="cat-email" type="email" placeholder="compras@tienda.com"></div>
+          <div class="field"><label for="cat-name">Nombre / empresa</label><input class="input" id="cat-name" value="Cliente potencial" placeholder="Nombre de la tienda"></div>
+          <div class="field"><label for="cat-country">País</label><select class="select" id="cat-country">${['Argentina','Chile','Uruguay','México','Colombia','España','Estados Unidos','Brasil','Otro'].map((c) => `<option value="${attr(c)}" ${c === 'Argentina' ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <p class="form-section-title">2. Elegí las lámparas</p>
+        <div class="cluster">
+          <label class="checkbox"><input type="checkbox" id="cat-all" checked><span>Todas las lámparas (${products.length})</span></label>
+        </div>
+        <div class="product-pick-list mt-2" id="cat-products">${products.map((p) => `<label class="checkbox" style="padding:4px 0"><input type="checkbox" class="cat-product" data-id="${attr(p.id)}" checked data-name="${attr(p.name)}"><span>${esc(p.name)} · ${esc(money(p.price, p.currency))}</span></label>`).join('')}</div>
+      </div>`,
+    footer: `<button class="btn btn-ghost" type="button" data-action="close-modal">Cancelar</button>
+      <button class="btn btn-accent" type="button" data-action="quote-catalog-build">${icon('dollar')} Preparar cotización</button>`,
+    onMount: (root) => {
+      const all = root.querySelector('#cat-all');
+      if (all) all.addEventListener('change', () => {
+        root.querySelectorAll('.cat-product').forEach((c) => { c.checked = all.checked; });
+      });
+    },
+  });
+}
+
+async function buildCatalogQuote() {
+  const picks = [...document.querySelectorAll('.cat-product:checked')];
+  if (!picks.length) { toast('Elegí al menos una lámpara.', 'error'); return; }
+  const email = String($('#cat-email')?.value || '').trim();
+  const name = String($('#cat-name')?.value || 'Cliente potencial').trim();
+  const country = String($('#cat-country')?.value || 'Argentina').trim();
+  const virtualThread = {
+    id: '__catalogo__',
+    contact: { company: name, name, email: email || 'cliente@example.com', country },
+    productId: picks[0].dataset.id,
+    drafts: [],
+    messages: [],
+    stage: 'nuevo',
+  };
+  S.catalogQuote = { picks: picks.map((p) => p.dataset.id), email, name, country };
+  closeModal(true);
+  openQuoteModal(virtualThread);
+  // una vez abierto, cargar todas las elegidas
+  const lines = $('#quote-lines');
+  const products = arr(S.state.products);
+  if (lines) {
+    lines.innerHTML = '';
+    picks.forEach((p, i) => {
+      const prod = products.find((x) => x.id === p.dataset.id);
+      if (prod) lines.insertAdjacentHTML('beforeend', quoteLineHTML(prod, i, prod.currency || S.state.brand?.currency || 'USD'));
+    });
+  }
+  refreshQuotePreview();
+  const footer = $('.modal-foot');
+  if (footer) {
+    footer.innerHTML = `<button class="btn btn-ghost" type="button" data-action="close-modal">Cancelar</button>
+      <button class="btn btn-accent" type="button" data-action="save-catalog-quote">${icon('dollar')} Preparar cotización</button>`;
+  }
+}
+
+async function saveCatalogQuote() {
+  const data = readQuoteForm();
+  if (!data || !data.lines.length) { toast('No hay lámparas en la cotización.', 'error'); return; }
+  const info = S.catalogQuote || {};
+  let threadId = null;
+  try {
+    // Crear un hilo real para guardar la cotización
+    const body = {
+      contact: { company: info.name || 'Cliente potencial', name: info.name || 'Cliente potencial', email: info.email || 'cliente@example.com', country: info.country || 'Argentina' },
+      productId: data.lines[0].productId,
+      stage: 'negociando',
+      notes: 'Cotización de catálogo completo generada desde Productos.',
+    };
+    const created = await api('/api/threads', { method: 'POST', body });
+    threadId = created.thread?.id || created.id;
+  } catch (error) {
+    toast(`No se pudo crear el hilo: ${error.message}`, 'error');
+    return;
+  }
+  if (!threadId) { toast('No se pudo guardar la cotización.', 'error'); return; }
+  const button = $('[data-action="save-catalog-quote"]');
+  if (button) { button.disabled = true; button.innerHTML = `${icon('refresh', 'spin')} Preparando…`; }
+  try {
+    const result = await api(`/api/threads/${encodeURIComponent(threadId)}/quotes`, {
+      method: 'POST',
+      body: {
+        productId: data.lines[0].productId,
+        items: data.lines,
+        shipping: data.shipping,
+        taxRate: data.taxRate,
+        validDays: data.validDays,
+        currency: data.currency,
+        paymentLink: data.paymentLink,
+        payTerms: data.payTerms, volumeNote: data.volumeNote, shipNote: data.shipNote,
+        notes: data.notes,
+        approve: data.approve,
+      },
+    });
+    closeModal();
+    S.catalogQuote = null;
+    await loadState({ silent: true, render: false });
+    navigate(`#/bandeja/${encodeURIComponent(threadId)}`);
+    toast(`Cotización ${result.quote?.number || ''} lista con ${data.lines.length} lámparas. Revisá el borrador y enviálo.`);
+  } catch (error) {
+    toast(error.message, 'error');
+    if (button) { button.disabled = false; button.innerHTML = `${icon('dollar')} Preparar cotización`; }
+  }
 }
 
 function openQuoteModal(thread) {
@@ -5446,6 +5565,9 @@ async function handleAction(action, el) {
     }
     case 'save-contact': await saveContact(el.dataset.id); return;
     case 'ai-configure': await aiConfigureSettings(); return;
+    case 'quote-catalog': openCatalogQuoteModal(); return;
+    case 'quote-catalog-build': await buildCatalogQuote(); return;
+    case 'save-catalog-quote': await saveCatalogQuote(); return;
     case 'new-quote': {
       if (!S.thread?.thread) return;
       openQuoteModal(S.thread.thread);
