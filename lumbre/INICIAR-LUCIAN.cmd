@@ -1,5 +1,6 @@
 ﻿@echo off
 title Lucian - sistema de ventas para lamparas de diseno
+<<<<<<< HEAD
 rem pushd soporta rutas compartidas (\\servidor\carpeta) que cd /d no maneja.
 pushd "%~dp0" 2>nul
 if errorlevel 1 (
@@ -20,6 +21,9 @@ if not exist "server.mjs" (
   pause
   exit /b 1
 )
+=======
+cd /d "%~dp0lucian"
+>>>>>>> 5b6030d9393a9bad5a7615677c7673632fc7ba63
 where node >nul 2>nul
 if errorlevel 1 (
   echo.
@@ -30,7 +34,10 @@ if errorlevel 1 (
   exit /b 1
 )
 node server.mjs
+<<<<<<< HEAD
 popd
+=======
+>>>>>>> 5b6030d9393a9bad5a7615677c7673632fc7ba63
 echo.
 echo Lucian se cerro. Presiona una tecla para salir.
 pause

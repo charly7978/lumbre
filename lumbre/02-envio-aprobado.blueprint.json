@@ -1,0 +1,791 @@
+{
+    "name": "02 - Envio Aprobado (Outbox)",
+    "flow": [
+        {
+            "id": 1,
+            "module": "airtable:ActionSearchRecords",
+            "version": 3,
+            "parameters": {},
+            "mapper": {
+                "base": "appREPLACE_BASE_ID",
+                "table": "tblREPLACE_OUTBOX",
+                "fields": [
+                    "Asunto",
+                    "Lead",
+                    "Para",
+                    "Nombre_destinatario",
+                    "Cuerpo_HTML",
+                    "Idioma",
+                    "Producto",
+                    "Paso",
+                    "Estado",
+                    "Programado_para",
+                    "Enviado_en",
+                    "Message_ID",
+                    "Respondido",
+                    "Notas"
+                ],
+                "formula": "{Estado}=\"Aprobado\"",
+                "maxRecords": "5",
+                "useColumnId": false
+            },
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 0,
+                    "name": "Buscar Aprobados"
+                },
+                "restore": {
+                    "expect": {
+                        "base": {
+                            "mode": "chose",
+                            "label": "Ventas Lamparas 3D"
+                        },
+                        "table": {
+                            "mode": "chose",
+                            "label": "Outbox"
+                        },
+                        "fields": {
+                            "mode": "chose",
+                            "label": [
+                                "Asunto",
+                                "Lead",
+                                "Para",
+                                "Nombre_destinatario",
+                                "Cuerpo_HTML",
+                                "Idioma",
+                                "Producto",
+                                "Paso",
+                                "Estado",
+                                "Programado_para",
+                                "Enviado_en",
+                                "Message_ID",
+                                "Respondido",
+                                "Notas"
+                            ]
+                        },
+                        "formula": {
+                            "mode": "chose"
+                        },
+                        "maxRecords": {
+                            "mode": "chose"
+                        },
+                        "useColumnId": {
+                            "mode": "chose"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "label": "Airtable"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:airtable3,airtable2",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "base",
+                        "type": "select",
+                        "label": "Base",
+                        "required": true
+                    },
+                    {
+                        "name": "useColumnId",
+                        "type": "boolean",
+                        "label": "Use Column ID",
+                        "required": true
+                    },
+                    {
+                        "name": "table",
+                        "type": "select",
+                        "label": "Table",
+                        "required": true
+                    },
+                    {
+                        "name": "formula",
+                        "type": "text",
+                        "label": "Formula"
+                    },
+                    {
+                        "name": "maxRecords",
+                        "type": "integer",
+                        "label": "Limit"
+                    },
+                    {
+                        "name": "sort",
+                        "spec": [
+                            {
+                                "name": "field",
+                                "type": "select",
+                                "label": "Field",
+                                "dynamic": true,
+                                "options": []
+                            },
+                            {
+                                "name": "direction",
+                                "type": "select",
+                                "label": "Direction",
+                                "options": [
+                                    {
+                                        "label": "Descending",
+                                        "value": "desc"
+                                    },
+                                    {
+                                        "label": "Ascending",
+                                        "value": "asc"
+                                    }
+                                ]
+                            }
+                        ],
+                        "type": "array",
+                        "label": "Sort"
+                    },
+                    {
+                        "name": "view",
+                        "type": "select",
+                        "label": "View"
+                    },
+                    {
+                        "name": "fields",
+                        "type": "select",
+                        "label": "Output Fields",
+                        "multiple": true
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "__IMTLENGTH__",
+                        "type": "uinteger",
+                        "label": "Total number of bundles"
+                    },
+                    {
+                        "name": "__IMTINDEX__",
+                        "type": "uinteger",
+                        "label": "Bundle order position"
+                    },
+                    {
+                        "name": "id",
+                        "type": "text",
+                        "label": "ID"
+                    },
+                    {
+                        "name": "createdTime",
+                        "type": "date",
+                        "label": "Created Time"
+                    },
+                    {
+                        "name": "Asunto",
+                        "type": "text",
+                        "label": "Asunto"
+                    },
+                    {
+                        "name": "Lead",
+                        "type": "text",
+                        "label": "Lead"
+                    },
+                    {
+                        "name": "Para",
+                        "type": "email",
+                        "label": "Para"
+                    },
+                    {
+                        "name": "Nombre_destinatario",
+                        "type": "text",
+                        "label": "Nombre_destinatario"
+                    },
+                    {
+                        "name": "Cuerpo_HTML",
+                        "type": "text",
+                        "label": "Cuerpo_HTML"
+                    },
+                    {
+                        "name": "Idioma",
+                        "type": "text",
+                        "label": "Idioma"
+                    },
+                    {
+                        "name": "Producto",
+                        "type": "text",
+                        "label": "Producto"
+                    },
+                    {
+                        "name": "Paso",
+                        "type": "number",
+                        "label": "Paso"
+                    },
+                    {
+                        "name": "Estado",
+                        "type": "text",
+                        "label": "Estado"
+                    },
+                    {
+                        "name": "Programado_para",
+                        "type": "date",
+                        "label": "Programado_para"
+                    },
+                    {
+                        "name": "Enviado_en",
+                        "type": "date",
+                        "label": "Enviado_en"
+                    },
+                    {
+                        "name": "Message_ID",
+                        "type": "text",
+                        "label": "Message_ID"
+                    },
+                    {
+                        "name": "Respondido",
+                        "type": "boolean",
+                        "label": "Respondido"
+                    },
+                    {
+                        "name": "Notas",
+                        "type": "text",
+                        "label": "Notas"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 2,
+            "module": "microsoft-email:createAndSendAMessage",
+            "version": 2,
+            "parameters": {
+                "__IMTCONN__": 12349388
+            },
+            "mapper": {
+                "toRecipients": [
+                    {
+                        "address": "{{1.Para}}",
+                        "name": "{{1.Nombre_destinatario}}"
+                    }
+                ],
+                "subject": "{{1.Asunto}}",
+                "content": "{{1.Cuerpo_HTML}}",
+                "contentType": "html"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 300,
+                    "y": 0,
+                    "name": "Enviar Aprobado"
+                },
+                "restore": {
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "label": "ROLITO's Microsoft connection"
+                        }
+                    },
+                    "expect": {
+                        "contentType": {
+                            "mode": "chose",
+                            "label": "HTML"
+                        },
+                        "toRecipients": {
+                            "extra": {
+                                "aiHelp": "To Recipients",
+                                "aiInstruction": "Proporcioná un destinatario profesional verificado con dirección y, si se conoce, nombre."
+                            }
+                        },
+                        "subject": {
+                            "extra": {
+                                "aiHelp": "Subject",
+                                "aiInstruction": "Asunto conciso y honesto, adaptado al interés de la empresa."
+                            }
+                        },
+                        "content": {
+                            "extra": {
+                                "aiHelp": "Body Content",
+                                "aiInstruction": "Cuerpo HTML breve y respetuoso. No inventes precios, certificaciones, plazos ni capacidades."
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:azure",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "toRecipients",
+                        "spec": [
+                            {
+                                "name": "address",
+                                "type": "email",
+                                "label": "Email Address",
+                                "required": true
+                            },
+                            {
+                                "name": "name",
+                                "type": "text",
+                                "label": "Name"
+                            }
+                        ],
+                        "type": "array",
+                        "label": "To Recipients",
+                        "required": true
+                    },
+                    {
+                        "name": "subject",
+                        "type": "text",
+                        "label": "Subject",
+                        "required": true
+                    },
+                    {
+                        "name": "content",
+                        "type": "text",
+                        "label": "Body Content",
+                        "required": true
+                    },
+                    {
+                        "name": "attachments",
+                        "spec": [
+                            {
+                                "name": "filename",
+                                "type": "filename",
+                                "label": "File Name",
+                                "required": true,
+                                "semantic": "file:name"
+                            },
+                            {
+                                "name": "data",
+                                "type": "buffer",
+                                "label": "Data",
+                                "required": true,
+                                "semantic": "file:data"
+                            }
+                        ],
+                        "type": "array",
+                        "label": "Attachments"
+                    },
+                    {
+                        "name": "replyTo",
+                        "spec": [
+                            {
+                                "name": "address",
+                                "type": "email",
+                                "label": "Email Address",
+                                "required": true
+                            },
+                            {
+                                "name": "name",
+                                "type": "text",
+                                "label": "Name"
+                            }
+                        ],
+                        "type": "array",
+                        "label": "Reply To"
+                    },
+                    {
+                        "name": "from",
+                        "spec": [
+                            {
+                                "name": "address",
+                                "type": "email",
+                                "label": "Email Address",
+                                "required": true
+                            },
+                            {
+                                "name": "name",
+                                "type": "text",
+                                "label": "Name"
+                            }
+                        ],
+                        "type": "array",
+                        "label": "From",
+                        "advanced": true,
+                        "validate": {
+                            "maxItems": 1
+                        }
+                    },
+                    {
+                        "name": "ccRecipients",
+                        "spec": [
+                            {
+                                "name": "address",
+                                "type": "email",
+                                "label": "Email Address",
+                                "required": true
+                            },
+                            {
+                                "name": "name",
+                                "type": "text",
+                                "label": "Name"
+                            }
+                        ],
+                        "type": "array",
+                        "label": "CC Recipients",
+                        "advanced": true
+                    },
+                    {
+                        "name": "bccRecipients",
+                        "spec": [
+                            {
+                                "name": "address",
+                                "type": "email",
+                                "label": "Email Address",
+                                "required": true
+                            },
+                            {
+                                "name": "name",
+                                "type": "text",
+                                "label": "Name"
+                            }
+                        ],
+                        "type": "array",
+                        "label": "Bcc Recipients",
+                        "advanced": true
+                    },
+                    {
+                        "name": "importance",
+                        "type": "select",
+                        "label": "Importance",
+                        "advanced": true,
+                        "validate": {
+                            "enum": [
+                                "Low",
+                                "Normal",
+                                "High"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "internetMessageHeaders",
+                        "spec": [
+                            {
+                                "name": "name",
+                                "type": "text",
+                                "label": "Name",
+                                "required": true
+                            },
+                            {
+                                "name": "value",
+                                "type": "text",
+                                "label": "Value",
+                                "required": true
+                            }
+                        ],
+                        "type": "array",
+                        "label": "Internet Message Headers",
+                        "advanced": true
+                    },
+                    {
+                        "name": "contentType",
+                        "type": "select",
+                        "label": "Body Content Type",
+                        "advanced": true,
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "html",
+                                "text"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "singleValueExtendedProperties",
+                        "spec": [
+                            {
+                                "name": "sensitivityLabel",
+                                "type": "text",
+                                "label": "Sensitivity Label"
+                            }
+                        ],
+                        "type": "collection",
+                        "label": "Extended MAPI Properties",
+                        "advanced": true
+                    }
+                ]
+            }
+        },
+        {
+            "id": 3,
+            "module": "airtable:ActionUpdateRecords",
+            "version": 3,
+            "parameters": {},
+            "mapper": {
+                "id": "{{1.id}}",
+                "base": "appREPLACE_BASE_ID",
+                "table": "tblREPLACE_OUTBOX",
+                "record": {
+                    "Estado": "Enviado",
+                    "Enviado_en": "{{now}}",
+                    "Message_ID": "{{2.id}}"
+                },
+                "typecast": true,
+                "useColumnId": false
+            },
+            "metadata": {
+                "designer": {
+                    "x": 600,
+                    "y": 0,
+                    "name": "Marcar Enviado"
+                },
+                "restore": {
+                    "expect": {
+                        "base": {
+                            "mode": "chose",
+                            "label": "Ventas Lamparas 3D"
+                        },
+                        "table": {
+                            "mode": "chose",
+                            "label": "Outbox"
+                        },
+                        "record": {
+                            "nested": {
+                                "Estado": {},
+                                "Enviado_en": {},
+                                "Message_ID": {}
+                            }
+                        },
+                        "typecast": {
+                            "mode": "chose"
+                        },
+                        "useColumnId": {
+                            "mode": "chose"
+                        },
+                        "id": {
+                            "extra": {
+                                "aiHelp": "Record ID",
+                                "aiInstruction": "Usá el id del registro de Outbox que se acaba de enviar."
+                            }
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "label": "Airtable"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:airtable3,airtable2",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "base",
+                        "type": "select",
+                        "label": "Base",
+                        "required": true
+                    },
+                    {
+                        "name": "typecast",
+                        "type": "boolean",
+                        "label": "Smart links",
+                        "required": true
+                    },
+                    {
+                        "name": "useColumnId",
+                        "type": "boolean",
+                        "label": "Use Column ID",
+                        "required": true
+                    },
+                    {
+                        "name": "table",
+                        "type": "select",
+                        "label": "Table",
+                        "required": true
+                    },
+                    {
+                        "name": "id",
+                        "type": "text",
+                        "label": "Record ID",
+                        "required": true
+                    },
+                    {
+                        "name": "record",
+                        "spec": [
+                            {
+                                "name": "Estado",
+                                "type": "text",
+                                "label": "Estado"
+                            },
+                            {
+                                "name": "Enviado_en",
+                                "type": "date",
+                                "label": "Enviado en"
+                            },
+                            {
+                                "name": "Message_ID",
+                                "type": "text",
+                                "label": "Message ID"
+                            }
+                        ],
+                        "type": "collection",
+                        "label": "Record"
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "id",
+                        "type": "text",
+                        "label": "ID"
+                    },
+                    {
+                        "name": "createdTime",
+                        "type": "date",
+                        "label": "Created Time"
+                    },
+                    {
+                        "name": "Estado",
+                        "type": "text",
+                        "label": "Estado"
+                    },
+                    {
+                        "name": "Enviado_en",
+                        "type": "date",
+                        "label": "Enviado en"
+                    },
+                    {
+                        "name": "Message_ID",
+                        "type": "text",
+                        "label": "Message ID"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 4,
+            "module": "telegram:SendReplyMessage",
+            "version": 1,
+            "parameters": {
+                "__IMTCONN__": 12349438
+            },
+            "mapper": {
+                "chatId": "5144879357",
+                "text": "EMAIL ENVIADO\n\nPara: {{1.Para}}\nAsunto: {{1.Asunto}}\nLead: {{1.Lead}}\nProducto: {{1.Producto}}"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 900,
+                    "y": 0,
+                    "name": "Informe Telegram"
+                },
+                "restore": {
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "label": "ROLITO's Telegram Bot connection"
+                        }
+                    },
+                    "expect": {
+                        "chatId": {
+                            "extra": {
+                                "aiHelp": "Chat ID",
+                                "aiInstruction": "Identificador del chat del dueño."
+                            }
+                        },
+                        "text": {
+                            "extra": {
+                                "aiHelp": "Texto",
+                                "aiInstruction": "Informe breve, truncado para entrar en el límite de Telegram."
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:telegram",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "chatId",
+                        "type": "text",
+                        "label": "Chat ID",
+                        "required": true
+                    },
+                    {
+                        "name": "text",
+                        "type": "text",
+                        "label": "Text",
+                        "required": true
+                    },
+                    {
+                        "name": "messageThreadId",
+                        "type": "number",
+                        "label": "Message Thread ID"
+                    },
+                    {
+                        "name": "parseMode",
+                        "type": "select",
+                        "label": "Parse Mode",
+                        "validate": {
+                            "enum": [
+                                "Markdown",
+                                "HTML"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "disableNotification",
+                        "type": "boolean",
+                        "label": "Disable Notifications",
+                        "editable": true
+                    },
+                    {
+                        "name": "disableWebPagePreview",
+                        "type": "boolean",
+                        "label": "Disable Link Previews"
+                    },
+                    {
+                        "name": "replyToMessageId",
+                        "type": "number",
+                        "label": "Original Message ID",
+                        "advanced": true
+                    },
+                    {
+                        "name": "replyMarkupAssembleType",
+                        "type": "select",
+                        "label": "Enter/Assemble the Reply Markup Field",
+                        "default": "reply_markup_enter",
+                        "advanced": true,
+                        "validate": {
+                            "enum": [
+                                "reply_markup_enter",
+                                "reply_markup_assemble"
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "metadata": {
+        "instant": false,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": true,
+            "slots": null,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": false,
+            "freshVariables": false
+        },
+        "designer": {
+            "orphans": []
+        },
+        "zone": "us2.make.com",
+        "notes": []
+    }
+}

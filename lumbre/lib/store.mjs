@@ -52,6 +52,9 @@ export const DEFAULT_SETTINGS = {
   autopilot: {
     enabled: true,
     intervalMinutes: 10,
+    ensureContent: true,
+    minContentIdeas: 3,
+    contentCooldownMinutes: 90,
   },
   // IA de respaldo: cuando el proveedor principal se queda sin cuota,
   // Lucian cambia automáticamente a Ollama local (gratis e ilimitado).

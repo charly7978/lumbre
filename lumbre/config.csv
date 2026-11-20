@@ -1,0 +1,22 @@
+Clave,Valor
+marca,COMPLETAR: nombre de tu marca
+web,COMPLETAR: URL de tu web o Instagram
+email_remitente,COMPLETAR: email desde el que envias
+firma,"COMPLETAR: nombre, cargo, telefono y web"
+direccion_fisica,COMPLETAR: direccion postal para la firma (obligatoria para CAN-SPAM)
+pais_base,Argentina
+moneda_base,USD
+idiomas,"es,en,pt"
+modo_envio,manual
+limite_borradores_por_ciclo,3
+limite_envios_por_dia,15
+limite_seguimientos,2
+dias_entre_seguimientos,4
+nichos_prioritarios,"estudios de interiorismo, arquitectura, hoteles boutique, restaurantes de diseno, coworkings premium, regalos corporativos"
+paises_prioritarios,"Argentina, Chile, Uruguay, Mexico, Espana, Estados Unidos"
+propuesta_valor,"COMPLETAR: que hace unica a tu lampara (material, diseno, personalizacion, plazo)"
+publico_prioritario,"interioristas, arquitectos, hoteles, restaurantes, retail de diseno y regalos corporativos"
+no_afirmar,"No inventar certificaciones, clientes, stock, plazos ni precios. No prometer envios internacionales sin confirmar logistica."
+horario_reporte,09:00 America/Argentina/Buenos_Aires
+aprobacion,El dueno aprueba cada correo en Airtable antes del envio.
+version_sistema,1.0

@@ -507,7 +507,8 @@ function startImapPolling() {
   console.log(`  Correo entrante (IMAP Gmail): cada ${minutes} min`);
 }
 startImapPolling();
-startAutopilot(store, notifier, (line) => console.log(line));
+const autopilotDeps = { createMission };
+startAutopilot(store, notifier, (line) => console.log(line), autopilotDeps);
 
 /* Extrae el procesamiento de un correo entrante para reutilizarlo
    desde el webhook y desde IMAP. Devuelve el hilo afectado. */
@@ -1980,7 +1981,7 @@ async function handle(req, res) {
   }
 
   if (pathname === '/api/autopilot/run' && method === 'POST') {
-    json(res, 200, await runAutopilot(store, notifier, (line) => console.log(line)));
+    json(res, 200, await runAutopilot(store, notifier, (line) => console.log(line), autopilotDeps));
     return;
   }
 

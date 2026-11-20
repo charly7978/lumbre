@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light" />
+  <title>Estudio · Sistema de Ventas</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <svg class="svg-defs" aria-hidden="true">
+    <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8.5 12 3 3 8.5v7L12 21l9-5.5v-7Z"/><path d="m3 8.5 9 5.5 9-5.5"/><path d="M12 14v7"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m20 6-11 11-5-5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2L12 3Z"/><path d="M19 15l.9 2.6L22 18.5l-2.1.9L19 22l-.9-2.6-2.1-.9 2.1-.9L19 15Z"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></symbol>
+    <symbol id="i-lamp" viewBox="0 0 24 24"><path d="M8 3h8l3 9H5l3-9Z"/><path d="M12 12v6"/><path d="M8 21h8"/><path d="M12 18v3"/></symbol>
+  </svg>
+
+  <section id="onboarding" class="onboarding">
+    <div class="onboarding-art">
+      <div class="art-glow"></div>
+      <div class="art-lamp">
+        <div class="lamp-shade"></div>
+        <div class="lamp-stem"></div>
+        <div class="lamp-base"></div>
+        <div class="lamp-light"></div>
+      </div>
+      <div class="art-copy">
+        <p class="eyebrow">ESTUDIO DE VENTAS</p>
+        <h1>Vos fabricás.<br />Nosotros vendemos.</h1>
+        <p>Cargá tu producto, apretá un botón y el equipo comercial se pone a trabajar. Sin planillas, sin terminal, sin vueltas.</p>
+        <div class="art-points">
+          <span><svg class="icon"><use href="#i-check"/></svg> Productos con fotos y precio</span>
+          <span><svg class="icon"><use href="#i-check"/></svg> Borradores para aprobar</span>
+          <span><svg class="icon"><use href="#i-check"/></svg> Bandeja de respuestas</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="onboarding-panel">
+      <div class="setup-card">
+        <div class="setup-head">
+          <span class="setup-badge">PASO 1 DE 3</span>
+          <h2>Conectá tu base de Airtable</h2>
+          <p>Pegá un token nuevo. No se comparte con nadie y queda guardado solo en esta computadora.</p>
+        </div>
+
+        <label class="field">
+          <span>Token de Airtable</span>
+          <div class="input-wrap">
+            <input id="token-input" type="password" placeholder="pat_..." autocomplete="off" spellcheck="false" />
+            <button class="icon-btn" id="toggle-token" type="button" aria-label="Mostrar token"><svg class="icon"><use href="#i-search"/></svg></button>
+          </div>
+        </label>
+        <div class="hint-row">
+          <a href="https://airtable.com/create/tokens" target="_blank" rel="noreferrer">Crear un token nuevo <svg class="icon"><use href="#i-arrow"/></svg></a>
+          <span>Scopes: data.records:read, data.records:write, schema.bases:read, schema.bases:write</span>
+        </div>
+
+        <button class="btn primary wide" id="connect-token" type="button">Conectar <svg class="icon"><use href="#i-arrow"/></svg></button>
+        <div id="setup-error" class="error-box hidden"></div>
+
+        <div id="base-step" class="base-step hidden">
+          <div class="divider"><span>Base detectada</span></div>
+          <label class="field">
+            <span>Elegí la base que tiene las tablas del sistema</span>
+            <select id="base-select"></select>
+          </label>
+          <button class="btn dark wide" id="connect-base" type="button">Usar esta base <svg class="icon"><use href="#i-check"/></svg></button>
+          <div id="base-error" class="error-box hidden"></div>
+        </div>
+
+        <div id="seed-step" class="seed-step hidden">
+          <div class="success-banner">
+            <svg class="icon"><use href="#i-check"/></svg>
+            <div><strong>Base conectada.</strong><span>Falta cargar la configuración inicial y el producto de ejemplo.</span></div>
+          </div>
+          <button class="btn primary wide" id="seed-config" type="button">Cargar configuración inicial</button>
+          <button class="btn ghost wide hidden" id="enter-app" type="button">Entrar al panel <svg class="icon"><use href="#i-arrow"/></svg></button>
+        </div>
+
+        <div class="setup-foot">
+          <button class="link-btn" id="demo-btn" type="button">Ver demo sin conectar</button>
+          <span>·</span>
+          <button class="link-btn" id="help-btn" type="button">¿Qué es esto?</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="shell" class="shell hidden">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark"><svg class="icon"><use href="#i-lamp"/></svg></div>
+        <div class="brand-text">
+          <strong id="brand-name">Estudio</strong>
+          <span>Sistema de ventas</span>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-view="panel"><svg class="icon"><use href="#i-panel"/></svg><span>Panel</span></button>
+        <button class="nav-item" data-view="products"><svg class="icon"><use href="#i-box"/></svg><span>Productos</span></button>
+        <button class="nav-item" data-view="leads"><svg class="icon"><use href="#i-users"/></svg><span>Leads</span></button>
+        <button class="nav-item" data-view="inbox"><svg class="icon"><use href="#i-inbox"/></svg><span>Bandeja</span><em class="nav-count hidden" id="nav-inbox-count">0</em></button>
+        <button class="nav-item" data-view="content"><svg class="icon"><use href="#i-layers"/></svg><span>Contenido</span></button>
+      </nav>
+
+      <div class="sidebar-foot">
+        <button class="nav-item" data-view="settings"><svg class="icon"><use href="#i-settings"/></svg><span>Ajustes</span></button>
+        <div class="connection-pill" id="connection-pill">
+          <span class="dot"></span>
+          <span id="connection-label">Airtable conectado</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-btn menu-btn" id="menu-btn" type="button"><svg class="icon"><use href="#i-menu"/></svg></button>
+          <div>
+            <h1 id="page-title">Panel</h1>
+            <p id="page-subtitle">Tu centro de operaciones</p>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <span class="today" id="today-label"></span>
+          <button class="btn ghost small" id="refresh-btn" type="button"><svg class="icon"><use href="#i-refresh"/></svg> Actualizar</button>
+          <button class="btn primary small" id="launch-btn" type="button"><svg class="icon"><use href="#i-spark"/></svg> Lanzar agentes</button>
+        </div>
+      </header>
+
+      <div id="view-root" class="view-root"></div>
+    </main>
+  </div>
+
+  <div id="modal-root" class="modal-root hidden"></div>
+  <div id="toast-root" class="toast-root"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

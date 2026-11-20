@@ -1,0 +1,20 @@
+{
+  "generatedAt": "2026-11-15T09:55:18.511Z",
+  "basePlaceholder": "appREPLACE_BASE_ID",
+  "tablePlaceholders": {
+    "productos": "tblREPLACE_PRODUCTOS",
+    "leads": "tblREPLACE_LEADS",
+    "outbox": "tblREPLACE_OUTBOX",
+    "conversaciones": "tblREPLACE_CONVERSACIONES",
+    "contenido": "tblREPLACE_CONTENIDO",
+    "config": "tblREPLACE_CONFIG",
+    "metricas": "tblREPLACE_METRICAS",
+    "aprendizajes": "tblREPLACE_APRENDIZAJES"
+  },
+  "scenarios": [
+    "01-motor-comercial.blueprint.json",
+    "02-envio-aprobado.blueprint.json",
+    "03-bandeja-respuestas.blueprint.json",
+    "04-marketing-contenido.blueprint.json"
+  ]
+}

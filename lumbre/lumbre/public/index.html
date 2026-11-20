@@ -1,0 +1,132 @@
+﻿<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Lucian: el equipo comercial de un maker de lámparas de diseño. Investigación, aduanas, precios, compradores, mensajes y contenido en un solo lugar.">
+  <title>Lucian · sistema de ventas para lámparas de diseño</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563eb'/%3E%3Cpath d='M36 8 L22 34 H32 L26 56 L42 28 H32 Z' fill='%23ffffff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+  <div class="app" id="app">
+    <aside class="sidebar" aria-label="Navegación principal">
+      <a class="brand" href="#/panel" aria-label="Lucian, ir al panel">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 48 48" fill="none">
+            <rect x="4" y="4" width="40" height="40" rx="12" fill="#2563eb"/>
+            <path d="M28 10 L17 27 H24 L20 38 L31 21 H24 Z" fill="#ffffff"/>
+          </svg>
+        </span>
+        <span class="brand-text">
+          <strong>Lucian</strong>
+          <em>ventas con luz propia</em>
+        </span>
+      </a>
+
+      <nav class="nav" id="main-nav">
+        <a class="nav-item" href="#/panel" data-nav="panel"><span class="nav-icon" data-icon="panel"></span><span>Panel</span></a>
+        <a class="nav-item" href="#/productos" data-nav="productos"><span class="nav-icon" data-icon="box"></span><span>Productos</span><span class="nav-count" data-count="products"></span></a>
+        <a class="nav-item" href="#/misiones" data-nav="misiones"><span class="nav-icon" data-icon="spark"></span><span>Misiones</span><span class="nav-count" data-count="activeMissions"></span></a>
+        <a class="nav-item" href="#/ventas" data-nav="ventas"><span class="nav-icon" data-icon="dollar"></span><span>Ventas</span><span class="nav-count" data-count="sold"></span></a>
+        <a class="nav-item" href="#/bandeja" data-nav="bandeja"><span class="nav-icon" data-icon="inbox"></span><span>Conversaciones</span><span class="nav-count" data-count="drafts"></span></a>
+        <a class="nav-item" href="#/contenido" data-nav="contenido"><span class="nav-icon" data-icon="image"></span><span>Contenido</span><span class="nav-count" data-count="contentIdeas"></span></a>
+        <a class="nav-item" href="#/equipo" data-nav="equipo"><span class="nav-icon" data-icon="users"></span><span>Equipo</span></a>
+        <a class="nav-item" href="#/mercados" data-nav="mercados"><span class="nav-icon" data-icon="globe"></span><span>Mercados</span></a>
+        <a class="nav-item" href="#/conexiones" data-nav="conexiones"><span class="nav-icon" data-icon="key"></span><span>Conexiones</span></a>
+      </nav>
+
+      <div class="sidebar-foot">
+        <div class="mode-card" id="mode-card">
+          <span class="mode-dot"></span>
+          <div>
+            <strong id="mode-title">Modo demo</strong>
+            <span id="mode-sub">Configurá una IA para trabajar con datos reales.</span>
+          </div>
+        </div>
+        <a class="nav-item nav-settings" href="#/ajustes" data-nav="ajustes"><span class="nav-icon" data-icon="settings"></span><span>Ajustes</span></a>
+        <p class="sidebar-sign">Hecho para un maker solo.<br>Sin Airtable. Sin Make.</p>
+      </div>
+    </aside>
+
+    <div class="main-wrap">
+      <header class="topbar" id="topbar">
+        <div class="topbar-left">
+          <button class="icon-btn mobile-menu" type="button" data-action="toggle-mobile-nav" aria-label="Abrir menú">
+            <span data-icon="menu"></span>
+          </button>
+          <div class="topbar-titles">
+            <p class="topbar-eyebrow" id="topbar-eyebrow">Lucian OS</p>
+            <h1 class="topbar-title" id="topbar-title">Panel</h1>
+          </div>
+        </div>
+        <div class="topbar-actions" id="topbar-actions">
+          <span class="save-state" id="save-state" aria-live="polite"></span>
+          <button class="btn btn-ghost btn-sm only-desktop" type="button" data-action="demo-seed" id="quick-demo">Cargar ejemplo</button>
+          <button class="btn btn-primary btn-sm" type="button" data-action="new-mission"><span data-icon="plus"></span> Nueva misión</button>
+        </div>
+      </header>
+
+      <main class="view" id="contenido" tabindex="-1">
+        <div class="boot" id="boot">
+          <div class="boot-lamp" aria-hidden="true">
+            <span class="boot-glow"></span>
+            <svg viewBox="0 0 120 140" fill="none">
+              <path d="M38 76h44L68 34H52L38 76Z" fill="#60a5fa"/>
+              <path d="M60 76v34" stroke="#1e3a5f" stroke-width="3"/>
+              <path d="M43 118h34" stroke="#1e3a5f" stroke-width="3" stroke-linecap="round"/>
+              <circle cx="60" cy="82" r="4" fill="#eff6ff"/>
+            </svg>
+          </div>
+          <p class="boot-word">Lucian</p>
+          <p class="boot-note">Encendiendo el equipo comercial”¦</p>
+        </div>
+      </main>
+
+      <footer class="footer">
+        <span>Lucian · datos en tu computadora · <span id="footer-version">v1.0</span></span>
+        <span class="footer-sep">·</span>
+        <a href="#/ajustes?tab=datos">Copia de seguridad</a>
+        <span class="footer-sep">·</span>
+        <a href="#/equipo">Cómo trabaja el equipo</a>
+      </footer>
+    </div>
+
+    <nav class="mobile-nav" aria-label="Navegación rápida">
+      <a href="#/panel" data-nav="panel"><span data-icon="panel"></span><b>Panel</b></a>
+      <a href="#/misiones" data-nav="misiones"><span data-icon="spark"></span><b>Misiones</b></a>
+      <a class="mobile-main" href="#/ventas" data-nav="ventas"><span data-icon="dollar"></span><b>Ventas</b></a>
+      <a href="#/bandeja" data-nav="bandeja"><span data-icon="inbox"></span><b>Conversaciones</b></a>
+      <a href="#/ajustes" data-nav="ajustes"><span data-icon="settings"></span><b>Ajustes</b></a>
+    </nav>
+
+    <div class="mobile-drawer" id="mobile-drawer" aria-hidden="true">
+      <div class="mobile-drawer-panel">
+        <div class="mobile-drawer-head">
+          <strong>Lucian</strong>
+          <button class="icon-btn" type="button" data-action="toggle-mobile-nav" aria-label="Cerrar menú"><span data-icon="x"></span></button>
+        </div>
+        <a href="#/panel" data-nav="panel">Panel</a>
+        <a href="#/productos" data-nav="productos">Productos</a>
+        <a href="#/misiones" data-nav="misiones">Misiones</a>
+        <a href="#/ventas" data-nav="ventas">Ventas</a>
+        <a href="#/bandeja" data-nav="bandeja">Conversaciones</a>
+        <a href="#/contenido" data-nav="contenido">Contenido</a>
+        <a href="#/equipo" data-nav="equipo">Equipo</a>
+        <a href="#/mercados" data-nav="mercados">Mercados</a>
+        <a href="#/conexiones" data-nav="conexiones">Conexiones</a>
+        <a href="#/ajustes" data-nav="ajustes">Ajustes</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-root"></div>
+  <div id="toasts" class="toasts" aria-live="polite" aria-atomic="false"></div>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

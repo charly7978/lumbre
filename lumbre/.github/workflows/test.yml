@@ -1,5 +1,9 @@
-name: test
-on: [push, pull_request]
+name: Lumbre tests
+
+on:
+  push:
+  pull_request:
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -8,4 +12,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm test
+      - name: Install
+        run: cd lumbre && npm ci --ignore-scripts 2>/dev/null || true
+      - name: Check & tests
+        run: cd lumbre && npm run check && npm run test:search && npm run test:core && npm run test:guards && npm run test:flow

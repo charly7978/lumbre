@@ -28,7 +28,7 @@ export function getAutopilotState() {
  * Ejecuta una pasada del piloto.
  * @returns {object} resultado con acciones tomadas
  */
-export async function runAutopilot(store, notifier, logger = () => {}) {
+export async function runAutopilot(store, notifier, logger = () => {}, deps = {}) {
   const settings = store.settings();
   if (settings.autopilot?.enabled === false) {
     return { enabled: false, actions: [] };
@@ -86,6 +86,47 @@ export async function runAutopilot(store, notifier, logger = () => {}) {
     }
   }
 
+  // 5) AUTOMATIZACIÓN DE CONTENIDO: si no hay piezas listas para publicar,
+  //    el piloto crea una misión de contenido por su cuenta.
+  if (deps.createMission && settings.autopilot?.ensureContent !== false) {
+    try {
+      const content = store.get('content') || [];
+      const ideas = content.filter((c) => c.status === 'idea' || c.status === 'borrador');
+      const minIdeas = Math.max(1, Math.min(200, Number(settings.autopilot?.minContentIdeas) || 3));
+      const active = store.get('missions').filter((m) => ['running', 'queued'].includes(m.status));
+      const meta = store.get('meta') || {};
+      const lastAt = meta.autopilotLastContentMission ? new Date(meta.autopilotLastContentMission).getTime() : 0;
+      const cooldown = Math.max(15, Math.min(720, Number(settings.autopilot?.contentCooldownMinutes) || 90)) * 60 * 1000;
+      const products = (store.get('products') || []).filter((p) => p.status !== 'archivado');
+
+      if (ideas.length < minIdeas && active.length === 0 && products.length && (Date.now() - lastAt) >= cooldown) {
+        // Rotar producto para no saturar siempre el mismo
+        const idx = Number(meta.autopilotContentIndex || 0) % products.length;
+        const product = products[idx];
+        const mission = await deps.createMission({
+          productId: product.id,
+          goal: 'lanzar-coleccion',
+          name: `Contenido automático · ${product.name}`,
+          markets: (settings.mission?.markets || ['España']).slice(0, 2),
+          depth: 'rapida',
+          mode: 'auto',
+          maxProspects: 4,
+          notes: 'Misión creada automáticamente por el piloto para reponer contenido listo para publicar en redes.',
+          autoContent: true,
+        });
+        await store.setMeta({
+          autopilotLastContentMission: new Date().toISOString(),
+          autopilotContentIndex: idx + 1,
+        });
+        actions.push(`Misión de contenido creada: ${mission?.name || product.name}`);
+        await notify(notifier, `🎨 *Lucian generó contenido automáticamente*\n\nNo había piezas listas para publicar, así que el piloto lanzó una misión rápida para ${product.name}. En unos minutos vas a ver nuevas publicaciones en Contenido.`);
+        state.recoveryAttempts += 1;
+      }
+    } catch (error) {
+      logger(`[Piloto] No pudo crear contenido: ${error.message}`);
+    }
+  }
+
   if (actions.length) logger(`[Piloto] ${actions.join(' | ')}`);
   return { enabled: true, actions, issues: issues.map((c) => c.id), state: getAutopilotState() };
 }
@@ -95,12 +136,12 @@ async function notify(notifier, text) {
   try { await notifier.notify(text, { kind: 'system' }); } catch { /* silencio */ }
 }
 
-export function startAutopilot(store, notifier, logger) {
+export function startAutopilot(store, notifier, logger, deps = {}) {
   const settings = store.settings();
   const every = Math.max(1, Math.min(60, Number(settings.autopilot?.intervalMinutes) || 10)) * 60 * 1000;
-  const timer = setInterval(() => runAutopilot(store, notifier, logger), every);
+  const timer = setInterval(() => runAutopilot(store, notifier, logger, deps), every);
   timer.unref?.();
   // Primera pasada al arrancar
-  setTimeout(() => runAutopilot(store, notifier, logger), 8000).unref?.();
+  setTimeout(() => runAutopilot(store, notifier, logger, deps), 8000).unref?.();
   return timer;
 }
