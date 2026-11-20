@@ -683,13 +683,13 @@ function panelSalesHTML() {
         <a class="section-link" href="#/ventas">Ver ventas ${icon('arrowRight')}</a>
       </div>
       <div class="card card-pad" style="text-align:center">
-        <p class="muted small">Las cotizaciones abiertas y los ingresos los ves en la vista de Ventas. El ingreso se calcula solo con cotizaciones aceptadas.</p>
+        <p class="muted small">Las cotizaciones abiertas y los ingresos los ves en la vista de Ventas. Aceptar una cotización no confirma un pago. Los cobros se registran manualmente.</p>
       </div>
     </section>`;
   }
   return `<section class="section">
     <div class="section-head">
-      <div><h2 class="section-title">Ventas recientes</h2><p class="section-sub">${won.length} venta${won.length === 1 ? '' : 's'} · ${money(sales.revenue || 0, sales.currency)} ingresados.</p></div>
+      <div><h2 class="section-title">Ventas recientes</h2><p class="section-sub">${won.length} venta${won.length === 1 ? '' : 's'} · ${money(sales.revenue || 0, sales.currency)} informados manualmente (no conciliados).</p></div>
       <a class="section-link" href="#/ventas">Ver todas ${icon('arrowRight')}</a>
     </div>
     <div class="card" style="padding:6px 0">
@@ -1008,7 +1008,7 @@ function renderVentas() {
     <div class="page-head-main">
       <p class="eyebrow">Ventas</p>
       <h2 class="page-title">Lo vendido y lo que está por cerrar.</h2>
-      <p class="page-sub">Una venta es una cotización aceptada o una conversación marcada como Ganada. El ingreso se calcula solo con cotizaciones aceptadas. Nada se inventa.</p>
+      <p class="page-sub">Cotizaciones aceptadas, cobros informados y saldos pendientes. Aceptar una propuesta NO acredita dinero; los cobros se registran manualmente y no se concilian con el banco.</p>
     </div>
     <div class="page-actions">
       <a class="btn btn-ghost btn-sm" href="#/bandeja?filtro=revisar">${icon('mail')} Por aprobar</a>
@@ -1018,9 +1018,9 @@ function renderVentas() {
 
   <section class="stat-grid">
     ${statCard('Ventas cerradas', sales.sold || 0, 'dollar', sales.sold ? 'conversaciones ganadas' : 'todavía ninguna', '', sales.sold ? 'warm' : '')}
-    ${statCard('Ingresos', money(sales.revenue || 0, currency), 'chart', 'cotizaciones aceptadas', '', '')}
+    ${statCard('Cobros informados', money(sales.revenue || 0, currency), 'chart', 'manual · sin conciliación bancaria', '', '')}
     ${statCard('Cotizaciones abiertas', sales.openQuotes || 0, 'mail', open.length ? 'borrador o enviada' : 'ninguna', '', sales.openQuotes ? 'warm' : '')}
-    ${statCard('Cotizaciones aceptadas', sales.acceptedQuotes || 0, 'check', 'cerraron la venta', '', '')}
+    ${statCard('Cotizaciones aceptadas', sales.acceptedQuotes || 0, 'check', `${sales.unpaidAcceptedQuotes || 0} con saldo pendiente`, '', '')}
   </section>
 
   <div class="section" style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,1fr);gap:22px">
@@ -1064,7 +1064,7 @@ function renderVentas() {
 
   ${byProduct.length ? `<section class="section">
     <div class="section-head">
-      <div><h2 class="section-title">Por lámpara</h2><p class="section-sub">Ventas e ingresos por producto. Hacé clic para ver la ruta completa.</p></div>
+      <div><h2 class="section-title">Por lámpara</h2><p class="section-sub">Cotizaciones y cobros manualmente registrados por producto. Hacé clic para ver el detalle.</p></div>
     </div>
     <div class="card" style="padding:6px 0">
       ${byProduct.sort((a,b) => (b.revenue||0)-(a.revenue||0)).map((p) => `<a class="thread-row" href="#/productos/${encodeURIComponent(p.productId)}" style="text-decoration:none">
@@ -1162,7 +1162,7 @@ function renderProductRoute(id) {
     ${statCard('Misiones', missions.length, 'spark', missions.length ? 'pasadas del equipo' : 'sin misiones aún', '', '')}
     ${statCard('Compradores', threads.length, 'users', threads.length ? `${hot} calientes` : 'ninguno aún', '', '')}
     ${statCard('Por aprobar', draftsToReview, 'mail', draftsToReview ? 'borradores pendientes' : 'nada pendiente', '', draftsToReview ? 'warm' : '')}
-    ${statCard('Ventas', sales.sold || 0, 'dollar', sales.revenue ? `${money(sales.revenue, currency)} ingresados` : 'todavía ninguna', '#/ventas', sales.sold ? 'warm' : '')}
+    ${statCard('Ventas', sales.sold || 0, 'dollar', sales.revenue ? `${money(sales.revenue, currency)} cobros manuales` : 'todavía ninguna', '#/ventas', sales.sold ? 'warm' : '')}
     ${statCard('Contenido', content.length, 'image', content.filter((c)=>c.status==='publicado').length ? `${content.filter((c)=>c.status==='publicado').length} publicado${content.filter((c)=>c.status==='publicado').length===1?'':'s'}` : 'ideas y borradores', '', '')}
   </section>
 
@@ -2846,7 +2846,7 @@ function quotesHTML(thread) {
       <div class="draft-actions">
         ${!accepted ? `<button class="btn btn-primary btn-xs" type="button" data-action="quote-status" data-id="${attr(thread.id)}" data-quote-id="${attr(quote.id)}" data-status="aceptada">${icon('check')} Aceptada</button>` : ''}
         ${!rejected && !accepted ? `<button class="btn btn-ghost btn-xs" type="button" data-action="quote-status" data-id="${attr(thread.id)}" data-quote-id="${attr(quote.id)}" data-status="rechazada">Rechazada</button>` : ''}
-        ${accepted ? `<span class="tiny muted">Cierra la venta y reinicia la postventa desde hoy.</span>` : ''}
+        ${accepted ? `<span class="tiny muted">Cotización aceptada, no significa cobrada.</span><span class="tiny muted">Cobrado manualmente: ${esc(money(arr(quote.payments).reduce((a,p)=>a+num(p.amount,0),0), quote.currency))} / ${esc(money(total, quote.currency))}</span><button class="btn btn-primary btn-xs" type="button" data-action="record-payment" data-id="${attr(thread.id)}" data-quote-id="${attr(quote.id)}">Registrar cobro</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -5705,6 +5705,8 @@ async function handleAction(action, el) {
       return;
     }
     case 'quote-status': await setQuoteStatusUI(el.dataset.id, el.dataset.quoteId, el.dataset.status); return;
+    case 'record-payment': openPaymentModal(el.dataset.id, el.dataset.quoteId); return;
+    case 'save-payment': await savePaymentUI(el.dataset.id, el.dataset.quoteId); return;
     case 'new-draft': {
       if (!S.thread?.thread) return;
       openDraftModal(S.thread.thread);
