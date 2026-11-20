@@ -38,19 +38,26 @@ export class Notifier {
 
   stop() {
     this.generation += 1;
+    this.started = false;
     this.polling = false;
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
   }
 
-  refresh() {
-    this.generation += 1;
-    const generation = this.generation;
-    this.polling = false;
+  // Arranca el loop de Telegram con la generación y la configuración vigentes.
+  //Si ya hay un loop activo, no hace nada: ese loop se detendrá solo al
+  //detectar el cambio de generación y volverá a llamar a este método.
+  startPolling() {
+    if (!this.started || this.polling) return;
     const settings = this.store.settings();
     if (!settings.notify?.telegram?.enabled) return;
     if (!settings.notify.telegram.token || !settings.notify.telegram.chatId) return;
-    this.pollTelegram(generation).catch(() => {});
+    this.pollTelegram(this.generation).catch(() => {});
+  }
+
+  refresh() {
+    this.generation += 1;
+    this.startPolling();
   }
 
   channels(settings = this.store.settings()) {
@@ -495,6 +502,9 @@ export class Notifier {
       }
     }
     this.polling = false;
+    // Si guardaron ajustes mientras esperábamos una respuesta, el loop viejo
+    // ya terminó: levantamos el nuevo con la configuración más reciente.
+    this.startPolling();
   }
 }
 
