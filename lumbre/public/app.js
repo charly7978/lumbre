@@ -363,7 +363,9 @@ async function api(path, options = {}) {
   if (!response.ok) {
     if (!silent) setSaveState('error');
     const message = typeof data === 'object' ? data.error : String(data || '');
-    throw new Error(message || `Error ${response.status}`);
+    const error = new Error(message || `Error ${response.status}`);
+    error.status = response.status;
+    throw error;
   }
   if (!silent) setSaveState('saved');
   return data;
@@ -462,11 +464,27 @@ function confirmAction({ title, message, details = '', confirmLabel = 'Confirmar
 async function loadState({ render: shouldRender = true, silent = false } = {}) {
   try {
     S.state = await api('/api/state', { silent });
+    S.loginAttempted = false;
     updateShell();
     scheduleAutoRefresh();
     if (shouldRender) render();
     maybeShowWelcome();
   } catch (error) {
+    if (error.status === 401 && !S.loginAttempted) {
+      S.loginAttempted = true;
+      const token = window.prompt('Lucian está protegido. Escribí la clave que aparece en la PC del servidor:');
+      if (token) {
+        try {
+          const response = await fetch('/api/login', {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ token }),
+          });
+          if (response.ok) return loadState({ render: shouldRender, silent });
+          renderFatal(new Error('Clave incorrecta. Recargá la página para volver a intentarlo.'));
+          return;
+        } catch { /* mostrar el error sin filtrar la clave */ }
+      }
+    }
     renderFatal(error);
   }
 }
@@ -3161,6 +3179,8 @@ function openContactModal(thread) {
         <div class="field"><label for="ct-country">País</label><input class="input" id="ct-country" name="country" value="${attr(contact.country || '')}"></div>
         <div class="field"><label for="ct-city">Ciudad</label><input class="input" id="ct-city" name="city" value="${attr(contact.city || '')}"></div>
         <div class="field full"><label for="ct-website">Sitio web</label><input class="input" id="ct-website" name="website" value="${attr(contact.website || '')}" placeholder="https://”¦"></div>
+        <div class="field full"><label for="ct-permission">Permiso para campañas por Resend</label><select class="select" id="ct-permission" name="permissionStatus"><option value="unknown" ${contact.permission?.status !== 'opted_in' ? 'selected' : ''}>Sin consentimiento documentado (no enviar)</option><option value="opted_in" ${contact.permission?.status === 'opted_in' ? 'selected' : ''}>Dio consentimiento explícito</option></select></div>
+        <div class="field full"><label for="ct-evidence">Evidencia del consentimiento</label><textarea class="textarea" id="ct-evidence" name="permissionEvidence" rows="2" placeholder="Formulario, fecha, finalidad y enlace o registro verificable">${esc(contact.permission?.evidence || '')}</textarea></div>
       </div>
       <p class="field-hint mt-3">Lucian no inventa direcciones. Si no tenés un email verificado, dejalo vacío y usá el formulario del sitio o el contacto manual.</p>
     </form>`,
@@ -3172,6 +3192,9 @@ async function saveContact(threadId) {
   const form = $('#contact-form');
   if (!form) return;
   const data = Object.fromEntries(new FormData(form).entries());
+  data.permission = { status: data.permissionStatus === 'opted_in' ? 'opted_in' : 'unknown', evidence: data.permissionEvidence || '' };
+  delete data.permissionStatus;
+  delete data.permissionEvidence;
   if (data.email && !isEmail(data.email)) { toast('Ese email no parece válido.', 'error'); return; }
   try {
     await api(`/api/threads/${encodeURIComponent(threadId)}`, { method: 'PATCH', body: { contact: data } });
@@ -3295,7 +3318,10 @@ function openSendModal(thread, draft) {
   const demoEmail = isDemoEmail(contact.email);
   const suppressed = Boolean(thread.suppressed);
   const gmailReady = settings.email?.provider === 'gmail' && Boolean(S.state.flags?.email);
-  const canResend = Boolean(S.state.flags?.email) && valid && !demoEmail && !suppressed;
+  const hasConsent = contact.permission?.status === 'opted_in'
+    && String(contact.permission?.evidence || '').trim().length >= 10
+    && Boolean(contact.permission?.capturedAt);
+  const canResend = Boolean(S.state.flags?.email) && valid && !demoEmail && !suppressed && hasConsent;
   const canWebhook = Boolean(settings.email?.webhookUrl) && valid && !demoEmail && !suppressed;
   const canGmail = gmailReady && valid && !demoEmail && !suppressed;
   const limits = S.state.limits || {};
@@ -3325,7 +3351,7 @@ function openSendModal(thread, draft) {
     <div class="form-section"><p class="form-section-title">Cómo lo mandás</p>
       <div class="stack">
         ${gmailReady ? `<div class="integration-card"><span class="status-dot ok"></span><div><h4>Gmail · listo</h4><p>Envío real desde ${esc(settings.email?.from || 'tu Gmail')} con tu contraseña de aplicación. Sale directo, sin copiar nada.</p></div></div>` : ''}
-        <div class="integration-card"><span class="status-dot ${canResend ? 'ok' : 'muted'}"></span><div><h4>Resend ${canResend ? '· listo' : '· no configurado'}</h4><p>${canResend ? 'Envío real desde tu dominio verificado.' : 'Requiere verificar un dominio en Resend.'}</p></div></div>
+        <div class="integration-card"><span class="status-dot ${canResend ? 'ok' : 'muted'}"></span><div><h4>Resend ${canResend ? '· listo' : '· no disponible'}</h4><p>${canResend ? 'Envío permitido por consentimiento registrado.' : !hasConsent ? 'No hay consentimiento explícito documentado. Editá el contacto para registrar evidencia real.' : 'Requiere verificar un dominio en Resend.'}</p></div></div>
         <div class="integration-card"><span class="status-dot ${canWebhook ? 'ok' : 'muted'}"></span><div><h4>Webhook propio ${canWebhook ? '· listo' : '· opcional'}</h4><p>${canWebhook ? 'Lucian manda el mensaje a tu automatización.' : 'Ideal si ya tenés Make, n8n o un servidor propio.'}</p></div></div>
       </div>
     </div>`,
@@ -5810,17 +5836,12 @@ function bindView(route) {
    ───────────────────────────────────────────────────────────── */
 
 function init() {
-  // Si la dirección viene con ?access=CLAVE (la que manda el script del túnel),
-  // la guardamos en una cookie y la quitamos de la URL. Así se entra directo,
-  // sin pedirla, igual que cuando se usaba sin clave.
+  // Las claves no se aceptan por URL: pueden quedar en historiales y registros.
   try {
     const params = new URLSearchParams(location.search);
-    const token = params.get('access');
-    if (token) {
-      document.cookie = `lucian_access=${encodeURIComponent(token)}; path=/; max-age=2592000; SameSite=Lax`;
+    if (params.has('access')) {
       params.delete('access');
-      const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
-      history.replaceState(null, '', clean);
+      history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : '') + location.hash);
     }
   } catch { /* noop */ }
   document.addEventListener('click', onGlobalClick);
