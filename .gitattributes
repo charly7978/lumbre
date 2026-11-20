@@ -1,0 +1,4 @@
+# Keep original CRLF bytes in Windows command scripts, including GitHub ZIP downloads.
+# Do not normalize CMD/BAT source blobs to LF during Git commits.
+*.cmd -text
+*.bat -text
