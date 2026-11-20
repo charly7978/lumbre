@@ -92,6 +92,8 @@ async function freshStore() {
     },
   });
 
+  const withoutConsent = { ...thread, id: 'thr_without_consent', contact: { ...thread.contact, permission: null } };
+  ok(await outbox.enqueueDraft(withoutConsent, draft) === null, 'no agenda destinatarios sin consentimiento documentado');
   const queued = await outbox.scheduleMission(mission);
   ok(queued.queued === 1, 'agenda el borrador listo de la misión');
   ok(outbox.status().pending === 1, 'la cola muestra un pendiente');
