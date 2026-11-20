@@ -35,6 +35,7 @@ import { diagnoseConnections, testConnection, getAiFailoverState, resetAiFailove
 import { startAutopilot, runAutopilot, getAutopilotState } from './lib/autopilot.mjs';
 import { verifyMetaSignature, hasDocumentedOptIn, resendIdempotencyKey } from './lib/security.mjs';
 import { buildSalesAgenda, buildCatalogHealth } from './lib/sales-ops.mjs';
+import { supervisedMissionPreflight } from './lib/sales-launch.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.LUCIAN_DATA_DIR ? path.resolve(process.env.LUCIAN_DATA_DIR) : path.join(__dirname, 'data');
@@ -598,7 +599,7 @@ function resumeQueuedMissions() {
         store,
         broadcast,
         notifier,
-        onMissionFinished: (finished) => outbox.scheduleMission(finished),
+        onMissionFinished: (finished) => finished.manualReviewOnly ? Promise.resolve({ queued: 0 }) : outbox.scheduleMission(finished),
       }).catch((error) => console.error('[Lucian] No se pudo retomar una misión en cola:', error));
     }, 500);
   }
@@ -679,6 +680,7 @@ function statePayload() {
     sales: buildSales(threads, products, settings.brand?.currency || 'USD'),
     salesAgenda: buildSalesAgenda({ threads, products, suppressions }),
     catalogHealth: buildCatalogHealth(products),
+    salesLaunch: supervisedMissionPreflight({ products, missions, settings, aiReady: isAIReady(settings), searchInfo: searchProviderInfo(settings) }),
     outbox: outbox.status(),
     usage: meta.agentUsage || {},
     intel: buildIntel(missions),
@@ -959,6 +961,7 @@ async function createMission(body) {
     id,
     demo,
     mode: demo ? 'demo' : 'real',
+    manualReviewOnly: !demo && body.manualReviewOnly === true,
     requestedMode,
     productId: product.id,
     name: asString(body.name).trim() || `${product.name} · ${finalMarkets[0] || 'Mercado global'}`,
@@ -994,7 +997,7 @@ async function createMission(body) {
   await store.set('missions', store.get('missions'));
   await store.activity('mission', `Misión creada: ${mission.name}${demo ? ' (demo)' : ''}.`, { missionId: id, demo });
   setTimeout(() => {
-    runMission(id, { store, broadcast, notifier, onMissionFinished: (mission) => outbox.scheduleMission(mission) }).catch((error) => {
+    runMission(id, { store, broadcast, notifier, onMissionFinished: (mission) => mission.manualReviewOnly ? Promise.resolve({ queued: 0 }) : outbox.scheduleMission(mission) }).catch((error) => {
       console.error('[Lucian] Error no controlado en la misión:', error);
     });
   }, 80);
@@ -1148,7 +1151,7 @@ async function retryMission(id) {
   const done = (mission.steps || []).filter((s) => s.status === 'done').length;
   mission.progress = Math.round((done / Math.max(1, mission.steps.length)) * 100);
   await store.activity('mission', `Misión reintentada: ${mission.name}.`, { missionId: id });
-  setTimeout(() => runMission(id, { store, broadcast, notifier, onMissionFinished: (mission) => outbox.scheduleMission(mission) }).catch((error) => console.error(error)), 80);
+  setTimeout(() => runMission(id, { store, broadcast, notifier, onMissionFinished: (mission) => mission.manualReviewOnly ? Promise.resolve({ queued: 0 }) : outbox.scheduleMission(mission) }).catch((error) => console.error(error)), 80);
   return mission;
 }
 
@@ -2153,6 +2156,37 @@ async function handle(req, res) {
 
   if (pathname === '/api/state' && method === 'GET') {
     json(res, 200, statePayload());
+    return;
+  }
+
+  // Primera misión real supervisada: una lámpara lista y máximo 8 contactos.
+  // Nunca cambia la configuración de envíos ni aprueba borradores.
+  if (pathname === '/api/sales/prepare-one' && method === 'POST') {
+    const body = await readJson(req);
+    if (body.confirm !== true) throw new HttpError(400, 'Confirmá expresamente el lanzamiento de esta misión real.');
+    const settings = store.settings();
+    const preflight = supervisedMissionPreflight({
+      products: store.get('products'), missions: store.get('missions'), settings,
+      aiReady: isAIReady(settings), searchInfo: searchProviderInfo(settings),
+    });
+    if (!preflight.canStart) throw new HttpError(409, preflight.reasons.join(' '));
+    const requested = asString(body.productId).trim();
+    if (requested && requested !== preflight.candidate.id) {
+      throw new HttpError(409, 'La lámpara recomendada cambió. Recargá Ventas para comprobarla.');
+    }
+    const mission = await createMission({
+      productId: preflight.candidate.id,
+      name: `${preflight.candidate.name} · prospección supervisada`,
+      markets: preflight.markets,
+      mode: 'real',
+      depth: 'estandar',
+      goal: 'conseguir-mayoristas',
+      maxProspects: 8,
+      manualReviewOnly: true,
+      notes: 'Revisión humana obligatoria de destinatarios y mensajes. No programar envíos automáticos.',
+    });
+    await store.activity('mission', `Propuesta comercial supervisada creada: ${mission.name}. Envío sujeto a aprobación.`, { missionId: mission.id });
+    json(res, 201, { ok: true, mission: missionSummary(mission), message: 'Agentes en marcha. Revisá los compradores y aprobá los borradores antes de enviar.' });
     return;
   }
 
