@@ -3851,6 +3851,32 @@ function agentFullCard(agent) {
   </article>`;
 }
 
+function dedupeAnswer(text) {
+  let s = String(text || '').trim();
+  if (s.startsWith('{')) {
+    try {
+      const obj = JSON.parse(s);
+      for (const key of ['answer', 'respuesta', 'text', 'response', 'mensaje']) {
+        if (typeof obj[key] === 'string') { s = obj[key].trim(); break; }
+      }
+    } catch { /* no era JSON */ }
+  }
+  if (!s) return s;
+  // Algunos proveedores repiten la respuesta completa dos veces seguidas.
+  const mid = Math.floor(s.length / 2);
+  const half = s.slice(0, mid).trim();
+  if (s.slice(mid).trim() === half) return half;
+  // También puede repetirse separado por salto de línea.
+  const parts = s.split(/\n\s*\n/);
+  if (parts.length % 2 === 0) {
+    const h = parts.length / 2;
+    if (parts.slice(0, h).join('\n\n').trim() === parts.slice(h).join('\n\n').trim()) {
+      return parts.slice(0, h).join('\n\n').trim();
+    }
+  }
+  return s;
+}
+
 async function askTeamSubmit() {
   const form = $('#ask-form');
   if (!form) return;
@@ -3862,6 +3888,7 @@ async function askTeamSubmit() {
   if (button) { button.disabled = true; button.innerHTML = `${icon('refresh', 'spin')} Pensando”¦`; }
   try {
     const result = await api('/api/ask', { method: 'POST', body: { question, agentId } });
+    if (result && typeof result.answer === 'string') result.answer = dedupeAnswer(result.answer);
     S.ui.ask = { agentId, question, result, loading: false };
     await loadState({ silent: true, render: false });
     render();

@@ -2287,7 +2287,16 @@ function askContext(store) {
   }));
   const threads = store.get('threads').slice(0, 10).map((t) => ({
     empresa: t.contact?.company, pais: t.contact?.country, etapa: t.stage, score: t.score,
-    siguiente: t.nextStep, ultimo: t.messages?.[t.messages.length - 1]?.body?.slice(0, 300),
+    siguiente: t.nextStep,
+    ultimo: t.messages?.[t.messages.length - 1]?.body?.slice(0, 300),
+    // Correos enviados y borradores: para que el Redactor pueda revisar
+    // el tono de la secuencia sin que el dueño tenga que pegarlos a mano.
+    correos: (t.messages || []).filter((m) => m.direction === 'out').slice(-4).map((m) => ({
+      fecha: String(m.at || '').slice(0, 10), asunto: m.subject || '', texto: String(m.body || '').slice(0, 400),
+    })),
+    borradores: (t.drafts || []).slice(0, 4).map((d) => ({
+      estado: d.status, origen: d.source || '', asunto: d.subject || '', texto: String(d.body || '').slice(0, 400),
+    })),
   }));
   const learnings = store.get('learnings').slice(0, 10).map((l) => ({ insight: l.insight, etiqueta: l.tag, confianza: l.confidence }));
   return {
@@ -2298,6 +2307,33 @@ function askContext(store) {
     aprendizajes: learnings,
     fecha: nowISO().slice(0, 10),
   };
+}
+
+function extractAnswerText(text) {
+  const s = String(text || '').trim();
+  if (!s.startsWith('{')) return s;
+  try {
+    const obj = JSON.parse(s);
+    for (const key of ['answer', 'respuesta', 'text', 'response', 'mensaje']) {
+      if (typeof obj[key] === 'string') return obj[key].trim();
+    }
+  } catch { /* no era JSON */ }
+  return s;
+}
+
+function dedupeText(text) {
+  const s = String(text || '').trim();
+  if (!s) return s;
+  const mid = Math.floor(s.length / 2);
+  if (s.slice(mid).trim() === s.slice(0, mid).trim()) return s.slice(0, mid).trim();
+  const parts = s.split(/\n\s*\n/);
+  if (parts.length % 2 === 0) {
+    const h = parts.length / 2;
+    if (parts.slice(0, h).join('\n\n').trim() === parts.slice(h).join('\n\n').trim()) {
+      return parts.slice(0, h).join('\n\n').trim();
+    }
+  }
+  return s;
 }
 
 function offlineStatusAnswer(store, question = '') {
@@ -2376,7 +2412,7 @@ export async function askTeam({ question, agentId = 'director', store, history =
   }
   await store.trackAgent(agent.id);
   return {
-    answer: result.text.trim(),
+    answer: dedupeText(extractAnswerText(result.text)),
     agent,
     demo: false,
     usage: result.usage,
