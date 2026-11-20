@@ -3118,6 +3118,9 @@ for (let attempt = 0; attempt < 8; attempt += 1) {
     break;
   } catch (error) {
     if (error.code !== 'EADDRINUSE') throw error;
+    if (process.env.LUCIAN_REQUIRE_AUTH === '1') {
+      throw new Error(`Puerto ${port + attempt} ocupado: no se iniciará un túnel apuntando a otro servidor.`);
+    }
     if (attempt === 7) throw error;
   }
 }
