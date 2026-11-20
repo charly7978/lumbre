@@ -4,15 +4,29 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ['20', '22']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - name: Install
-        run: cd lumbre && npm ci --ignore-scripts 2>/dev/null || true
-      - name: Check & tests
-        run: cd lumbre && npm run check && npm run test:search && npm run test:core && npm run test:guards && npm run test:flow
+          node-version: ${{ matrix.node-version }}
+      # El proyecto no tiene dependencias npm ni package-lock.json.
+      # No ocultar errores con "|| true".
+      - name: Check and run full test suite
+        working-directory: lumbre
+        env:
+          LUCIAN_NO_OPEN: '1'
+        run: npm test
+      - name: Reject unresolved merge markers in runtime files
+        run: |
+          if git grep -nE '^(<<<<<<< |=======|>>>>>>> )' -- '*.mjs' '*.js' '*.cmd'; then
+            echo "Hay conflictos de Git sin resolver"; exit 1
+          fi
