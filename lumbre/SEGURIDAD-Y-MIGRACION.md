@@ -14,16 +14,16 @@ La versión histórica `/server.mjs` (Lumbre raíz) permanece por compatibilidad
 - Resend incorpora `idempotency-key` persistente por conversación y borrador; el mismo borrador conserva su Message-ID al reintentarse.
 - El piloto automático únicamente encola mensajes para contactos con consentimiento documentado (incluso si utiliza otros proveedores).
 - Los iniciadores `.cmd` de Lucian no dependen de carpetas personales ni cierran todos los procesos de Node.
-- Los tests se ejecutan en Node 20 y 22 mediante GitHub Actions. Ninguna prueba debe contactar destinatarios reales.
+- GitHub Actions quedó configurado para ejecutar la batería en Node 20 y 22. La ejecución remota **no está verificada**: los jobs GitHub aparecen sin runner asignado ni pasos ejecutados. La batería sí pasó localmente en Node 22. Ninguna prueba debe contactar destinatarios reales.
 
 ## Configuración necesaria
 
 En la PC que ejecuta Lucian:
 
 1. Para uso local, iniciar `lumbre/INICIAR-LUCIAN.cmd` o `INICIAR-LUCIAN.cmd` desde la raíz.
-2. Para LAN, usar `lumbre/INICIAR-LUCIAN-COMPARTIR.cmd`; la clave se muestra en la consola del servidor.
-3. Para un túnel temporal, disponer de `cloudflared` oficial en el PATH o en `lumbre/cloudflared.exe` y ejecutar `ABRIR-LUCIAN-DESDE-CUALQUIER-LUGAR.cmd`. Compartir **solo** la URL HTTPS. Ingresar la clave en el cuadro del navegador.
-4. Para un túnel con dominio propio, escribir el dominio en `lumbre/DOMINIO.txt`, configurar el túnel Cloudflare `lucian` y ejecutar `lumbre/INICIAR-LUCIAN-FIJO.cmd`. El script establece `LUCIAN_PUBLIC_HOST`.
+2. Para LAN, usar `lumbre/INICIAR-LUCIAN-COMPARTIR.cmd`; la clave se muestra en la consola del servidor. No reenviar puertos del router a Internet: en LAN el transporte es HTTP y no cifra la clave.
+3. Para un túnel temporal, disponer de `cloudflared` oficial en el PATH o en `lumbre/cloudflared.exe` y ejecutar `ABRIR-LUCIAN-DESDE-CUALQUIER-LUGAR.cmd`. Compartir **solo** la URL HTTPS. Ingresar la clave **mostrada en la consola LUCIAN-SERVIDOR** en el cuadro del navegador. El script habilita `LUCIAN_REQUIRE_AUTH=1` y se detiene si el puerto 4321 está ocupado.
+4. Para un túnel con dominio propio, escribir el dominio en `lumbre/DOMINIO.txt`, configurar el túnel Cloudflare `lucian` y ejecutar `lumbre/INICIAR-LUCIAN-FIJO.cmd`. El script establece `LUCIAN_PUBLIC_HOST` y `LUCIAN_REQUIRE_AUTH=1`.
 5. Para recibir WhatsApp Cloud API, definir las variables de entorno `META_APP_SECRET` y `META_VERIFY_TOKEN` con los valores reales de la aplicación Meta. El App Secret es distinto del access token de WhatsApp. No publicar ninguno en Git.
 6. Opcional: establecer `LUCIAN_ACCESS_TOKEN` con una clave aleatoria de **al menos 20 caracteres** si se quiere mantener el mismo acceso tras reiniciar. Si no se establece, se genera una clave nueva y se muestra en la consola.
 7. Antes de enviar por Resend, editar el contacto y registrar una evidencia verificable del consentimiento previo. El sistema no debe marcar automáticamente contactos prospectados como consentidos.
@@ -45,6 +45,13 @@ npm test
 ```
 
 La prueba de seguridad simula el túnel mediante encabezados HTTP y firma mensajes Meta localmente. No crea túneles ni envía correos reales. La integración HTTPS/Meta/Resend requiere comprobación separada usando las credenciales y el dominio legítimos.
+
+## Estado de las comprobaciones
+
+- Copia local del código de GitHub verificada mediante hashes de archivo: `server.mjs`, `lib/email.mjs`, `lib/outbox.mjs`, `lib/security.mjs`, `public/app.js`, `package.json` y pruebas.
+- `npm run test:security` y `npm test` terminan con resultado correcto en Node.js 22 local. Estas comprobaciones utilizan servicios simulados; no constituyen una prueba de ventas ni entregabilidad real.
+- GitHub Actions devuelve fallos sin runner asignado (`runner_id=0`, `steps=[]`). Es necesario solucionar la disponibilidad/permisos/facturación de runners desde GitHub antes de exigir CI verde para la fusión.
+- Se retiraron de la raíz workflows de plantilla de Webpack y Terraform sin configuración en este repositorio; se conserva exclusivamente el workflow pertinente de tests.
 
 ## Pendientes fuera de esta primera intervención
 
