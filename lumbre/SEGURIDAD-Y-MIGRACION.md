@@ -36,6 +36,8 @@ Para contactos sin permiso se pueden preparar borradores para revisión y utiliz
 
 ## Pruebas
 
+En Windows se puede hacer doble clic en **`PROBAR-LUCIAN.cmd`** desde la raíz o desde `lumbre/`. Deja la ventana abierta y muestra el resultado. No envía correos ni activa campañas.
+
 Desde `lumbre/`:
 
 ```powershell
