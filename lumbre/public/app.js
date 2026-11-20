@@ -1007,6 +1007,7 @@ function renderVentas() {
   const agenda = S.state.salesAgenda || { tasks: [], total: 0, counts: {} };
   const agendaTasks = arr(agenda.tasks);
   const health = S.state.catalogHealth || { total: 0, ready: 0, blocked: 0, toImprove: [] };
+  const launch = S.state.salesLaunch || { canStart: false, reasons: ['Actualizá Lucian para usar esta función.'] };
   return `<div class="page-head">
     <div class="page-head-main">
       <p class="eyebrow">Ventas</p>
@@ -1024,6 +1025,23 @@ function renderVentas() {
     ${statCard('Cobros informados', money(sales.revenue || 0, currency), 'chart', 'manual · sin conciliación bancaria', '', '')}
     ${statCard('Cotizaciones abiertas', sales.openQuotes || 0, 'mail', open.length ? 'borrador o enviada' : 'ninguna', '', sales.openQuotes ? 'warm' : '')}
     ${statCard('Cotizaciones aceptadas', sales.acceptedQuotes || 0, 'check', `${sales.unpaidAcceptedQuotes || 0} con saldo pendiente`, '', '')}
+  </section>
+
+  <section class="section" id="agentes-supervisados">
+    <div class="section-head">
+      <div><h2 class="section-title">Activar agentes: primera prospección real</h2><p class="section-sub">Lucian buscará compradores verificables para una lámpara, analizará oportunidades y preparará mensajes individuales para revisión humana.</p></div>
+    </div>
+    <div class="card card-pad">
+      ${launch.candidate ? `<p class="small"><b>Lámpara seleccionada:</b> ${esc(launch.candidate.name)} (${num(launch.candidate.score)}% de ficha completa).</p>` : `<p class="small muted">Todavía no hay una lámpara elegible para iniciar.</p>`}
+      <p class="small muted mt-2">${num(launch.eligible || 0)} lámparas elegibles · ${num(launch.unready || 0)} requieren completar datos · ${num(launch.recent || 0)} ya prospectadas en los últimos 7 días.</p>
+      ${arr(launch.reasons).length ? `<div class="artifact-callout warn mt-3">${arr(launch.reasons).map(t => `<p>${esc(t)}</p>`).join('')}</div>` : ''}
+      ${arr(launch.warnings).length ? `<p class="small muted mt-2">${arr(launch.warnings).map(t => esc(t)).join(' ')}</p>` : ''}
+      <div class="mt-3" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button type="button" class="btn btn-primary" data-action="launch-supervised-agents" ${launch.canStart ? '' : 'disabled'}>${icon('spark')} Preparar misión real con agentes</button>
+        <a class="btn btn-ghost" href="#/ajustes">Configuración de IA y búsqueda</a>
+      </div>
+      <p class="tiny muted mt-2">Una sola misión simultánea · máximo 8 prospectos · sin envíos automáticos · sin cobros ficticios. Las búsquedas externas pueden consumir créditos.</p>
+    </div>
   </section>
 
   <section class="section" id="agenda-comercial">
@@ -1127,6 +1145,24 @@ function renderVentas() {
     </div>
   </section>` : ''}
 `;
+}
+
+async function launchSupervisedAgents() {
+  const launch = S.state.salesLaunch;
+  if (!launch?.canStart || !launch.candidate) { toast('Revisá las condiciones de inicio de la misión.', 'error'); return; }
+  const confirmed = await confirmAction({
+    title: 'Iniciar una misión real supervisada',
+    message: `Los agentes investigarán compradores para ${launch.candidate.name}. Buscarán hasta ${launch.maximumProspects} prospectos y prepararán propuestas individuales para revisar.`,
+    details: 'Puede consumir consultas web y créditos de IA. No se enviarán mensajes ni se aprobarán destinatarios automáticamente.',
+    confirmLabel: 'Iniciar agentes',
+  });
+  if (!confirmed) return;
+  try {
+    const data = await api('/api/sales/prepare-one', { method: 'POST', body: { confirm: true, productId: launch.candidate.id } });
+    await loadState({ silent: true, render: false });
+    toast('Misión iniciada. Los mensajes quedarán pendientes de aprobación.');
+    navigate(`#/misiones/${encodeURIComponent(data.mission.id)}`);
+  } catch (error) { toast(error.message, 'error'); await loadState({silent:true}); }
 }
 
 function bindVentas() { /* sin filtros adicionales */ }
@@ -5608,6 +5644,7 @@ async function handleAction(action, el) {
       return;
     }
     case 'launch-campaign': await launchCampaign(); return;
+    case 'launch-supervised-agents': await launchSupervisedAgents(); return;
     case 'edit-product': openProductModal(el.dataset.id); return;
     case 'delete-product': await deleteProduct(el.dataset.id); return;
     case 'save-product': await saveProduct(); return;
