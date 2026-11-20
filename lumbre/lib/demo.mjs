@@ -1,4 +1,4 @@
-import { addDays, nowISO, slugify, uid } from './util.mjs';
+﻿import { addDays, nowISO, slugify, uid } from './util.mjs';
 import { detectOptOut } from './email.mjs';
 
 /* ─────────────────────────────────────────────────────────────
@@ -116,9 +116,9 @@ export function demoStep(stepId, ctx) {
         { tendencia: 'Transparencia de materiales y reparabilidad', evidencia: 'Las fichas de producto con materiales, peso y repuestos responden mejor en tiendas de la UE.', fuente: 'https://example.com/materiales' },
       ],
       competidores: [
-        { nombre: 'Estudio Línea (ejemplo)', pais: 'España', precio: `${currency} 190–260`, canal: 'Tienda propia y showrooms', fortaleza: 'Fotos de ambiente muy cuidadas y packaging premium.', hueco: 'No personaliza color y tarda 6 semanas.' },
-        { nombre: 'Norte Objetos (ejemplo)', pais: 'México', precio: `${currency} 140–210`, canal: 'Concept stores', fortaleza: 'Precio accesible y red de 12 tiendas.', hueco: 'Diseño más masivo; poca historia de autor.' },
-        { nombre: 'Studio Halo (ejemplo)', pais: 'Estados Unidos', precio: `${currency} 320–480`, canal: 'Interioristas', fortaleza: 'Certificación UL y logística resuelta.', hueco: 'Plazos largos y mínimos de 20 unidades.' },
+        { nombre: 'Estudio Línea (ejemplo)', pais: 'España', precio: `${currency} 190”“260`, canal: 'Tienda propia y showrooms', fortaleza: 'Fotos de ambiente muy cuidadas y packaging premium.', hueco: 'No personaliza color y tarda 6 semanas.' },
+        { nombre: 'Norte Objetos (ejemplo)', pais: 'México', precio: `${currency} 140”“210`, canal: 'Concept stores', fortaleza: 'Precio accesible y red de 12 tiendas.', hueco: 'Diseño más masivo; poca historia de autor.' },
+        { nombre: 'Studio Halo (ejemplo)', pais: 'Estados Unidos', precio: `${currency} 320”“480`, canal: 'Interioristas', fortaleza: 'Certificación UL y logística resuelta.', hueco: 'Plazos largos y mínimos de 20 unidades.' },
       ],
       demanda: {
         senales: [
@@ -126,7 +126,7 @@ export function demoStep(stepId, ctx) {
           'Los estudios de interiorismo consultados compran piezas de 150 a 350 USD para proyectos residenciales.',
           'La temporada fuerte va de septiembre a diciembre y de marzo a mayo.',
         ],
-        temporadas: 'Sep–dic (preparación de fin de año) y mar–may (reformas de primavera).',
+        temporadas: 'Sep”“dic (preparación de fin de año) y mar”“may (reformas de primavera).',
         terminos: ['lámpara de autor', 'designer pendant light', 'lámpara impresa en 3D', 'statement lighting', 'luz cálida regulable'],
       },
       canales: [
@@ -149,22 +149,22 @@ export function demoStep(stepId, ctx) {
       paises: [
         {
           pais: country1,
-          codigo_hs: '9405.21 (lámparas eléctricas de mesa, salón o dormitorio) — verificar',
-          arancel_estimado: '0% dentro de la UE; 2,7%–4,7% si ingresa desde fuera',
+          codigo_hs: '9405.21 (lámparas eléctricas de mesa, salón o dormitorio) ”” verificar',
+          arancel_estimado: '0% dentro de la UE; 2,7%”“4,7% si ingresa desde fuera',
           impuestos: 'IVA 21% (España) sobre valor + flete + seguro',
           requisitos: ['Marcado CE', 'Declaración UE de conformidad', 'Instrucciones y datos del fabricante en el idioma local'],
           etiquetado: 'Etiqueta con fabricante/importador, modelo, tensión y potencia.',
           certificaciones: ['CE', 'RoHS', 'EN 60598 para luminarias'],
           incoterm: 'DAP (evita que el comprador se sorprenda con gastos)',
-          courier: 'DHL Express o UPS; comparar ambos para 3–8 kg',
+          courier: 'DHL Express o UPS; comparar ambos para 3”“8 kg',
           riesgo: 'medio',
           notas: 'Si ya hay stock en la UE, el envío interno no paga arancel. La certificación es responsabilidad del fabricante/importador.',
           fuente: 'https://example.com/aduanas-ue-luminarias',
         },
         {
           pais: country2,
-          codigo_hs: '9405.21 — verificar con despachante',
-          arancel_estimado: '5%–15% según fracción y origen',
+          codigo_hs: '9405.21 ”” verificar con despachante',
+          arancel_estimado: '5%”“15% según fracción y origen',
           impuestos: 'IVA 16% + posible DTA',
           requisitos: ['Factura comercial', 'Certificado de origen si aplica', 'NOM-003-SCFI para producto eléctrico'],
           etiquetado: 'País de origen, importador, tensión y potencia.',
@@ -177,8 +177,8 @@ export function demoStep(stepId, ctx) {
         },
         {
           pais: country3,
-          codigo_hs: '9405.21.20 — verificar',
-          arancel_estimado: '3,9%–7,5% + posibles aranceles adicionales vigentes',
+          codigo_hs: '9405.21.20 ”” verificar',
+          arancel_estimado: '3,9%”“7,5% + posibles aranceles adicionales vigentes',
           impuestos: 'Sales tax estatal según destino; no hay IVA federal',
           requisitos: ['FCC si incluye componentes electrónicos', 'UL/ETL para venta en tiendas', 'Etiquetado en inglés'],
           etiquetado: 'Fabricante, modelo, tensión, potencia y advertencias.',
@@ -249,7 +249,7 @@ export function demoStep(stepId, ctx) {
       segmentos: [
         { segmento: 'Concept stores de diseño', por_que: 'Venden objetos con relato y aceptan series cortas.', donde_buscar: ['Directorios de diseño local', 'Instagram de tiendas de diseño', 'Ferias de diseño independiente'], volumen: 'medio' },
         { segmento: 'Estudios de interiorismo', por_que: 'Compran varias unidades por proyecto y valoran personalización.', donde_buscar: ['Colegios de arquitectos', 'Proyectos publicados en revistas de diseño', 'LinkedIn'], volumen: 'alto' },
-        { segmento: 'Hoteles boutique', por_que: 'Necesitan repetibilidad y una pieza que resista uso intensivo.', donde_buscar: ['Hoteles independientes de 10–40 habitaciones', 'Estudios de arquitectura hotelera'], volumen: 'bajo' },
+        { segmento: 'Hoteles boutique', por_que: 'Necesitan repetibilidad y una pieza que resista uso intensivo.', donde_buscar: ['Hoteles independientes de 10”“40 habitaciones', 'Estudios de arquitectura hotelera'], volumen: 'bajo' },
       ],
       compradores: buyerList(product, markets, currency, price),
       canales: [
@@ -302,7 +302,7 @@ export function demoStep(stepId, ctx) {
           pais: buyer.pais,
           idioma: 'en',
           asunto: `${name}: a small series for ${buyer.nombre}`,
-          cuerpo: `Hi ${buyer.nombre} team,\n\nI saw your selection of ${index % 2 === 0 ? 'sculptural lighting and small-series objects' : 'design pieces for compact interiors'} and thought ${name} might fit.\n\nIt is a 3D-printed pendant lamp with a warm, dimmable light and a geometric shade that casts a distinct shadow. Each piece is made to order in a small series and can be finished in a custom color.\n\nRetail is ${money(price, currency)}; wholesale starts at 4 units. I can send a one-page spec sheet with dimensions, materials and lead time.\n\nWould it make sense to send it over?\n\n— ${ctx.brand?.maker || ctx.brand?.name || 'Lumbre'}\n${ctx.brand?.website || ''}`,
+          cuerpo: `Hi ${buyer.nombre} team,\n\nI saw your selection of ${index % 2 === 0 ? 'sculptural lighting and small-series objects' : 'design pieces for compact interiors'} and thought ${name} might fit.\n\nIt is a 3D-printed pendant lamp with a warm, dimmable light and a geometric shade that casts a distinct shadow. Each piece is made to order in a small series and can be finished in a custom color.\n\nRetail is ${money(price, currency)}; wholesale starts at 4 units. I can send a one-page spec sheet with dimensions, materials and lead time.\n\nWould it make sense to send it over?\n\n”” ${ctx.brand?.maker || ctx.brand?.name || 'Lucian'}\n${ctx.brand?.website || ''}`,
           personalizacion: `Menciona ${index % 2 === 0 ? 'su selección de piezas escultóricas' : 'su trabajo en interiores compactos'} y ofrece ficha técnica.`,
           cta: 'Pedir permiso para enviar la ficha de una página.',
         };
@@ -312,8 +312,8 @@ export function demoStep(stepId, ctx) {
           comprador: buyer.nombre,
           pais: buyer.pais,
           idioma: 'fr',
-          asunto: `${name} — une petite série pour ${buyer.nombre}`,
-          cuerpo: `Bonjour,\n\nJ'ai vu votre sélection d'objets de créateurs et je pense que ${name} pourrait trouver sa place chez vous.\n\nC'est une suspension imprimée en 3D, avec une lumière chaude et un abat-jour géométrique qui projette une ombre très particulière. Chaque pièce est fabriquée à la commande, en petite série, et peut être teintée dans une couleur sur mesure.\n\nLe prix de détail est de ${money(price, currency)} ; le tarif professionnel commence à partir de 4 pièces. Je peux vous envoyer une fiche technique d'une page avec les dimensions, les matériaux et le délai.\n\nSouhaitez-vous que je vous l'envoie ?\n\n— ${ctx.brand?.maker || ctx.brand?.name || 'Lumbre'}`,
+          asunto: `${name} ”” une petite série pour ${buyer.nombre}`,
+          cuerpo: `Bonjour,\n\nJ'ai vu votre sélection d'objets de créateurs et je pense que ${name} pourrait trouver sa place chez vous.\n\nC'est une suspension imprimée en 3D, avec une lumière chaude et un abat-jour géométrique qui projette une ombre très particulière. Chaque pièce est fabriquée à la commande, en petite série, et peut être teintée dans une couleur sur mesure.\n\nLe prix de détail est de ${money(price, currency)} ; le tarif professionnel commence à partir de 4 pièces. Je peux vous envoyer une fiche technique d'une page avec les dimensions, les matériaux et le délai.\n\nSouhaitez-vous que je vous l'envoie ?\n\n”” ${ctx.brand?.maker || ctx.brand?.name || 'Lucian'}`,
           personalizacion: 'Reconoce la curaduría de la galería y ofrece ficha técnica en francés.',
           cta: 'Ofrecer la ficha técnica sin adjuntar archivos en el primer mensaje.',
         };
@@ -323,7 +323,7 @@ export function demoStep(stepId, ctx) {
         pais: buyer.pais,
         idioma: 'es',
         asunto: `${name}: una serie corta para ${buyer.nombre}`,
-        cuerpo: `Hola,\n\nVi la selección de ${buyer.nombre} y me pareció que ${name} puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es ${money(price, currency)}; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n— ${ctx.brand?.maker || ctx.brand?.name || 'Lumbre'}\n${ctx.brand?.website || ''}`,
+        cuerpo: `Hola,\n\nVi la selección de ${buyer.nombre} y me pareció que ${name} puede encajar con lo que muestran: piezas con presencia, no solo lámparas para iluminar.\n\nEs una luminaria impresa en 3D, con luz cálida regulable y una pantalla geométrica que proyecta una sombra propia. La hacemos a pedido, en series cortas, y se puede elegir el color del cable y de la pantalla.\n\nEl precio de venta sugerido es ${money(price, currency)}; el mayorista arranca en 4 unidades. Te puedo mandar una ficha de una página con medidas, materiales y plazo de producción.\n\n¿Te sirve que te la envíe?\n\n”” ${ctx.brand?.maker || ctx.brand?.name || 'Lucian'}\n${ctx.brand?.website || ''}`,
         personalizacion: `Menciona la selección de la tienda y ofrece una ficha concreta, sin adjuntos en el primer correo.`,
         cta: 'Pedir permiso para enviar la ficha.',
       };
@@ -332,21 +332,21 @@ export function demoStep(stepId, ctx) {
     return {
       estrategia: 'Entrar por tiendas y estudios pequeños con una pieza explicable en 30 segundos. Primero España y México; EE. UU. solo con contactos que ya compran a makers. Un solo pedido por mensaje: permiso para enviar la ficha.',
       secuencia: [
-        { paso: 1, dia: 0, objetivo: 'Abrir la conversación con una observación específica, no con un pitch.', asunto: `${name}: una serie corta`, cuerpo: `Hola,\n\nVi que en ${'{tienda}'} trabajan con piezas de autor. ${name} es una lámpara impresa en 3D, de serie corta, con luz cálida y una sombra que se nota en la pared.\n\n¿Te interesa que te mande la ficha con medidas y precio mayorista?\n\n— ${ctx.brand?.maker || 'Lumbre'}` },
-        { paso: 2, dia: 4, objetivo: 'Aportar valor sin repetir el primer mensaje.', asunto: 'Una foto de la sombra (y medidas)', cuerpo: `Hola de nuevo,\n\nTe dejo una referencia concreta: la pantalla mide 32 cm de diámetro y proyecta una sombra de 60 cm sobre la pared. Es lo que más llama la atención en las fotos.\n\nSi querés, te envío la ficha completa y una foto del detalle de la terminación.\n\n— ${ctx.brand?.maker || 'Lumbre'}` },
-        { paso: 3, dia: 10, objetivo: 'Cerrar con dignidad y dejar la puerta abierta.', asunto: 'Cierro el tema por ahora', cuerpo: `Hola,\n\nNo quiero sumarte otro correo a la bandeja. Si en este momento no es el momento, lo dejo acá.\n\nSi más adelante armás una vidriera o un proyecto donde entre una lámpara de serie corta, escribime y te mando la ficha actualizada.\n\nGracias por tu tiempo.\n\n— ${ctx.brand?.maker || 'Lumbre'}` },
+        { paso: 1, dia: 0, objetivo: 'Abrir la conversación con una observación específica, no con un pitch.', asunto: `${name}: una serie corta`, cuerpo: `Hola,\n\nVi que en ${'{tienda}'} trabajan con piezas de autor. ${name} es una lámpara impresa en 3D, de serie corta, con luz cálida y una sombra que se nota en la pared.\n\n¿Te interesa que te mande la ficha con medidas y precio mayorista?\n\n”” ${ctx.brand?.maker || 'Lucian'}` },
+        { paso: 2, dia: 4, objetivo: 'Aportar valor sin repetir el primer mensaje.', asunto: 'Una foto de la sombra (y medidas)', cuerpo: `Hola de nuevo,\n\nTe dejo una referencia concreta: la pantalla mide 32 cm de diámetro y proyecta una sombra de 60 cm sobre la pared. Es lo que más llama la atención en las fotos.\n\nSi querés, te envío la ficha completa y una foto del detalle de la terminación.\n\n”” ${ctx.brand?.maker || 'Lucian'}` },
+        { paso: 3, dia: 10, objetivo: 'Cerrar con dignidad y dejar la puerta abierta.', asunto: 'Cierro el tema por ahora', cuerpo: `Hola,\n\nNo quiero sumarte otro correo a la bandeja. Si en este momento no es el momento, lo dejo acá.\n\nSi más adelante armás una vidriera o un proyecto donde entre una lámpara de serie corta, escribime y te mando la ficha actualizada.\n\nGracias por tu tiempo.\n\n”” ${ctx.brand?.maker || 'Lucian'}` },
       ],
       mensajes: messages,
       whatsapp: top.slice(0, 3).map((buyer) => ({
         comprador: buyer.nombre,
-        mensaje: `Hola, soy ${ctx.brand?.maker || 'el maker'} de ${ctx.brand?.name || 'Lumbre'}. Vi la selección de ${buyer.nombre} y creo que ${name} puede encajar. ¿Te puedo mandar una ficha con medidas y precio mayorista?`,
+        mensaje: `Hola, soy ${ctx.brand?.maker || 'el maker'} de ${ctx.brand?.name || 'Lucian'}. Vi la selección de ${buyer.nombre} y creo que ${name} puede encajar. ¿Te puedo mandar una ficha con medidas y precio mayorista?`,
       })),
       objeciones: [
         { objecion: 'El precio es alto para una marca que no conocemos.', respuesta: `Entiendo. El precio incluye producción a pedido, packaging reforzado y una pieza que no se repite en otras tiendas. Si querés probar sin riesgo, empecemos con una unidad y vemos cómo reacciona tu cliente.` },
         { objecion: '¿Es eléctricamente segura para nuestro país?', respuesta: 'La lámpara se entrega con cableado y ficha técnica; antes del primer envío confirmo la certificación que corresponde al destino. No prometo una certificación que no tenga.' },
         { objecion: 'No trabajamos con marcas nuevas.', respuesta: 'Tiene sentido. Si te sirve, te dejo la ficha para que la veas cuando tengas una vidriera o un cliente que busque algo distinto. Sin seguimiento.' },
       ],
-      firma: `${ctx.brand?.maker || ctx.brand?.name || 'Lumbre'}\n${ctx.brand?.tagline || 'Lámparas de diseño impresas en 3D'}\n${ctx.brand?.website || ''}`,
+      firma: `${ctx.brand?.maker || ctx.brand?.name || 'Lucian'}\n${ctx.brand?.tagline || 'Lámparas de diseño impresas en 3D'}\n${ctx.brand?.website || ''}`,
       reglas: [
         'Máximo 5 correos nuevos por día durante la primera semana.',
         'No adjuntar archivos en el primer mensaje: pedir permiso primero.',
@@ -423,9 +423,9 @@ export function demoStep(stepId, ctx) {
         'No prometer entrega puerta a puerta sin verificar el courier y el despacho.',
       ],
       correcciones: [
-        { campo: 'mensaje', original: 'luz cálida regulable', sugerido: 'luz cálida regulable (versión estándar 220–240 V; consultar versión 110 V y certificación local antes de comprar)' },
-        { campo: 'mensaje', original: 'warm, dimmable light', sugerido: 'warm, dimmable light (standard 220–240 V; check 110 V and local certification before ordering)' },
-        { campo: 'mensaje', original: 'lumière chaude', sugerido: 'lumière chaude (version standard 220–240 V ; vérifier la version 110 V et la certification locale avant commande)' },
+        { campo: 'mensaje', original: 'luz cálida regulable', sugerido: 'luz cálida regulable (versión estándar 220”“240 V; consultar versión 110 V y certificación local antes de comprar)' },
+        { campo: 'mensaje', original: 'warm, dimmable light', sugerido: 'warm, dimmable light (standard 220”“240 V; check 110 V and local certification before ordering)' },
+        { campo: 'mensaje', original: 'lumière chaude', sugerido: 'lumière chaude (version standard 220”“240 V ; vérifier la version 110 V et la certification locale avant commande)' },
       ],
       checklist: [
         { item: 'Firma con identidad y ciudad', ok: false },
@@ -483,7 +483,7 @@ export function demoStep(stepId, ctx) {
         { que: 'Agregar identidad y opt-out en todos los correos', por_que: 'Cumplimiento detectó un riesgo alto.' },
       ],
       mensajes: [
-        { comprador: 'Luz de Autor', asunto: `${name}: una serie corta para Luz de Autor`, cuerpo: `Hola,\n\nVi la selección de Luz de Autor y me pareció que ${name} puede encajar: una lámpara impresa en 3D, de serie corta, con luz cálida y una pantalla que proyecta una sombra propia.\n\nSoy ${ctx.brand?.maker || 'el maker'} de ${ctx.brand?.name || 'Lumbre'}, en ${ctx.brand?.city || 'Buenos Aires'}. Te puedo mandar una ficha de una página con medidas, materiales y precio mayorista (desde 4 unidades, sin envío incluido).\n\n¿Te sirve que te la envíe?\n\n— ${ctx.brand?.maker || 'Lumbre'}\n${ctx.brand?.website || ''}\nSi preferís no recibir más mensajes, respondé BAJA.` },
+        { comprador: 'Luz de Autor', asunto: `${name}: una serie corta para Luz de Autor`, cuerpo: `Hola,\n\nVi la selección de Luz de Autor y me pareció que ${name} puede encajar: una lámpara impresa en 3D, de serie corta, con luz cálida y una pantalla que proyecta una sombra propia.\n\nSoy ${ctx.brand?.maker || 'el maker'} de ${ctx.brand?.name || 'Lucian'}, en ${ctx.brand?.city || 'Buenos Aires'}. Te puedo mandar una ficha de una página con medidas, materiales y precio mayorista (desde 4 unidades, sin envío incluido).\n\n¿Te sirve que te la envíe?\n\n”” ${ctx.brand?.maker || 'Lucian'}\n${ctx.brand?.website || ''}\nSi preferís no recibir más mensajes, respondé BAJA.` },
       ],
       ajustes_plan: [
         'Semana 1: solo España, 5 contactos por día, 90 minutos diarios.',
@@ -517,8 +517,8 @@ export function demoStep(stepId, ctx) {
         { prioridad: 3, accion: 'Documentar la certificación eléctrica', por_que: 'Sin eso, México y EE. UU. quedan bloqueados.', metrica: 'Presupuesto y plazo de laboratorio' },
       ],
       mensajes_listos: [
-        { comprador: 'Luz de Autor', asunto: `${name}: una serie corta para Luz de Autor`, cuerpo: `Hola,\n\nVi la selección de Luz de Autor y me pareció que ${name} puede encajar: una lámpara impresa en 3D, de serie corta, con luz cálida y una pantalla que proyecta una sombra propia.\n\nSoy ${ctx.brand?.maker || 'el maker'} de ${ctx.brand?.name || 'Lumbre'}, en ${ctx.brand?.city || 'Buenos Aires'}. Te puedo mandar una ficha de una página con medidas, materiales y precio mayorista (desde 4 unidades, sin envío incluido).\n\n¿Te sirve que te la envíe?\n\n— ${ctx.brand?.maker || 'Lumbre'}\n${ctx.brand?.website || ''}\nSi preferís no recibir más mensajes, respondé BAJA.` },
-        { comprador: 'Forma Living', asunto: `${name}: una pieza para la vidriera`, cuerpo: `Hola,\n\nVi que en Forma Living mezclan mobiliario y luz de diseñadores emergentes. ${name} es una lámpara de serie corta que funciona bien en vidriera porque su sombra se ve desde la calle.\n\nTe puedo acercar una unidad para que la veas sin compromiso y, si te convence, hablamos de una serie de 4.\n\n¿Te parece si paso la semana que viene?\n\n— ${ctx.brand?.maker || 'Lumbre'}\nSi preferís no recibir más mensajes, respondé BAJA.` },
+        { comprador: 'Luz de Autor', asunto: `${name}: una serie corta para Luz de Autor`, cuerpo: `Hola,\n\nVi la selección de Luz de Autor y me pareció que ${name} puede encajar: una lámpara impresa en 3D, de serie corta, con luz cálida y una pantalla que proyecta una sombra propia.\n\nSoy ${ctx.brand?.maker || 'el maker'} de ${ctx.brand?.name || 'Lucian'}, en ${ctx.brand?.city || 'Buenos Aires'}. Te puedo mandar una ficha de una página con medidas, materiales y precio mayorista (desde 4 unidades, sin envío incluido).\n\n¿Te sirve que te la envíe?\n\n”” ${ctx.brand?.maker || 'Lucian'}\n${ctx.brand?.website || ''}\nSi preferís no recibir más mensajes, respondé BAJA.` },
+        { comprador: 'Forma Living', asunto: `${name}: una pieza para la vidriera`, cuerpo: `Hola,\n\nVi que en Forma Living mezclan mobiliario y luz de diseñadores emergentes. ${name} es una lámpara de serie corta que funciona bien en vidriera porque su sombra se ve desde la calle.\n\nTe puedo acercar una unidad para que la veas sin compromiso y, si te convence, hablamos de una serie de 4.\n\n¿Te parece si paso la semana que viene?\n\n”” ${ctx.brand?.maker || 'Lucian'}\nSi preferís no recibir más mensajes, respondé BAJA.` },
       ],
       presupuesto: {
         inversion: 80,
@@ -613,7 +613,7 @@ function demoSvg(kind = 'aurora') {
   <g filter="url(#grain)">
     ${lamp}
   </g>
-  <text x="72" y="1110" fill="${p.metal}" opacity=".55" font-family="Georgia, serif" font-size="26" letter-spacing="8">LUMBRE · EJEMPLO</text>
+  <text x="72" y="1110" fill="${p.metal}" opacity=".55" font-family="Georgia, serif" font-size="26" letter-spacing="8">LUCIAN · EJEMPLO</text>
 </svg>`;
 }
 
@@ -802,7 +802,7 @@ export async function seedDemo(store) {
         channel: 'email',
         language: msg.idioma,
         subject: msg.asunto,
-        body: msg.cuerpo.replace(/— .*$/s, `— ${store.settings().brand.maker || 'Lumbre'}\n${store.settings().brand.website || ''}\nSi preferís no recibir más mensajes, respondé BAJA.`),
+        body: msg.cuerpo.replace(/”” .*$/s, `”” ${store.settings().brand.maker || 'Lucian'}\n${store.settings().brand.website || ''}\nSi preferís no recibir más mensajes, respondé BAJA.`),
         status: 'listo',
         guardVersion: 2,
         createdAt,
@@ -863,8 +863,8 @@ export async function seedDemo(store) {
         at: new Date(Date.now() - 2 * 86400000).toISOString(), status: 'recibido',
       });
       thread.drafts.push({
-        id: uid('drf'), channel: 'email', language: 'es', subject: 'Re: Aurora 01 — ficha y plazos',
-        body: `Hola Marta,\n\nGracias por responder. Te paso los datos concretos: la pantalla mide 32 cm de diámetro, el cable es de 180 cm y el plazo para 4 unidades es de 3 semanas desde la confirmación.\n\nEl precio mayorista es ${money(156, 'USD')} por unidad, sin envío, con un mínimo de 4. La pantalla se puede personalizar en hueso, terracota o verde oliva sin costo adicional; un color fuera de esa paleta tiene un extra del 12%.\n\nTe adjunto la ficha completa. Si te sirve, puedo reservar la producción de la primera serie para la semana que viene.\n\n— ${store.settings().brand.maker || 'Lumbre'}\nSi preferís no recibir más mensajes, respondé BAJA.`,
+        id: uid('drf'), channel: 'email', language: 'es', subject: 'Re: Aurora 01 ”” ficha y plazos',
+        body: `Hola Marta,\n\nGracias por responder. Te paso los datos concretos: la pantalla mide 32 cm de diámetro, el cable es de 180 cm y el plazo para 4 unidades es de 3 semanas desde la confirmación.\n\nEl precio mayorista es ${money(156, 'USD')} por unidad, sin envío, con un mínimo de 4. La pantalla se puede personalizar en hueso, terracota o verde oliva sin costo adicional; un color fuera de esa paleta tiene un extra del 12%.\n\nTe adjunto la ficha completa. Si te sirve, puedo reservar la producción de la primera serie para la semana que viene.\n\n”” ${store.settings().brand.maker || 'Lucian'}\nSi preferís no recibir más mensajes, respondé BAJA.`,
         status: 'listo', guardVersion: 2, createdAt: new Date(Date.now() - 86400000).toISOString(),
       });
       thread.lastActivityAt = new Date(Date.now() - 2 * 86400000).toISOString();
@@ -993,7 +993,7 @@ export function demoReply(thread, brand = {}) {
       asunto: no ? 'Listo, no vuelvo a escribir' : `Re: ${last?.subject || 'tu consulta'}`,
       cuerpo: no
         ? 'Gracias por avisar. No vuelvo a escribirte. Si en algún momento retomás el proyecto, la puerta queda abierta. Éxitos.'
-        : `Hola,\n\nGracias por responder. Te paso el dato concreto: la pieza se produce a pedido en 3 semanas y el precio mayorista arranca en 4 unidades.\n\nTe adjunto la ficha con medidas y materiales. Si te sirve, te reservo un lugar en la próxima serie y te confirmo la fecha exacta.\n\n¿Querés que avancemos con una unidad de muestra?\n\n— ${brand?.maker || brand?.name || 'Lumbre'}`,
+        : `Hola,\n\nGracias por responder. Te paso el dato concreto: la pieza se produce a pedido en 3 semanas y el precio mayorista arranca en 4 unidades.\n\nTe adjunto la ficha con medidas y materiales. Si te sirve, te reservo un lugar en la próxima serie y te confirmo la fecha exacta.\n\n¿Querés que avancemos con una unidad de muestra?\n\n”” ${brand?.maker || brand?.name || 'Lucian'}`,
     },
     nota: 'Análisis simulado del modo demo. Configurá una IA para analizar la respuesta real.',
     demo: true,
@@ -1024,7 +1024,7 @@ export function demoAsk(agentId, question) {
 }
 
 export function demoMissionBundle(product = null, overrides = {}) {
-  const settings = { brand: { name: 'Lumbre', maker: '', city: '', website: '' }, mission: { currency: 'USD' } };
+  const settings = { brand: { name: 'Lucian', maker: '', city: '', website: '' }, mission: { currency: 'USD' } };
   const ctx = {
     product: product || { name: 'Aurora 01', code: 'AUR-01', price: 240, currency: 'USD', cost: 58, description: '' },
     mission: { markets: ['España', 'México', 'Estados Unidos'], ...overrides },

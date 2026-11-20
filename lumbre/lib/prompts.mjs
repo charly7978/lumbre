@@ -1,4 +1,4 @@
-import { truncate } from './util.mjs';
+﻿import { truncate } from './util.mjs';
 
 /* ─────────────────────────────────────────────────────────────
    El equipo. Cada agente tiene una responsabilidad distinta y
@@ -57,7 +57,7 @@ export const AGENTS = [
     initials: 'RC',
     role: 'Mensajes que abren puertas',
     color: '#a65d3f',
-    bio: 'Escribe correos breves, específicos y humanos. Nada de plantillas con “espero que estés bien”. Un solo pedido por mensaje.',
+    bio: 'Escribe correos breves, específicos y humanos. Nada de plantillas con “espero que estés bien”. Un solo pedido por mensaje.',
     focus: ['Secuencias', 'Personalización', 'Objeciones'],
   },
   {
@@ -66,7 +66,7 @@ export const AGENTS = [
     initials: 'CO',
     role: 'Redes y narrativa',
     color: '#9a6f8e',
-    bio: 'Diseña contenido que muestra el objeto y el proceso, no que grita “comprá”. Piensa en series, no en posts sueltos.',
+    bio: 'Diseña contenido que muestra el objeto y el proceso, no que grita “comprá”. Piensa en series, no en posts sueltos.',
     focus: ['Calendario', 'Ganchos', 'Series'],
   },
   {
@@ -126,7 +126,7 @@ REGLAS DEL EQUIPO:
 
 export function systemFor(agentId) {
   const agent = getAgent(agentId);
-  return `Sos ${agent.name} en Lumbre, el equipo comercial de un maker que diseña y vende lámparas de autor impresas en 3D.
+  return `Sos ${agent.name} en Lucian, el equipo comercial de un maker que diseña y vende lámparas de autor impresas en 3D.
 Tu rol: ${agent.role}. ${agent.bio}
 Tu estándar: pensás como alguien con diez años vendiendo diseño a tiendas y estudios, no como un generador de contenido.
 ${COMMON_RULES}`;
@@ -205,13 +205,13 @@ function sourcesBlock(search) {
   }
   const lines = ['\nFUENTES DE BÚSQUEDA (usar solo lo relevante; no copiar literal):'];
   (search.results || []).slice(0, 14).forEach((r, i) => {
-    lines.push(`[${i + 1}] ${r.title || 'Sin título'} — ${r.url}`);
+    lines.push(`[${i + 1}] ${r.title || 'Sin título'} ”” ${r.url}`);
     if (r.snippet) lines.push(`    ${truncate(r.snippet, 320)}`);
   });
   if (search.pages?.length) {
-    lines.push('\nCONTENIDO DE PÁGINAS (extractos):');
+    lines.push('\nCONTENIDO DE PÃGINAS (extractos):');
     search.pages.slice(0, 5).forEach((p, i) => {
-      lines.push(`[P${i + 1}] ${p.title || ''} — ${p.url}`);
+      lines.push(`[P${i + 1}] ${p.title || ''} ”” ${p.url}`);
       lines.push(truncate(p.content, 1600));
     });
   }
@@ -232,7 +232,7 @@ function verifiedBuyersBlock(ctx) {
     const place = [buyer.ciudad, buyer.pais].filter(Boolean).join(', ');
     const email = buyer.email ? `${buyer.email} (${buyer.email_estado || 'publico'})` : 'sin email público verificado';
     const priority = buyer.prioridad || 'media';
-    lines.push(`[${index + 1}] ${buyer.nombre || 'Sin nombre'}${place ? ` — ${place}` : ''} — ${buyer.web || 'sin sitio propio'} — ${email} — prioridad ${priority}`);
+    lines.push(`[${index + 1}] ${buyer.nombre || 'Sin nombre'}${place ? ` ”” ${place}` : ''} ”” ${buyer.web || 'sin sitio propio'} ”” ${email} ”” prioridad ${priority}`);
     if (buyer.por_que) lines.push(`    Encaje: ${truncate(buyer.por_que, 200)}`);
   });
   return `${lines.join('\n')}\n`;
@@ -265,21 +265,21 @@ export const DEPTHS = {
     description: 'Lo esencial para salir a vender esta semana. 8 pasos, sin contenido ni red team.',
     steps: ['brief', 'research', 'prospecting', 'enrichment', 'customs', 'pricing', 'outreach', 'synthesis'],
     calls: 7,
-    minutes: '2–4',
+    minutes: '2”“4',
   },
   estandar: {
     label: 'Estándar',
     description: 'El equipo completo: investigación, compradores, contactos, precios, mensajes, contenido, cumplimiento y crítica.',
     steps: ['brief', 'research', 'prospecting', 'enrichment', 'customs', 'pricing', 'outreach', 'content', 'compliance', 'redteam', 'synthesis', 'learning'],
     calls: 10,
-    minutes: '4–8',
+    minutes: '4”“8',
   },
   profunda: {
     label: 'Profunda',
     description: 'Todo lo anterior más una revisión y corrección obligatoria después del red team.',
     steps: ['brief', 'research', 'prospecting', 'enrichment', 'customs', 'pricing', 'outreach', 'content', 'compliance', 'redteam', 'revision', 'synthesis', 'learning'],
     calls: 11,
-    minutes: '6–12',
+    minutes: '6”“12',
   },
 };
 
@@ -400,7 +400,7 @@ ${contextBlock(ctx, { prior: [['brief', 2000], ['research', 3500], ['customs', 3
 - Calculá al menos tres escenarios: venta directa online, mayorista y galería/interiorista. Usá la moneda de la marca.
 - Mostrá ganancia y margen después de comisiones y envío, no solo el precio de lista.
 - Incluá costo aterrizado por país usando los aranceles estimados; si falta un dato, usá un rango y explicá.
-- Proponé un precio psicológico (ej. 189 en vez de 195) y una polÁtica de descuentos que no destruya el margen.
+- Proponé un precio psicológico (ej. 189 en vez de 195) y una polÃtica de descuentos que no destruya el margen.
 - La recomendación tiene que ser una sola decisión clara.
 Devolvé este JSON:
 ${STEPS.pricing.schemaHint}`,
@@ -707,16 +707,18 @@ export function askPrompt(agentId, question, context, options = {}) {
     : '';
   if (channel === 'telegram') {
     return `Tarea: sos el agente personal del dueño por Telegram. Mantené el hilo; usá el historial para "eso", "el anterior", "más corto".
+Sos un agente de IA completo y autónomo, no un bot de comandos. Podés responder cualquier pregunta, analizar datos, diseñar estrategias, investigar en la web, redactar contenido, preparar borradores, cotizar, actualizar hilos/productos, lanzar misiones y ejecutar cualquier tarea del negocio. Actuás como socio operativo: razonás, proponés y ejecutás; lo irreversible (enviar mails, lanzar misiones, cambiar precios) lo dejás para confirmación del dueño.
+Si recibís una imagen, describila y usala para el pedido (producto, comprador, documento). Si recibís un audio, lo transcribí y respondé en consecuencia.
 ${jsonBlock('CONTEXTO DEL NEGOCIO', context, 8000)}
 ${historyBlock}
 PREGUNTA DEL DUEÑO:
 ${truncate(question, 2500)}
 REGLAS:
-- Si falta un dato, decí exactamente cuál y el paso concreto para conseguirlo.
-- No empieces con "no puedo". Si una acción no existe, decí directamente qué sí podés hacer y ejecutá esa parte.
+- Respondé la pregunta completa, no te limites a una lista de acciones. Si el dueño pide algo que no existe como función, resolvé la parte que sí podés y explicá cómo completar el resto.
+- Nunca empieces con "no puedo". Siempre ofrecé un camino real y ejecutá lo que esté a tu alcance.
 - Si la acción es externa/irreversible, devolvé un bloque JSON de acción; el sistema pide confirmación.
 - No inventes datos; marcá "supuesto". Si usaste buscar, citá las URLs de las fuentes.
-- Acciones que podés proponer: buscar, crear_borrador, actualizar_hilo, guardar_aprendizaje, agendar_seguimiento, enviar_borrador, lanzar_mision, actualizar_producto. Si el usuario pide otra cosa, ofrecé la más cercana de esta lista y ejecutá la parte posible.
+- Herramientas que podés invocar cuando haga falta: buscar, crear_borrador, actualizar_hilo, guardar_aprendizaje, agendar_seguimiento, enviar_borrador, lanzar_mision, actualizar_producto, cotizar, analizar_hilo, generar_contenido, investigar. Pero no sos un menú: razoná primero y usá la herramienta solo si ayuda.
 - Incluí el bloque accion solo si el usuario pide hacer algo; en ese caso poné requiere_accion: true.
 - Español rioplatense, texto plano, <=600 palabras; si es una solución larga, pasos numerados y la acción concreta al final.
 - Tono: cercano y directo, como un socio; sin "estimado", sin relleno, sin repetir la pregunta.

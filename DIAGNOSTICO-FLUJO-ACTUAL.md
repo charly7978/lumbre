@@ -1,4 +1,4 @@
-# Diagnóstico honesto del flujo anterior (Airtable + Make)
+﻿# Diagnóstico honesto del flujo anterior (Airtable + Make)
 
 ## Qué era
 
@@ -21,7 +21,7 @@ hardcodeadas (`12349170`, `12349301`, `12349376`, `12349388`, `12349438`).
 ## Conclusión
 
 Los blueprints son un **borrador útil de prompts y estructura**, pero no son un producto usable tal cual.
-Por eso se construyó **Lumbre** (`lumbre/`): mismo objetivo, sin dependencias externas, con datos locales,
+Por eso se construyó **Lucian** (`lucian/`): mismo objetivo, sin dependencias externas, con datos locales,
 equipo de agentes real, revisión humana obligatoria y modo demo completo.
 
-El sistema anterior se **conserva intacto** por si querés seguir usándolo, pero Lumbre no lo requiere.
+El sistema anterior se **conserva intacto** por si querés seguir usándolo, pero Lucian no lo requiere.

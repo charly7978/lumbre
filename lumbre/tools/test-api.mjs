@@ -1,4 +1,4 @@
-const base = 'http://127.0.0.1:4399';
+﻿const base = 'http://127.0.0.1:4399';
 
 async function waitUp() {
   for (let i = 0; i < 40; i += 1) {
@@ -67,7 +67,7 @@ console.log('counts after', state.counts);
 await expectStatus('webhook con x-forwarded-for sin token', 403, () => api('/api/webhooks/email', {
   method: 'POST',
   headers: { 'x-forwarded-for': '203.0.113.7' },
-  body: JSON.stringify({ from: 'Marta <marta@luzdeautor.test>', to: 'hola@lumbre.test', subject: 'Consulta', text: 'Hola, me interesa.' }),
+  body: JSON.stringify({ from: 'Marta <marta@luzdeautor.test>', to: 'hola@lucian.test', subject: 'Consulta', text: 'Hola, me interesa.' }),
 }));
 
 /* 3. Semántica de supresiones. */
@@ -170,7 +170,7 @@ const reconciled = await api(`/api/missions/${mission.id}/reconcile`, { method: 
 console.log('reconcile', reconciled.created, reconciled.updated, reconciled.stats?.draftsReady, reconciled.stats?.draftsToReview);
 
 /* 9. Ajustes enmascarados, .eml, respaldo, consulta e inbound. */
-await api('/api/settings', { method: 'PUT', body: JSON.stringify({ email: { from: 'Lumbre <hola@lumbre.test>' }, ai: { apiKey: 'sk-test-123456789' } }) });
+await api('/api/settings', { method: 'PUT', body: JSON.stringify({ email: { from: 'Lucian <hola@lucian.test>' }, ai: { apiKey: 'sk-test-123456789' } }) });
 state = await api('/api/state');
 console.log('masked key', state.settings.ai.apiKey, 'from', state.settings.email.from);
 await api('/api/settings', { method: 'PUT', body: JSON.stringify({ ai: { apiKey: '' } }) });
@@ -191,7 +191,7 @@ console.log('ask demo', ask.demo, ask.answer.slice(0, 80));
 const backup = await fetch(`${base}/api/backup`);
 const buf = Buffer.from(await backup.arrayBuffer());
 console.log('backup', backup.status, buf.length, buf.slice(0, 2).toString());
-const inbound = await api('/api/webhooks/email', { method: 'POST', body: JSON.stringify({ from: 'Marta <marta@luzdeautor.test>', to: 'hola@lumbre.test', subject: 'Consulta', text: 'Hola, me interesa la lámpara. ¿Cuánto sale el envío a Madrid?' }) });
+const inbound = await api('/api/webhooks/email', { method: 'POST', body: JSON.stringify({ from: 'Marta <marta@luzdeautor.test>', to: 'hola@lucian.test', subject: 'Consulta', text: 'Hola, me interesa la lámpara. ¿Cuánto sale el envío a Madrid?' }) });
 console.log('inbound', inbound);
 const afterInbound = await api('/api/state');
 const newThread = afterInbound.threads.find((t) => t.contact?.email === 'marta@luzdeautor.test');
@@ -200,10 +200,10 @@ console.log('intel countries', (await api('/api/intel')).countries.length);
 
 /* 10. Importación de catálogo por CSV. */
 const csv = [
-  'nombre,codigo,precio,costo,moneda,estado,materiales',
-  'Lámpara CSV Uno,CSV-1,120,40,USD,listo,PLA',
-  'Lámpara CSV Dos,CSV-2,"95,50",30,USD,borrador,PLA',
-  'Lámpara CSV Dos,CSV-3,100,30,USD,borrador,PLA',
+  'nombre,codigo,precio,costo,moneda,estado,materiales,capacidad,plazo,pago',
+  'Lámpara CSV Uno,CSV-1,120,40,USD,listo,PLA,12,10,https://pagos.test/csv-1',
+  'Lámpara CSV Dos,CSV-2,"95,50",30,USD,borrador,PLA,4,7,https://pagos.test/csv-2',
+  'Lámpara CSV Dos,CSV-3,100,30,USD,borrador,PLA,4,7,',
 ].join('\n');
 const imported = await fetch(`${base}/api/products/import`, {
   method: 'POST',
@@ -218,9 +218,11 @@ if (!csvTarget) {
   process.exitCode = 1;
 }
 const csvProduct = (await api(`/api/products/${csvTarget.id}`)).product;
-console.log('csv price', csvProduct.price, '| status', csvProduct.status, '| code', csvTarget.code);
+console.log('csv price', csvProduct.price, '| status', csvProduct.status, '| code', csvTarget.code, '| cap', csvProduct.capacityPerWeek, '| lead', csvProduct.leadTimeDays, '| pay', csvProduct.paymentLink);
 if (csvProduct.price !== 95.5) process.exitCode = 1;
 if (csvProduct.status !== 'borrador') process.exitCode = 1;
+if (csvProduct.capacityPerWeek !== 4 || csvProduct.leadTimeDays !== 7) process.exitCode = 1;
+if (csvProduct.paymentLink !== 'https://pagos.test/csv-2') process.exitCode = 1;
 
 /* 11. Campaña de catálogo: una misión por producto, mercados rotados. */
 const campaign = await api('/api/campaigns', {
@@ -242,7 +244,140 @@ const queuedCampaign = campaignState.missions.filter((m) => m.campaignId === cam
 console.log('campaign queued', queuedCampaign.length, queuedCampaign.map((m) => m.status).join(','));
 if (queuedCampaign.length !== 2) process.exitCode = 1;
 
+/* 12. Cotizaciones: crear, enviar, aceptar y reiniciar la postventa. */
+state = await api('/api/state');
+const quoteThread = state.threads.find((t) => t.contact?.email === 'marta@luzdeautor.test');
+if (!quoteThread) {
+  console.log('FAILED: falta el hilo entrante para cotizar');
+  process.exitCode = 1;
+} else {
+  const quoteCreated = await api(`/api/threads/${quoteThread.id}/quotes`, {
+    method: 'POST',
+    body: JSON.stringify({
+      productId: product.id, quantity: 2, unitPrice: 250, shipping: 30, discount: 10, taxRate: 21,
+      notes: 'Entrega en Madrid', approve: false,
+    }),
+  });
+  console.log('quote', quoteCreated.quote.number, quoteCreated.quote.status, quoteCreated.quote.total, quoteCreated.draft.status);
+  if (quoteCreated.quote.status !== 'borrador') process.exitCode = 1;
+  if (quoteCreated.quote.total !== 629.2) process.exitCode = 1;
+  if (quoteCreated.draft.status !== 'revisar' || !quoteCreated.draft.quoteId) process.exitCode = 1;
+  if (!quoteCreated.draft.subject.includes(quoteCreated.quote.number)) process.exitCode = 1;
+  if (!quoteCreated.draft.body.includes(product.name) || !/629[.,]20/.test(quoteCreated.draft.body)) process.exitCode = 1;
+
+  await expectStatus('cotización sin precio', 400, () => api(`/api/threads/${quoteThread.id}/quotes`, {
+    method: 'POST',
+    body: JSON.stringify({ productId: product.id, unitPrice: 0 }),
+  }));
+
+  await api(`/api/threads/${quoteThread.id}/drafts/${quoteCreated.draft.id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status: 'listo' }),
+  });
+  const quoteSend = await api(`/api/threads/${quoteThread.id}/send`, {
+    method: 'POST',
+    body: JSON.stringify({ draftId: quoteCreated.draft.id, channel: 'manual', confirm: true }),
+  });
+  const sentQuote = (await api(`/api/threads/${quoteThread.id}`)).thread.quotes.find((item) => item.id === quoteCreated.quote.id);
+  console.log('quote sent', sentQuote?.status, '| messageId', Boolean(quoteSend.message.messageId));
+  if (sentQuote?.status !== 'enviada') process.exitCode = 1;
+  if (!quoteSend.message.messageId) process.exitCode = 1;
+
+  const accepted = await api(`/api/threads/${quoteThread.id}/quotes/${quoteCreated.quote.id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status: 'aceptada' }),
+  });
+  console.log('quote accepted', accepted.quote.status, '| stage', accepted.thread.stage, '| postSaleAt', Boolean(accepted.thread.postSaleAt));
+  if (accepted.quote.status !== 'aceptada') process.exitCode = 1;
+  if (accepted.thread.stage !== 'ganado' || !accepted.thread.postSaleAt) process.exitCode = 1;
+
+  const unsentQuote = await api(`/api/threads/${quoteThread.id}/quotes`, {
+    method: 'POST',
+    body: JSON.stringify({ productId: product.id, quantity: 1, unitPrice: 200, approve: false }),
+  });
+  const acceptedUnsent = await api(`/api/threads/${quoteThread.id}/quotes/${unsentQuote.quote.id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status: 'aceptada' }),
+  });
+  const unsentDraft = acceptedUnsent.thread.drafts.find((draft) => draft.id === unsentQuote.draft.id);
+  console.log('accepted unsent quote draft', unsentDraft?.status);
+  if (unsentDraft?.status !== 'descartado') process.exitCode = 1;
+
+  await expectStatus('estado de cotización inválido', 400, () => api(`/api/threads/${quoteThread.id}/quotes/${quoteCreated.quote.id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status: 'inventado' }),
+  }));
+
+  /* 12b. Enrutado de respuestas: In-Reply-To gana sobre el asunto. */
+  const routed = await api('/api/webhooks/email', {
+    method: 'POST',
+    body: JSON.stringify({
+      data: {
+        from: 'Marta <marta@luzdeautor.test>',
+        to: 'hola@lucian.test',
+        subject: 'Un asunto completamente distinto',
+        text: 'Perfecto, avancemos con el pedido.',
+        headers: {
+          'Message-ID': '<routing-test@luzdeautor.test>',
+          'In-Reply-To': quoteSend.message.messageId,
+          References: quoteSend.message.messageId,
+        },
+      },
+    }),
+  });
+  console.log('reply routed by Message-ID:', routed.threadId === quoteThread.id);
+  if (routed.threadId !== quoteThread.id) process.exitCode = 1;
+  const routedDetail = (await api(`/api/threads/${quoteThread.id}`)).thread;
+  const routedMessage = routedDetail.messages.find((m) => m.messageId === '<routing-test@luzdeautor.test>');
+  console.log('routed message stored', Boolean(routedMessage), '| inReplyTo', routedMessage?.inReplyTo);
+  if (!routedMessage || routedMessage.inReplyTo !== quoteSend.message.messageId) process.exitCode = 1;
+}
+
+/* 13. Rebote definitivo: suprime, pierde el hilo y bloquea sus borradores. */
+{
+  const bounce = await api('/api/webhooks/email', {
+    method: 'POST',
+    body: JSON.stringify({
+      type: 'email.bounced',
+      data: { to: ['marta@luzdeautor.test'], bounce: { type: 'Permanent', subType: 'General', message: 'mailbox not found' } },
+    }),
+  });
+  console.log('bounce event', bounce.event, '| touched', bounce.touched, '| suppressed', bounce.suppressed);
+  if (bounce.event !== 'bounce' || bounce.suppressed !== 1) process.exitCode = 1;
+  state = await api('/api/state');
+  const bouncedThread = state.threads.find((t) => t.contact?.email === 'marta@luzdeautor.test');
+  const bouncedSuppression = state.suppressions.find((item) => item.email === 'marta@luzdeautor.test');
+  console.log('bounced thread', bouncedThread?.stage, bouncedThread?.contact?.emailStatus, '| suppression', Boolean(bouncedSuppression));
+  if (bouncedThread?.stage !== 'perdido' || bouncedThread?.contact?.emailStatus !== 'rebotado' || !bouncedSuppression) process.exitCode = 1;
+}
+
+/* 14. Ficha incompleta: una misión real se frena antes de gastar búsquedas. */
+{
+  await api('/api/settings', {
+    method: 'PUT',
+    body: JSON.stringify({ ai: { provider: 'custom', baseUrl: 'http://127.0.0.1:9/v1', model: 'local-test', apiKey: '' } }),
+  });
+  const draftProduct = await api('/api/products', {
+    method: 'POST',
+    body: JSON.stringify({ name: 'Producto sin precio', price: 0, status: 'borrador', description: 'Ficha incompleta a propósito.' }),
+  });
+  let readinessError = null;
+  try {
+    await api('/api/missions', {
+      method: 'POST',
+      body: JSON.stringify({ productId: draftProduct.product.id, mode: 'real', markets: ['España'], depth: 'rapida' }),
+    });
+  } catch (error) { readinessError = error; }
+  console.log('misión real con ficha incompleta:', readinessError?.status, readinessError?.message);
+  if (readinessError?.status !== 400 || !/no está listo/.test(readinessError.message)) process.exitCode = 1;
+  await api('/api/settings', {
+    method: 'PUT',
+    body: JSON.stringify({ ai: { provider: 'openai', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4.1-mini' } }),
+  });
+}
+
 await api('/api/demo', { method: 'DELETE' });
 state = await api('/api/state');
 console.log('after clear demo', state.counts, 'products', state.products.length, 'threads', state.threads.length);
+if (!state.funnel || typeof state.funnel.sold !== 'number') process.exitCode = 1;
 console.log('OK');

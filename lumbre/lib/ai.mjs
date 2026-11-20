@@ -1,8 +1,8 @@
-import { extractJson, fetchWithTimeout, humanError, sleep, truncate } from './util.mjs';
+﻿import { extractJson, fetchWithTimeout, humanError, sleep, truncate } from './util.mjs';
 
 /* ─────────────────────────────────────────────────────────────
    Proveedores. La clave y el modelo siempre se pueden pisar a mano.
-   `baseUrl` debe ser la raíz compatible con OpenAI (…/v1).
+   `baseUrl` debe ser la raíz compatible con OpenAI (”¦/v1).
    ───────────────────────────────────────────────────────────── */
 
 export const PROVIDERS = {
@@ -119,9 +119,9 @@ function shrinkBudget(budget) {
 
 export function resolveAIConfig(settings) {
   const ai = settings?.ai || {};
-  const provider = (process.env.LUMBRE_AI_PROVIDER || ai.provider || 'openai').toLowerCase();
+  const provider = (process.env.LUCIAN_AI_PROVIDER || ai.provider || 'openai').toLowerCase();
   const preset = PROVIDERS[provider] || PROVIDERS.custom;
-  let baseUrl = process.env.LUMBRE_AI_BASE_URL || ai.baseUrl || preset.baseUrl || '';
+  let baseUrl = process.env.LUCIAN_AI_BASE_URL || ai.baseUrl || preset.baseUrl || '';
   baseUrl = String(baseUrl).trim().replace(/\/+$/, '');
   if (baseUrl.endsWith('/chat/completions')) baseUrl = baseUrl.slice(0, -'/chat/completions'.length);
   if (provider === 'openai' && /^https:\/\/api\.openai\.com$/i.test(baseUrl)) baseUrl = `${baseUrl}/v1`;
@@ -133,9 +133,9 @@ export function resolveAIConfig(settings) {
   return {
     provider,
     preset,
-    apiKey: String(process.env.LUMBRE_AI_KEY || ai.apiKey || '').trim(),
+    apiKey: String(process.env.LUCIAN_AI_KEY || ai.apiKey || '').trim(),
     baseUrl,
-    model: String(process.env.LUMBRE_AI_MODEL || ai.model || preset.model || '').trim(),
+    model: String(process.env.LUCIAN_AI_MODEL || ai.model || preset.model || '').trim(),
     visionModel: String(ai.visionModel || '').trim(),
     temperature: Number(ai.temperature ?? 0.6),
     maxTokens: Math.min(HARD_MAX_TOKENS, Math.max(512, maxTokens)),
@@ -175,8 +175,8 @@ function baseHeaders(cfg) {
   const headers = { 'content-type': 'application/json' };
   if (cfg.apiKey) headers.authorization = `Bearer ${cfg.apiKey}`;
   if (cfg.provider === 'openrouter') {
-    headers['http-referer'] = 'http://localhost/lumbre';
-    headers['x-title'] = 'Lumbre';
+    headers['http-referer'] = 'http://localhost/lucian';
+    headers['x-title'] = 'Lucian';
   }
   return headers;
 }
@@ -380,6 +380,28 @@ export async function chat(cfg, options = {}) {
   throw new Error(humanError(lastError));
 }
 
+export async function transcribeAudio(cfg, audioBuffer, mime = 'audio/ogg') {
+  if (!cfg?.baseUrl) throw new Error('Falta la dirección del proveedor de IA');
+  const provider = cfg.provider;
+  // Solo OpenAI y compatibles exponen /audio/transcriptions.
+  if (!['openai', 'openrouter', 'groq', 'custom'].includes(provider)) {
+    throw new Error('Tu proveedor no soporta transcripción de audio. Configurá OpenAI, Groq o un servidor compatible.');
+  }
+  const url = `${cfg.baseUrl}/audio/transcriptions`;
+  const form = new FormData();
+  const blob = new Blob([audioBuffer], { type: mime || 'audio/ogg' });
+  form.append('file', blob, 'audio.ogg');
+  form.append('model', provider === 'groq' ? 'whisper-large-v3' : 'whisper-1');
+  form.append('language', 'es');
+  form.append('response_format', 'text');
+  const headers = {};
+  if (cfg.apiKey) headers.authorization = `Bearer ${cfg.apiKey}`;
+  const response = await fetchWithTimeout(url, { method: 'POST', headers, body: form, timeoutMs: 120000 });
+  const text = await response.text();
+  if (!response.ok) throw new Error(`Transcripción falló: ${response.status} ${text.slice(0, 200)}`);
+  return String(text || '').trim();
+}
+
 export async function generateJson(cfg, options = {}) {
   const {
     system = '',
@@ -452,7 +474,7 @@ export async function generateJson(cfg, options = {}) {
       extra = [
         '',
         '',
-        'LA RESPUESTA SE CORTÓ POR EL LÍMITE DE TOKENS.',
+        'LA RESPUESTA SE CORTÓ POR EL LÃMITE DE TOKENS.',
         'No dejes el JSON abierto. Volvé a responder el JSON COMPLETO, más breve:',
         'máximo 2 frases por campo de texto, máximo 4 elementos por lista y sin repetir el contexto.',
       ].join('\n');
@@ -470,7 +492,7 @@ export async function generateJson(cfg, options = {}) {
       extra = [
         '',
         '',
-        'LA RESPUESTA ANTERIOR SE CORTÓ POR EL LÍMITE DE TOKENS.',
+        'LA RESPUESTA ANTERIOR SE CORTÓ POR EL LÃMITE DE TOKENS.',
         'Volvé a responder el JSON COMPLETO, más breve:',
         'máximo 2 frases por campo de texto, máximo 4 elementos por lista y sin repetir el contexto.',
       ].join('\n');

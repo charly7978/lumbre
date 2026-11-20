@@ -1,4 +1,4 @@
-import dns from 'node:dns/promises';
+﻿import dns from 'node:dns/promises';
 import net from 'node:net';
 import crypto from 'node:crypto';
 
@@ -77,7 +77,7 @@ export function slugify(text, fallback = 'item') {
 export function truncate(text, max = 600) {
   const s = String(text ?? '');
   if (s.length <= max) return s;
-  return `${s.slice(0, Math.max(0, max - 1)).trimEnd()}…`;
+  return `${s.slice(0, Math.max(0, max - 1)).trimEnd()}”¦`;
 }
 
 export function uniqueBy(list, keyFn) {
@@ -180,10 +180,10 @@ const ENTITIES = {
   amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ',
   iexcl: '¡', iquest: '¿', ntilde: 'ñ', Ntilde: 'Ñ',
   aacute: 'á', eacute: 'é', iacute: 'í', oacute: 'ó', uacute: 'ú',
-  Aacute: 'Á', Eacute: 'É', Iacute: 'Í', Oacute: 'Ó', Uacute: 'Ú',
+  Aacute: 'Ã', Eacute: 'É', Iacute: 'Ã', Oacute: 'Ó', Uacute: 'Ú',
   uuml: 'ü', Uuml: 'Ü', ccedil: 'ç', Ccedil: 'Ç',
-  ndash: '–', mdash: '—', hellip: '…', laquo: '«', raquo: '»',
-  ldquo: '“', rdquo: '”', lsquo: '‘', rsquo: '’', bull: '•', middot: '·',
+  ndash: '”“', mdash: '””', hellip: '”¦', laquo: '«', raquo: '»',
+  ldquo: '“', rdquo: '”', lsquo: '”˜', rsquo: '”™', bull: '”¢', middot: '·',
   deg: '°', euro: '€', pound: '£', yen: '¥', dollar: '$', copy: '©', reg: '®', trade: '™',
 };
 
@@ -216,7 +216,7 @@ export function htmlToText(html) {
     .replace(/<iframe[\s\S]*?<\/iframe>/gi, ' ')
     .replace(/<!--[\s\S]*?-->/g, ' ')
     .replace(/<(br|\/p|\/div|\/li|\/h[1-6]|\/tr|\/section|\/article|\/header|\/footer)[^>]*>/gi, '\n')
-    .replace(/<li[^>]*>/gi, '• ')
+    .replace(/<li[^>]*>/gi, '”¢ ')
     .replace(/<td[^>]*>/gi, ' | ')
     .replace(/<[^>]+>/g, ' ');
 
@@ -374,7 +374,7 @@ export async function safeFetchText(input, { maxBytes = 1_500_000, timeoutMs = 1
     const response = await fetchWithTimeout(url.toString(), {
       redirect: 'manual',
       headers: {
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36 LumbreResearch/1.0',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36 LucianResearch/1.0',
         'accept': 'text/html,application/xhtml+xml,application/json;q=0.9,text/plain;q=0.8',
         'accept-language': 'es-ES,es;q=0.9,en;q=0.8',
         ...headers,
@@ -424,19 +424,19 @@ export async function fetchJson(url, { method = 'GET', headers = {}, body, timeo
 export function maskSecret(value) {
   const s = String(value || '');
   if (!s) return '';
-  if (s.length <= 6) return '••••••';
-  return `••••••${s.slice(-4)}`;
+  if (s.length <= 6) return '”¢”¢”¢”¢”¢”¢';
+  return `”¢”¢”¢”¢”¢”¢${s.slice(-4)}`;
 }
 
 export function isMaskedSecret(value) {
-  return typeof value === 'string' && value.startsWith('••');
+  return typeof value === 'string' && value.startsWith('”¢”¢');
 }
 
 export function maskEmail(value) {
   const s = String(value || '');
   const [user, domain] = s.split('@');
   if (!domain) return s;
-  return `${user.slice(0, 2)}${'•'.repeat(Math.max(2, user.length - 2))}@${domain}`;
+  return `${user.slice(0, 2)}${'”¢'.repeat(Math.max(2, user.length - 2))}@${domain}`;
 }
 
 export function csvEscape(value) {

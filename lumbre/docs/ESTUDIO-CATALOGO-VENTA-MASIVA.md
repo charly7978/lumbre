@@ -1,6 +1,6 @@
-# ESTUDIO — ¿Va a funcionar Lumbre con todo el catálogo cargado?
+﻿# ESTUDIO ”” ¿Va a funcionar Lucian con todo el catálogo cargado?
 
-Fecha: 2026-11-19. Alcance: el flujo de automatización de ventas de Lumbre y su
+Fecha: 2026-11-19. Alcance: el flujo de automatización de ventas de Lucian y su
 capacidad real para mover un catálogo completo de productos («todos los
 artículos») asistido por agentes, con el dueño fabricando y los agentes haciendo
 el resto: prospección, verificación, redacción, seguimiento y envío.
@@ -14,8 +14,8 @@ está medido, se dice explícitamente.
 
 ## 1. Respuesta corta (veredicto)
 
-**Sí, el motor aguanta un catálogo completo — pero "vender de manera masiva" no
-es lo que va a pasar solo por cargar artículos.** Lumbre ya hace bien la mitad
+**Sí, el motor aguanta un catálogo completo ”” pero "vender de manera masiva" no
+es lo que va a pasar solo por cargar artículos.** Lucian ya hace bien la mitad
 difícil y verificable: encontrar compradores reales, comprobar que existen,
 escribir mensajes 1:1 correctos y no mentir en los informes. Lo que decide si
 habrá ventas masivas está fuera del pipeline: (1) la reputación de tu dominio y
@@ -34,12 +34,12 @@ Para "todos los artículos" hay que distinguir dos afirmaciones:
 | Afirmación | ¿Soportada? | Condición |
 |---|---|---|
 | El catálogo completo puede entrar por CSV y generar una misión en cola por producto | **Sí, ya implementado y probado** | Productos en estado `listo` con precio/materiales |
-| Las misiones pueden correr 20 seguidas sin saturar la IA ni la búsqueda | **Sí, con límites** | ~93k tokens y ~16–23 créditos Tavily por misión; 2 misiones concurrentes |
+| Las misiones pueden correr 20 seguidas sin saturar la IA ni la búsqueda | **Sí, con límites** | ~93k tokens y ~16”“23 créditos Tavily por misión; 2 misiones concurrentes |
 | 100+ correos fríos saldrán en ráfaga el mismo día | **No, y es lo correcto** | Warmup 10→30/día, tope `dailyLimit`, 1 envío cada 5 min en piloto |
 | Los agentes van a cerrar ventas solos | **No** | Hoy solo 2 hilos en `respondio` y 0 cierres; el cierre es humano |
 | La bandeja se vaciará sola | **No si no aprobás los 54 borradores pendientes** | `listo`=34, `revisar`=20: ninguno sale sin decisión tuya (salvo piloto opt-in) |
 
-La honestidad que importa: **Lumbre es un equipo de ventas que redacta,
+La honestidad que importa: **Lucian es un equipo de ventas que redacta,
 prospecta y hace seguimiento; no un cerrador automático.** Con la configuración
 actual (email `manual`, sin dominio propio, warmup activo) el límite de
 velocidad lo ponés vos.
@@ -48,7 +48,7 @@ velocidad lo ponés vos.
 
 ## 2. Qué hace realmente el flujo hoy
 
-Pipeline por misión (8–13 pasos): brief → investigación de mercado →
+Pipeline por misión (8”“13 pasos): brief → investigación de mercado →
 prospección → enriquecimiento → aduanas/logística → precios → outreach (secuencia
 y mensajes 1:1) → síntesis. En misiones completas además: contenido,
 compliance (guarda dura), red team (advertencia fuerte, ya no bloqueo eterno),
@@ -89,7 +89,7 @@ Productos: 1 («SIRI Velador (base alta)», estado `listo`). Misiones reales: **
 | Tokens totales (todas las misiones) | 1.206.067 |
 | Tokens por misión (media / máx) | 92.774 / 125.221 |
 | Llamadas a IA totales (~media/misión) | 129 (~10) |
-| Duración de pasos por misión (media) | ~0,7–2,6 min |
+| Duración de pasos por misión (media) | ~0,7”“2,6 min |
 | Tiempo de pared 1.ª misión / 2.ª / resto | 251 min / 165 min / ~1 min |
 | Prospectos verificados | 108 |
 | Emails públicos encontrados | 65 |
@@ -99,7 +99,7 @@ Productos: 1 («SIRI Velador (base alta)», estado `listo`). Misiones reales: **
 | Mensajes salientes / entrantes | 9 / 6 |
 | Tasa de respuesta observada | 2 hilos `respondio` + 4 `interesado` (de ~9 envíos) |
 | **Ventas cerradas** | **0** |
-| Cuota Tavily (observada en la sesión previa) | ~301 de 1000 créditos usados; ~699 restantes; ~16–23 créditos/misión |
+| Cuota Tavily (observada en la sesión previa) | ~301 de 1000 créditos usados; ~699 restantes; ~16”“23 créditos/misión |
 
 Detalle de tiempos: las dos primeras misiones tardaron 251 y 165 minutos de
 pared con solo ~3 y ~2,6 minutos de pasos: el tiempo se lo llevó la espera del
@@ -109,7 +109,7 @@ Conclusión operativa: **el pipeline no es el cuello de botella; el cupo de IA y
 la decisión humana sí.**
 
 Errores observados: 1 paso con error (`content` en una misión) y un aviso de
-red team — ambos ya gestionados por el flujo (avisos, no caídas).
+red team ”” ambos ya gestionados por el flujo (avisos, no caídas).
 
 ---
 
@@ -118,17 +118,17 @@ red team — ambos ya gestionados por el flujo (avisos, no caídas).
 Supuesto explícito: catálogo de ~20 artículos en estado `listo` (si «todos los
 artículos» significa otra cosa, ver §9). Escenario con la configuración actual
 (`rapida`, `maxProspects: 12`, mercados España/México/EE. UU., rotación de
-mercados en la campaña, `LUMBRE_MAX_MISSIONS=2`):
+mercados en la campaña, `LUCIAN_MAX_MISSIONS=2`):
 
 | Recurso | Estimado | Cálculo |
 |---|---|---|
 | Misiones en cola | 20 | 1 por producto (campaña `POST /api/campaigns`, estrategia `rotate`) |
-| Cómputo total | ~30–60 min de pasos | ~1–3 min/misión × 20 ÷ 2 concurrentes |
-| Pared realista | horas | Con reintentos 429/413 de Groq y pausas de equipo; las primeras misiones midieron 28–252 min por corte de proveedor, no por cómputo |
-| Tokens IA | ≈ 1,8–2,5 M | 20 × ~93k (medido) + reintentos |
-| Créditos Tavily | ≈ 320–460 | 20 × ~16–23 (medido). **Entra en los ~699 observados, pero justo**; si el mes está avanzado, recargá o sumá un segundo proveedor |
+| Cómputo total | ~30”“60 min de pasos | ~1”“3 min/misión × 20 ÷ 2 concurrentes |
+| Pared realista | horas | Con reintentos 429/413 de Groq y pausas de equipo; las primeras misiones midieron 28”“252 min por corte de proveedor, no por cómputo |
+| Tokens IA | ≈ 1,8”“2,5 M | 20 × ~93k (medido) + reintentos |
+| Créditos Tavily | ≈ 320”“460 | 20 × ~16”“23 (medido). **Entra en los ~699 observados, pero justo**; si el mes está avanzado, recargá o sumá un segundo proveedor |
 | Envíos fríos necesarios | ~100 (5/producto × 20) | 34 `listo` ya esperan de una sola misión; al escalar el patrón se reproduce |
-| Tiempo mínimo de envío | **≥ 5–10 días hábiles** | Warmup semana 1 = 10/día; semana 2 = 20/día; semana 3 = 30/día; tope `dailyLimit` = 20/día. El piloto además espacia 1 envío cada 5 min |
+| Tiempo mínimo de envío | **≥ 5”“10 días hábiles** | Warmup semana 1 = 10/día; semana 2 = 20/día; semana 3 = 30/día; tope `dailyLimit` = 20/día. El piloto además espacia 1 envío cada 5 min |
 | Decisión humana | **54 borradores pendientes hoy** | 34 `listo` + 20 `revisar`. Nada sale sin tu decisión (salvo que actives el piloto) |
 | Pool de compradores | Finito por mercado | El dedupe de 90 días evita repintar la bandeja, no crea compradores nuevos: para 20 productos con la misma categoría, los mercados rotan entre España/México/EE. UU.; si se agota un mercado, hay que ampliarlo (no inflar `maxProspects` sin límite) |
 
@@ -173,12 +173,12 @@ Ni devastador ni superficial: estos son los límites reales, no apocalípticos.
    evita repetir.
 8. **Groq 429/413.** Ya mitigado (reintentos con backoff, presupuesto
    creciente, espera de 20 s). Si el TPM de tu organización es bajo, mantené
-   `LUMBRE_MAX_MISSIONS=2`; subir a 3–4 solo con margen de cuota.
+   `LUCIAN_MAX_MISSIONS=2`; subir a 3”“4 solo con margen de cuota.
 9. **Sin tracking de apertura/clic ni atribución.** Hoy no sabés qué emails
    abrieron ni qué misión cerró. Para "todo el catálogo" hace falta aunque sea
    UTM o un campo `origen` por campaña, o no podrás medir qué producto vende.
    Está en el backlog sugerido, no implementado.
-10. **Una instancia de Lumbre.** Si levantás dos servidores, el puerto
+10. **Una instancia de Lucian.** Si levantás dos servidores, el puerto
     autoincrementa y ambos escriben en los mismos datos. La limpieza de
     misiones huérfanas evita el daño grave, pero la operación correcta es
     una sola instancia.
@@ -265,12 +265,12 @@ En orden, sin saltear pasos:
    catálogo el mismo día; mercados España/México/EE. UU. (o los que vendas);
    profundidad `rapida`.
 6. **Mientras corre**: no abras múltiples instancias; dejá que la cola haga lo
-   suyo. Revisá avisos (descartes con motivo, red team, sin compradores) — son
+   suyo. Revisá avisos (descartes con motivo, red team, sin compradores) ”” son
    información, no errores.
 7. **Cierre**: cuando lleguen respuestas (etapa `interesado`/`respondio`),
    **la conversación es tuya**: ningún automático toca ese hilo. Cotizá,
    negociá, cerrá.
-8. **Seguimientos**: con `email.followUps: true`, Lumbre propone día 4 y día 10
+8. **Seguimientos**: con `email.followUps: true`, Lucian propone día 4 y día 10
    sin precio; aprobá o dejalos correr según tu modo.
 9. **Medición mínima**: registrá por campaña qué pasó (respuesta / cotización /
    venta / baja). Si en 3 semanas no hay respuestas, el problema es
@@ -306,7 +306,7 @@ no de evidencia.
 ## 9. Límite de alcance de este estudio
 
 «Todos los artículos» se interpretó como **el catálogo completo de productos**
-(la unidad que Lumbre vende y lo que el flujo automatiza: misiones por
+(la unidad que Lucian vende y lo que el flujo automatiza: misiones por
 producto, campaña de catálogo, importación CSV). Si te referías a «artículos de
 contenido» (posts, guiones, fichas), el alcance y las conclusiones cambian y
 hay que rehacer el modelo; decime y lo ajusto.
@@ -329,6 +329,6 @@ medidos.
 - SearXNG docs, https://docs.searxng.org/ · searx.space, https://searx.space/
 - Stripe, idempotent requests, https://docs.stripe.com/api/idempotent_requests
 - deepseek-chat API (finish_reason), https://api-docs.deepseek.com/api/create-chat-completion
-- Estado anterior y rondas 1–3: `docs/INVESTIGACION-CORRECCIONES.md` (misma base de fuentes)
+- Estado anterior y rondas 1”“3: `docs/INVESTIGACION-CORRECCIONES.md` (misma base de fuentes)
 - Mediciones: `data/products.json`, `data/missions.json`, `data/threads.json`,
-  `data/outbox.json` (datos locales de Lumbre; sin claves ni tokens citados)
+  `data/outbox.json` (datos locales de Lucian; sin claves ni tokens citados)

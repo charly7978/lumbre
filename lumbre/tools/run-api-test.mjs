@@ -1,11 +1,11 @@
-import { spawn } from 'node:child_process';
+﻿import { spawn } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const dataDir = path.join(os.tmpdir(), `lumbre-api-${Date.now()}`);
+const dataDir = path.join(os.tmpdir(), `lucian-api-${Date.now()}`);
 const base = 'http://127.0.0.1:4399';
 
 async function waitForHealth(timeoutMs = 20000) {
@@ -34,7 +34,7 @@ function run(args, options = {}) {
 
 const server = spawn(process.execPath, ['server.mjs'], {
   cwd: root,
-  env: { ...process.env, PORT: '4399', LUMBRE_DATA_DIR: dataDir, LUMBRE_NO_OPEN: '1' },
+  env: { ...process.env, PORT: '4399', LUCIAN_DATA_DIR: dataDir, LUCIAN_NO_OPEN: '1' },
   stdio: 'inherit',
 });
 

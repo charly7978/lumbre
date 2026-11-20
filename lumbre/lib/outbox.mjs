@@ -1,4 +1,4 @@
-import { isDemoEmail, isSuppressed, isValidEmail, normalizeEmail } from './email.mjs';
+﻿import { isDemoEmail, isSuppressed, isValidEmail, normalizeEmail } from './email.mjs';
 import { nowISO, uid } from './util.mjs';
 
 /* ─────────────────────────────────────────────────────────────
@@ -76,7 +76,7 @@ export function buildFollowUp(thread, product, mission) {
 
   const bodies = language === 'en'
     ? {
-      2: `Hi again.\n\nI wanted to make sure you saw the note about ${name}. If it helps, I can send the spec sheet with sizes, materials and finish options — no commitment.\n\nWould that be useful?`,
+      2: `Hi again.\n\nI wanted to make sure you saw the note about ${name}. If it helps, I can send the spec sheet with sizes, materials and finish options ”” no commitment.\n\nWould that be useful?`,
       3: `Hi.\n\nI'll close the loop for now. If ${name} or a small series of pieces becomes interesting later, just reply to this email and I'll send the details.\n\nThanks for your time.`,
     }
     : {
@@ -96,7 +96,7 @@ export function buildFollowUp(thread, product, mission) {
 /* ─────────────────────────────────────────────────────────────
    Postventa: fidelización y recompra.
 
-   Cuando una conversación pasa a "ganado", Lumbre agenda tres
+   Cuando una conversación pasa a "ganado", Lucian agenda tres
    toques deterministas, sin precios ni presión:
    - Paso 1 (día 3): agradecimiento + cuidados de la pieza.
    - Paso 2 (día 30): feedback honesto + pide reseña o remisión.
@@ -332,7 +332,7 @@ export class Outbox {
     // Un solo envío por tick no alcanza para cuidar la reputación: si varias
     // misiones terminan juntas, la cola puede tener decenas de elementos
     // vencidos al mismo tiempo. Esta guarda impone el espaciado global aunque
-    // Lumbre se haya reiniciado o el equipo haya estado suspendido.
+    // Lucian se haya reiniciado o el equipo haya estado suspendido.
     const spacing = spacingMs(settings);
     const meta = this.store.get('meta') || {};
     const lastSent = Date.parse(meta.lastOutboxSendAt || 0) || 0;

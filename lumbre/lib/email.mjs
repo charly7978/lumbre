@@ -1,5 +1,6 @@
-import crypto from 'node:crypto';
+﻿import crypto from 'node:crypto';
 import { fetchJson, localDayKey } from './util.mjs';
+import { sendWithGmailSmtp } from './smtp.mjs';
 
 /* ─────────────────────────────────────────────────────────────
    Correo: composición, .eml, Resend y webhook.
@@ -220,7 +221,7 @@ export function htmlFromText(text, { accent = '#b8632f' } = {}) {
         <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#211b16">${paragraphs}</td></tr>
       </table>
       <div style="max-width:560px;margin:14px auto 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8b7b68;text-align:center">
-        Enviado con Lumbre
+        Enviado con Lucian
       </div>
     </td></tr>
   </table>
@@ -259,7 +260,7 @@ export function composeEmail(thread, draft, settings) {
   const contact = thread?.contact || {};
   const brand = settings?.brand || {};
   const from = String(settings?.email?.from || '').trim() || (brand.email ? `${brand.name} <${brand.email}>` : '');
-  const subject = String(draft?.subject || '').trim() || `Una pieza de ${brand.name || 'Lumbre'} para ${contact.company || 'tu tienda'}`;
+  const subject = String(draft?.subject || '').trim() || `Una pieza de ${brand.name || 'Lucian'} para ${contact.company || 'tu tienda'}`;
   const text = ensureCompliance(draft?.body || '', settings);
   return {
     to: contact.email || '',
@@ -273,15 +274,15 @@ export function composeEmail(thread, draft, settings) {
 }
 
 export function buildEml(message) {
-  const { from, to, subject, text, html, replyTo } = message;
+  const { from, to, subject, text, html, replyTo, messageId, inReplyTo, references } = message;
   const parsedFrom = splitFrom(from);
   if (!parsedFrom.email) throw new Error('Falta el remitente');
   if (!isValidEmail(to)) throw new Error('El destinatario no es un email válido');
 
-  const domain = parsedFrom.email.split('@')[1] || 'lumbre.local';
-  const messageId = `<${crypto.randomUUID()}@${domain}>`;
+  const domain = parsedFrom.email.split('@')[1] || 'lucian.local';
+  const id = sanitizeHeader(messageId) || `<${crypto.randomUUID()}@${domain}>`;
   const date = new Date().toUTCString();
-  const boundary = `lumbre_${crypto.randomUUID().replace(/-/g, '')}`;
+  const boundary = `lucian_${crypto.randomUUID().replace(/-/g, '')}`;
   const bodyText = Buffer.from(String(text || ''), 'utf8').toString('base64');
   const bodyHtml = Buffer.from(String(html || htmlFromText(text)), 'utf8').toString('base64');
 
@@ -290,10 +291,14 @@ export function buildEml(message) {
     `To: ${sanitizeHeader(to)}`,
     `Subject: ${encodeHeader(subject)}`,
     `Date: ${date}`,
-    `Message-ID: ${messageId}`,
+    `Message-ID: ${id}`,
     'MIME-Version: 1.0',
   ];
   if (replyTo && isValidEmail(splitFrom(replyTo).email)) headers.push(`Reply-To: ${sanitizeHeader(replyTo)}`);
+  // Hilos: sin In-Reply-To/References el cliente de correo del comprador abre
+  // una conversación nueva y las respuestas se pierden.
+  if (inReplyTo) headers.push(`In-Reply-To: ${sanitizeHeader(inReplyTo)}`);
+  if (references) headers.push(`References: ${sanitizeHeader(references)}`);
   headers.push(`Content-Type: multipart/alternative; boundary="${boundary}"`);
 
   return `${headers.join('\r\n')}\r\n\r\n--${boundary}\r\nContent-Type: text/plain; charset="UTF-8"\r\nContent-Transfer-Encoding: base64\r\n\r\n${bodyText}\r\n--${boundary}\r\nContent-Type: text/html; charset="UTF-8"\r\nContent-Transfer-Encoding: base64\r\n\r\n${bodyHtml}\r\n--${boundary}--\r\n`;
@@ -310,6 +315,11 @@ export async function sendWithResend(settings, message) {
   if (!key) throw new Error('Falta la clave de Resend en Ajustes → Correo');
   if (!message.from) throw new Error('Falta configurar el remitente en Ajustes → Correo');
 
+  const headers = {};
+  if (message.messageId) headers['Message-ID'] = sanitizeHeader(message.messageId);
+  if (message.inReplyTo) headers['In-Reply-To'] = sanitizeHeader(message.inReplyTo);
+  if (message.references) headers.References = sanitizeHeader(message.references);
+
   const { ok, data, text } = await fetchJson('https://api.resend.com/emails', {
     method: 'POST',
     headers: { authorization: `Bearer ${key}` },
@@ -320,6 +330,7 @@ export async function sendWithResend(settings, message) {
       text: message.text,
       html: message.html,
       ...(message.replyTo ? { reply_to: message.replyTo } : {}),
+      ...(Object.keys(headers).length ? { headers } : {}),
     },
     timeoutMs: 30000,
   });
@@ -327,23 +338,59 @@ export async function sendWithResend(settings, message) {
   return { id: data?.id || '', provider: 'resend' };
 }
 
+export async function sendWithGmail(settings, message) {
+  const email = settings?.email || {};
+  const user = String(email.smtpUser || '').trim();
+  const pass = String(email.smtpPassword || '').trim();
+  if (!user || !pass) throw new Error('Falta el usuario o la contraseña de aplicación de Gmail en Ajustes → Correo.');
+  return await sendWithGmailSmtp({
+    user,
+    appPassword: pass,
+    from: message.from || user,
+    to: message.to,
+    subject: message.subject,
+    text: message.text,
+    html: message.html,
+    replyTo: message.replyTo,
+    messageId: message.messageId,
+    inReplyTo: message.inReplyTo,
+    references: message.references,
+  });
+}
+
 export async function sendWithWebhook(settings, message, extra = {}) {
   const url = settings?.email?.webhookUrl;
   if (!url) throw new Error('Falta la URL del webhook en Ajustes → Correo');
   const { ok, data, text } = await fetchJson(url, {
     method: 'POST',
-    headers: settings?.email?.webhookToken ? { 'x-lumbre-token': settings.email.webhookToken } : {},
+    headers: settings?.email?.webhookToken ? { 'x-lucian-token': settings.email.webhookToken } : {},
     body: {
       to: message.to,
       from: message.from,
       subject: message.subject,
       text: message.text,
       html: message.html,
+      ...(message.replyTo ? { reply_to: message.replyTo } : {}),
+      ...(message.messageId ? { messageId: message.messageId } : {}),
+      ...(message.inReplyTo ? { inReplyTo: message.inReplyTo } : {}),
+      ...(message.references ? { references: message.references } : {}),
       ...extra,
     },
     timeoutMs: 30000,
   });
+  // Un webhook de correo debe responder con JSON confirmando el envío.
+  // Si devuelve una página HTML (como una web cualquiera), NO es un
+  // servicio de correo: marcarlo como "enviado" sería un falso positivo.
+  // Antes pasaba: https://lucian.com devolvía 200 con HTML y los correos
+  // quedaban como enviados sin que nadie los recibiera.
+  const looksLikeHtml = /<(!doctype|html|head|body)\b/i.test(text || '');
+  if (looksLikeHtml) {
+    throw new Error('El webhook devolvió una página web en vez de una confirmación JSON. No es un servicio de correo: revisá la URL en Ajustes → Correo.');
+  }
   if (!ok) throw new Error(`Webhook: ${data?.message || text.slice(0, 300)}`);
+  if (!data || typeof data !== 'object') {
+    throw new Error('El webhook no confirmó el envío con JSON. No se marcó como enviado.');
+  }
   return { id: data?.id || '', provider: 'webhook' };
 }
 
@@ -429,11 +476,36 @@ export function assertCanSend(settings, threads, email, suppressions = [], optio
   if (settings?.email?.provider === 'resend' && !settings?.email?.resendKey) {
     throw new Error('Elegiste Resend pero falta la clave en Ajustes → Correo.');
   }
+  if (settings?.email?.provider === 'gmail') {
+    if (!settings?.email?.smtpUser || !settings?.email?.smtpPassword) {
+      throw new Error('Elegiste Gmail pero faltan el usuario o la contraseña de aplicación en Ajustes → Correo.');
+    }
+  }
   const info = dailyLimitInfo(settings, threads);
   if (info.remaining <= 0) {
     throw new Error(`Llegaste al límite de ${info.limit} envíos por hoy${info.warmup ? ` (semana de calentamiento, día ${info.day})` : ''}.`);
   }
   return info;
+}
+
+/* Los proveedores de correo entrante mandan los identificadores de hilo con
+   nombres distintos y, a veces, dentro de `headers`. Normalizamos ambos
+   formatos: sin esto, dos hilos del mismo comprador se mezclan. */
+function headerValue(source, name) {
+  if (!source || typeof source !== 'object') return '';
+  const headers = source.headers && typeof source.headers === 'object' ? source.headers : source;
+  const wanted = String(name).toLowerCase();
+  for (const [key, value] of Object.entries(headers)) {
+    if (String(key).toLowerCase() !== wanted) continue;
+    if (Array.isArray(value)) return value.filter(Boolean).join(' ').trim();
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return '';
+}
+
+function referenceList(value) {
+  const raw = Array.isArray(value) ? value : String(value || '').match(/<[^>]+>/g) || [];
+  return raw.map((item) => String(item).trim()).filter((item) => /^<[^>]+>$/.test(item));
 }
 
 export function parseInbound(payload) {
@@ -446,5 +518,57 @@ export function parseInbound(payload) {
   const text = data.text || data.plain || data.body || '';
   const html = data.html || '';
   if (!from || (!text && !html)) return null;
-  return { from: String(from), to: String(to), subject: String(subject), text: String(text), html: String(html) };
+  const messageId = data.messageId || data.message_id || headerValue(data, 'message-id');
+  const inReplyTo = data.inReplyTo || data.in_reply_to || headerValue(data, 'in-reply-to');
+  const referencesRaw = data.references || headerValue(data, 'references');
+  return {
+    from: String(from),
+    to: String(to),
+    subject: String(subject),
+    text: String(text),
+    html: String(html),
+    messageId: String(messageId || '').trim(),
+    inReplyTo: String(inReplyTo || '').trim(),
+    references: referenceList(referencesRaw),
+  };
+}
+
+/* Eventos de entrega (Resend y formatos equivalentes). Un rebote duro o una
+   queja de spam no son una respuesta: hay que suprimir la dirección antes de
+   que el siguiente envío queme el dominio. */
+const EMAIL_EVENTS = {
+  'email.bounced': 'bounce',
+  'email.complained': 'complaint',
+  'email.delivered': 'delivered',
+  'email.opened': 'opened',
+  'email.clicked': 'clicked',
+  'email.delivery_delayed': 'delayed',
+};
+
+function eventEmail(value) {
+  const raw = String(value || '').trim();
+  const match = raw.match(/<([^>]+)>/);
+  return normalizeEmail(match ? match[1] : raw);
+}
+
+export function parseEmailEvent(payload) {
+  if (!payload || typeof payload !== 'object') return null;
+  const type = String(payload.type || payload.event || payload.event_type || '').toLowerCase();
+  let kind = EMAIL_EVENTS[type] || '';
+  if (!kind && /bounce/.test(type)) kind = 'bounce';
+  if (!kind && /complain/.test(type)) kind = 'complaint';
+  if (!kind) return null;
+  const data = payload.data && typeof payload.data === 'object' ? payload.data : payload;
+  const recipients = data.to ?? data.recipient ?? data.recipients ?? data.email ?? '';
+  const emails = [...new Set((Array.isArray(recipients) ? recipients : [recipients]).map(eventEmail).filter(isValidEmail))];
+  const bounce = data.bounce && typeof data.bounce === 'object' ? data.bounce : {};
+  const severity = `${bounce.type || ''} ${bounce.subType || ''} ${data.severity || ''}`;
+  return {
+    type,
+    kind,
+    emails,
+    hard: kind === 'complaint' || (kind === 'bounce' && !/transient|soft|delayed/i.test(severity)),
+    messageId: String(data.messageId || data.message_id || headerValue(data, 'message-id') || '').trim(),
+    reason: String(bounce.message || data.reason || data.error || '').slice(0, 500),
+  };
 }

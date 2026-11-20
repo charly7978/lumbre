@@ -1,10 +1,10 @@
-import os from 'node:os';
+﻿import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
 // La caché de búsqueda se persiste en disco junto a los datos; los tests
 // nunca deben tocar el directorio real del dueño.
-process.env.LUMBRE_DATA_DIR = fsSync.mkdtempSync(path.join(os.tmpdir(), 'lumbre-cache-test-'));
+process.env.LUCIAN_DATA_DIR = fsSync.mkdtempSync(path.join(os.tmpdir(), 'lucian-cache-test-'));
 import { Store } from '../lib/store.mjs';
 import { clearSearchCache, searchWebDetailed } from '../lib/search.mjs';
 import { Outbox, buildFollowUp } from '../lib/outbox.mjs';
@@ -14,7 +14,7 @@ let passed = 0;
 const dirs = [];
 function ok(condition, label, detail = '') {
   if (!condition) {
-    console.error(`FALLO: ${label}${detail ? ` — ${detail}` : ''}`);
+    console.error(`FALLO: ${label}${detail ? ` ”” ${detail}` : ''}`);
     process.exitCode = 1;
     throw new Error(label);
   }
@@ -23,7 +23,7 @@ function ok(condition, label, detail = '') {
 }
 
 async function freshStore() {
-  const dir = path.join(os.tmpdir(), `lumbre-scale-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+  const dir = path.join(os.tmpdir(), `lucian-scale-${Date.now()}-${Math.random().toString(16).slice(2)}`);
   dirs.push(dir);
   const store = new Store(dir);
   await store.init();
@@ -64,7 +64,7 @@ async function freshStore() {
 {
   const store = await freshStore();
   await store.saveSettings({
-    email: { provider: 'resend', resendKey: 're_test', from: 'Lumbre <hola@lumbre.test>', dailyLimit: 50, warmup: false, autopilot: true, autopilotSpacingMin: 5 },
+    email: { provider: 'resend', resendKey: 're_test', from: 'Lucian <hola@lucian.test>', dailyLimit: 50, warmup: false, autopilot: true, autopilotSpacingMin: 5 },
   });
   const product = { id: 'prd_scale', name: 'Aurora 01' };
   const mission = { id: 'mis_scale', name: 'Campaña', demo: false, status: 'done' };
@@ -108,7 +108,7 @@ async function freshStore() {
 {
   const store = await freshStore();
   await store.saveSettings({
-    email: { provider: 'webhook', webhookUrl: 'https://hook.test/send', from: 'Lumbre <hola@lumbre.test>', dailyLimit: 50, warmup: false, autopilot: true },
+    email: { provider: 'webhook', webhookUrl: 'https://hook.test/send', from: 'Lucian <hola@lucian.test>', dailyLimit: 50, warmup: false, autopilot: true },
   });
   const draft = { id: 'drf_sup', channel: 'email', status: 'listo', subject: 'Hola', body: 'Hola' };
   const thread = {
@@ -176,7 +176,7 @@ async function freshStore() {
 {
   const store = await freshStore();
   await store.saveSettings({
-    email: { provider: 'resend', resendKey: 're_test', from: 'Lumbre <hola@lumbre.test>', dailyLimit: 50, warmup: false, autopilot: true, autopilotSpacingMin: 5 },
+    email: { provider: 'resend', resendKey: 're_test', from: 'Lucian <hola@lucian.test>', dailyLimit: 50, warmup: false, autopilot: true, autopilotSpacingMin: 5 },
   });
   const mkDraft = (id) => ({ id, channel: 'email', status: 'listo', subject: 'Hola', body: 'Hola' });
   const mkThread = (id, stage) => ({
@@ -212,7 +212,7 @@ async function freshStore() {
 {
   const store = await freshStore();
   await store.saveSettings({
-    email: { provider: 'resend', resendKey: 're_test', from: 'Lumbre <hola@lumbre.test>', dailyLimit: 50, warmup: false, autopilot: true, autopilotSpacingMin: 10 },
+    email: { provider: 'resend', resendKey: 're_test', from: 'Lucian <hola@lucian.test>', dailyLimit: 50, warmup: false, autopilot: true, autopilotSpacingMin: 10 },
   });
   const mkThread = (id) => ({
     id, stage: 'nuevo', missionId: 'mis_spacing', demo: false,
@@ -241,7 +241,7 @@ async function freshStore() {
   ok(after === 0 && delivered === 1, 'y el siguiente tick respeta el nuevo espaciado');
 }
 
-/* 10. Postventa: al marcar ganado, Lumbre prepara los tres toques
+/* 10. Postventa: al marcar ganado, Lucian prepara los tres toques
    (día 3 agradecimiento, día 30 feedback, día 90 reorden). Sin piloto
    quedan Por aprobar; los suprimidos nunca reciben nada. */
 {
@@ -313,7 +313,7 @@ async function freshStore() {
 {
   const store = await freshStore();
   await store.saveSettings({
-    email: { provider: 'resend', resendKey: 're_test', from: 'Lumbre <hola@lumbre.test>', dailyLimit: 50, warmup: false, autopilot: true, autopilotSpacingMin: 5 },
+    email: { provider: 'resend', resendKey: 're_test', from: 'Lucian <hola@lucian.test>', dailyLimit: 50, warmup: false, autopilot: true, autopilotSpacingMin: 5 },
   });
   const product = { id: 'prd_ap', name: 'Siri Velador' };
   const mission = { id: 'mis_ap', demo: false, status: 'done', artifacts: { outreach: { secuencia: [] } } };
@@ -369,13 +369,13 @@ async function freshStore() {
 /* 11. Cumplimiento: la baja y la dirección física viajan en cada correo. */
 {
   const text = ensureCompliance('Hola, te paso la ficha.', {
-    brand: { name: 'Lumbre', maker: 'Carlos', address: 'Calle 123, Rosario', website: 'https://lumbre.test' },
+    brand: { name: 'Lucian', maker: 'Carlos', address: 'Calle 123, Rosario', website: 'https://lucian.test' },
     email: {},
   });
   ok(/respondé BAJA/i.test(text), 'incluye una vía de baja');
   ok(text.includes('Calle 123, Rosario'), 'incluye la dirección física');
-  ok(text.includes('https://lumbre.test'), 'incluye el sitio de la marca');
+  ok(text.includes('https://lucian.test'), 'incluye el sitio de la marca');
 }
 
-for (const dir of [...dirs, process.env.LUMBRE_DATA_DIR]) await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
+for (const dir of [...dirs, process.env.LUCIAN_DATA_DIR]) await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
 console.log(`\n${passed} comprobaciones de escala OK`);

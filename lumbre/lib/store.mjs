@@ -1,4 +1,5 @@
-import { nowISO, uid } from './util.mjs';
+﻿import { nowISO, uid } from './util.mjs';
+import { isAIReady } from './ai.mjs';
 import crypto from 'node:crypto';
 
 /* ─────────────────────────────────────────────────────────────
@@ -8,7 +9,7 @@ import crypto from 'node:crypto';
 export const DEFAULT_SETTINGS = {
   version: 1,
   brand: {
-    name: 'Lumbre',
+    name: 'Lucian',
     maker: '',
     tagline: 'Lámparas de diseño impresas en 3D',
     city: '',
@@ -50,6 +51,8 @@ export const DEFAULT_SETTINGS = {
   email: {
     provider: 'manual',
     resendKey: '',
+    smtpUser: '',
+    smtpPassword: '',
     from: '',
     replyTo: '',
     footer: '',
@@ -84,6 +87,13 @@ export const DEFAULT_SETTINGS = {
     // Un comprador no se vuelve a contactar antes de este plazo. Evita
     // quemar el mercado y permite venderle otro producto más adelante.
     contactCooldownDays: 90,
+  },
+  sales: {
+    // Link de pago global (Stripe, MercadoPago, PayPal”¦). Cada producto puede
+    // pisarlo con su propio link.
+    paymentLink: '',
+    quoteValidityDays: 15,
+    shippingPolicy: '',
   },
 };
 
@@ -155,7 +165,7 @@ function mergeSettings(current, patch, prefix = '') {
   for (const [key, value] of Object.entries(patch)) {
     const path = prefix ? `${prefix}.${key}` : key;
     if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
-    if (isSecretPath(path) && (value === '' || String(value).startsWith('••'))) continue;
+    if (isSecretPath(path) && (value === '' || String(value).startsWith('”¢”¢'))) continue;
     if (value === null || value === undefined) continue;
     if (isObject(value) && isSecretPath(path) === false && (isObject(out[key]) || out[key] === undefined)) {
       out[key] = mergeSettings(out[key] || {}, value, path);
@@ -171,29 +181,59 @@ export function maskSettings(settings) {
   for (const path of SECRET_PATHS) {
     const value = getPath(out, path);
     if (typeof value === 'string' && value) {
-      setPath(out, path, `••••••${value.slice(-4)}`);
+      setPath(out, path, `”¢”¢”¢”¢”¢”¢${value.slice(-4)}`);
     }
   }
   return out;
 }
 
 export function settingsFlags(settings) {
+  // La disponibilidad real depende del proveedor: Ollama, Pollinations y los
+  // servidores locales funcionan sin clave. Antes la interfaz decía "modo
+  // demo" aunque la misión sí podía ejecutarse, y el dueño no entendía por qué
+  // el botón real estaba deshabilitado.
+  const aiReady = isAIReady(settings);
   return {
-    ai: Boolean(settings.ai?.apiKey) || settings.ai?.provider === 'ollama',
+    ai: aiReady,
     aiProvider: settings.ai?.provider || '',
     search: settings.search?.provider === 'duckduckgo' || Boolean(settings.search?.apiKey),
     searchProvider: settings.search?.provider || 'duckduckgo',
     hunter: Boolean(settings.hunter?.apiKey),
-    email: settings.email?.provider === 'resend' && Boolean(settings.email?.resendKey),
+    email: (settings.email?.provider === 'resend' && Boolean(settings.email?.resendKey))
+      || (settings.email?.provider === 'gmail' && Boolean(settings.email?.smtpUser && settings.email?.smtpPassword)),
     telegram: Boolean(settings.notify?.telegram?.enabled && settings.notify?.telegram?.token && settings.notify?.telegram?.chatId),
     whatsapp: Boolean(settings.notify?.whatsapp?.enabled && settings.notify?.whatsapp?.token && settings.notify?.whatsapp?.phoneNumberId && settings.notify?.whatsapp?.to),
-    demo: !settings.ai?.apiKey && settings.ai?.provider !== 'ollama',
+    demo: !aiReady,
   };
 }
 
 /* ─────────────────────────────────────────────────────────────
    Almacén en archivos JSON con escritura atómica y cola.
    ───────────────────────────────────────────────────────────── */
+
+function applyEnvOverrides(settings) {
+  const out = deepClone(settings);
+  out.ai = out.ai || {};
+  out.search = out.search || {};
+  out.email = out.email || {};
+  out.hunter = out.hunter || {};
+  out.brand = out.brand || {};
+  if (process.env.LUCIAN_AI_PROVIDER) out.ai.provider = process.env.LUCIAN_AI_PROVIDER;
+  if (process.env.LUCIAN_AI_BASE_URL) out.ai.baseUrl = process.env.LUCIAN_AI_BASE_URL;
+  if (process.env.LUCIAN_AI_MODEL) out.ai.model = process.env.LUCIAN_AI_MODEL;
+  if (process.env.LUCIAN_AI_VISION_MODEL) out.ai.visionModel = process.env.LUCIAN_AI_VISION_MODEL;
+  if (process.env.LUCIAN_AI_API_KEY) out.ai.apiKey = process.env.LUCIAN_AI_API_KEY;
+  if (process.env.LUCIAN_SEARCH_PROVIDER) out.search.provider = process.env.LUCIAN_SEARCH_PROVIDER;
+  if (process.env.LUCIAN_SEARCH_API_KEY) out.search.apiKey = process.env.LUCIAN_SEARCH_API_KEY;
+  if (process.env.LUCIAN_SEARX_URL) out.search.searxUrl = process.env.LUCIAN_SEARX_URL;
+  if (process.env.LUCIAN_RESEND_KEY) out.email.resendKey = process.env.LUCIAN_RESEND_KEY;
+  if (process.env.LUCIAN_EMAIL_FROM) out.email.from = process.env.LUCIAN_EMAIL_FROM;
+  if (process.env.LUCIAN_EMAIL_REPLY_TO) out.email.replyTo = process.env.LUCIAN_EMAIL_REPLY_TO;
+  if (process.env.LUCIAN_WEBHOOK_TOKEN) out.email.webhookToken = process.env.LUCIAN_WEBHOOK_TOKEN;
+  if (process.env.LUCIAN_HUNTER_API_KEY) out.hunter.apiKey = process.env.LUCIAN_HUNTER_API_KEY;
+  if (process.env.LUCIAN_BRAND_NAME) out.brand.name = process.env.LUCIAN_BRAND_NAME;
+  return out;
+}
 
 export class Store {
   constructor(dataDir) {
@@ -247,10 +287,10 @@ export class Store {
     }
     // Completar ajustes nuevos sin pisar los existentes.
     const merged = deepMerge(DEFAULT_SETTINGS, this.cache.get('settings') || {});
-    // verifyToken por defecto adivinable ('lumbre'): reemplazar por uno no trivial.
+    // verifyToken por defecto adivinable ('lucian'): reemplazar por uno no trivial.
     const wa = merged?.notify?.whatsapp;
     let verifyTokenChanged = false;
-    if (wa && (!wa.verifyToken || wa.verifyToken === 'lumbre')) {
+    if (wa && (!wa.verifyToken || wa.verifyToken === 'lucian')) {
       wa.verifyToken = `lmb-${crypto.randomUUID().slice(0, 12)}`;
       verifyTokenChanged = true;
     }
@@ -379,7 +419,7 @@ export class Store {
   }
 
   settings() {
-    return deepMerge(DEFAULT_SETTINGS, this.get('settings') || {});
+    return applyEnvOverrides(deepMerge(DEFAULT_SETTINGS, this.get('settings') || {}));
   }
 
   async saveSettings(patch) {
@@ -453,7 +493,7 @@ export class Store {
 
   exportBundle() {
     return {
-      app: 'lumbre',
+      app: 'lucian',
       version: 1,
       exportedAt: nowISO(),
       data: Object.fromEntries(Object.keys(COLLECTION_DEFAULTS).map((name) => [name, deepClone(this.get(name))])),
@@ -461,8 +501,8 @@ export class Store {
   }
 
   async importBundle(bundle) {
-    if (!bundle || bundle.app !== 'lumbre' || !isObject(bundle.data)) {
-      throw new Error('El archivo no es una copia de seguridad válida de Lumbre.');
+    if (!bundle || bundle.app !== 'lucian' || !isObject(bundle.data)) {
+      throw new Error('El archivo no es una copia de seguridad válida de Lucian.');
     }
     for (const name of Object.keys(COLLECTION_DEFAULTS)) {
       if (!(name in bundle.data)) continue;

@@ -1,4 +1,4 @@
-import os from 'node:os';
+﻿import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { Store } from '../lib/store.mjs';
@@ -7,7 +7,7 @@ import { createZip, readZip } from '../lib/zip.mjs';
 import { buildEml, composeEmail, dailyLimitInfo } from '../lib/email.mjs';
 import { demoReply, demoStep } from '../lib/demo.mjs';
 
-const dir = path.join(os.tmpdir(), `lumbre-test-${Date.now()}`);
+const dir = path.join(os.tmpdir(), `lucian-test-${Date.now()}`);
 const store = new Store(dir);
 await store.init();
 const seeded = await seedDemo(store);
@@ -22,7 +22,7 @@ const reply = demoReply(thread, store.settings().brand);
 console.log('reply', reply.intencion, reply.score, reply.borrador.cuerpo.slice(0, 50));
 const message = composeEmail(thread, thread.drafts[0], store.settings());
 console.log('email', message.to, message.from, message.text.length);
-const eml = buildEml({ ...message, to: 'test@example.org', from: 'Lumbre <hola@lumbre.test>' });
+const eml = buildEml({ ...message, to: 'test@example.org', from: 'Lucian <hola@lucian.test>' });
 console.log('eml', eml.length, eml.split('\r\n')[0]);
 const zip = createZip([{ name: 'a.txt', data: 'hola' }, { name: 'media/x.txt', data: Buffer.from('mundo') }]);
 const entries = readZip(zip);

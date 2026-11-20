@@ -34,7 +34,7 @@ console.log('parseAction OK');
 
 // executeAction buscar
 {
-  const dir = path.join(os.tmpdir(), `lumbre-tg-${Date.now()}`);
+  const dir = path.join(os.tmpdir(), `lucian-tg-${Date.now()}`);
   const store = new Store(dir);
   await store.init();
   const res = await executeAction({
@@ -50,7 +50,7 @@ console.log('parseAction OK');
 }
 // query vacia
 {
-  const dir = path.join(os.tmpdir(), `lumbre-tg-${Date.now()}`);
+  const dir = path.join(os.tmpdir(), `lucian-tg-${Date.now()}`);
   const store = new Store(dir);
   await store.init();
   const res = await executeAction({
@@ -66,7 +66,7 @@ console.log('executeAction buscar OK');
 
 // enviar_borrador calls handler with confirm:true
 {
-  const dir = path.join(os.tmpdir(), `lumbre-tg-${Date.now()}`);
+  const dir = path.join(os.tmpdir(), `lucian-tg-${Date.now()}`);
   const store = new Store(dir);
   await store.init();
   let called = null;
@@ -83,13 +83,13 @@ console.log('enviar_borrador OK');
 
 // lanzar_mision calls createMission
 {
-  const dir = path.join(os.tmpdir(), `lumbre-tg-${Date.now()}`);
+  const dir = path.join(os.tmpdir(), `lucian-tg-${Date.now()}`);
   const store = new Store(dir);
   await store.init();
   let called = null;
   const actions = { createMission: async (body) => { called = body; return { id: 'm1', name: 'Mision' }; } };
   const res = await executeAction({
-    action: { tipo: 'lanzar_mision', args: { productId: 'p1', markets: ['EspaÃ±a'] }, resumen: '', requiere_accion: true },
+    action: { tipo: 'lanzar_mision', args: { productId: 'p1', markets: ['España'] }, resumen: '', requiere_accion: true },
     store, actions, chatId: '1',
   });
   if (!res.ok) throw new Error('lanzar failed: ' + res.message);
@@ -100,7 +100,7 @@ console.log('lanzar_mision OK');
 
 // unknown type
 {
-  const dir = path.join(os.tmpdir(), `lumbre-tg-${Date.now()}`);
+  const dir = path.join(os.tmpdir(), `lucian-tg-${Date.now()}`);
   const store = new Store(dir);
   await store.init();
   const res = await executeAction({
@@ -114,12 +114,12 @@ console.log('unknown type OK');
 
 // Notifier handleOwnerText
 {
-  const dir = path.join(os.tmpdir(), `lumbre-tg-${Date.now()}`);
+  const dir = path.join(os.tmpdir(), `lucian-tg-${Date.now()}`);
   const store = new Store(dir);
   await store.init();
   const ask = async (q, channel, history) => 'Respuesta del equipo.';
   const notifier = new Notifier({ store, ask, actions: {} });
-  // solo chatId dueÃ±o: otros chats ignorados
+  // solo chatId dueño: otros chats ignorados
   store.get('settings').notify.telegram = { enabled: true, token: 't', chatId: '42' };
   await store.saveSettings(store.get('settings'));
   const r1 = await notifier.handleOwnerText('hola', 'telegram', '99');
@@ -127,7 +127,7 @@ console.log('unknown type OK');
   const r2 = await notifier.handleOwnerText('/start', 'telegram', '42');
   if (!r2) throw new Error('start empty');
   // automatic action via ask returning action? ask returns plain text, no action
-  const r3 = await notifier.handleOwnerText('Â¿cÃ³mo venimos?', 'telegram', '42');
+  const r3 = await notifier.handleOwnerText('¿cómo venimos?', 'telegram', '42');
   if (!r3) throw new Error('empty reply');
   await fs.rm(dir, { recursive: true, force: true });
 }
@@ -135,7 +135,7 @@ console.log('Notifier basic OK');
 
 // confirm flow
 {
-  const dir = path.join(os.tmpdir(), `lumbre-tg-${Date.now()}`);
+  const dir = path.join(os.tmpdir(), `lucian-tg-${Date.now()}`);
   const store = new Store(dir);
   await store.init();
   store.get('settings').notify.telegram = { enabled: true, token: 't', chatId: '42' };
@@ -144,7 +144,7 @@ console.log('Notifier basic OK');
   let sent = null;
   const actions = { sendThreadMessage: async (tid, body) => { sent = { tid, body }; return { message: 'enviado' }; } };
   const notifier = new Notifier({ store, ask, actions });
-  const r1 = await notifier.handleOwnerText('mandÃ¡ el mail', 'telegram', '42');
+  const r1 = await notifier.handleOwnerText('mandá el mail', 'telegram', '42');
   if (!/confirmar/i.test(r1)) throw new Error('should ask confirm: ' + r1);
   // confirm
   const r2 = await notifier.handleOwnerText('confirmar', 'telegram', '42');
@@ -152,7 +152,7 @@ console.log('Notifier basic OK');
   // cancel scenario
   const ask2 = async () => '{"accion":{"tipo":"enviar_borrador","args":{"threadId":"t1","draftId":"d1"},"resumen":"enviar","requiere_accion":true}}';
   const n2 = new Notifier({ store, ask: ask2, actions });
-  await n2.handleOwnerText('mandÃ¡ el mail', 'telegram', '42');
+  await n2.handleOwnerText('mandá el mail', 'telegram', '42');
   const r3 = await n2.handleOwnerText('cancelar', 'telegram', '42');
   if (!/cancelado/i.test(r3)) throw new Error('cancel failed: ' + r3);
   await fs.rm(dir, { recursive: true, force: true });
@@ -161,7 +161,7 @@ console.log('confirm flow OK');
 
 // /reiniciar
 {
-  const dir = path.join(os.tmpdir(), `lumbre-tg-${Date.now()}`);
+  const dir = path.join(os.tmpdir(), `lucian-tg-${Date.now()}`);
   const store = new Store(dir);
   await store.init();
   store.get('settings').notify.telegram = { enabled: true, token: 't', chatId: '42' };
@@ -180,7 +180,7 @@ console.log('reiniciar OK');
 {
   const ctx = { marca: {} };
   const out = askPrompt('director', 'q', ctx, { history: [{ role: 'user', text: 'prev' }], channel: 'telegram' });
-  if (!/CONVERSACION RECIENTE/.test(out) && !/CONVERSACIÃ“N RECIENTE/.test(out)) throw new Error('history not included');
+  if (!/CONVERSACION RECIENTE/.test(out) && !/CONVERSACIÓN RECIENTE/.test(out)) throw new Error('history not included');
   if (!/no puedo/.test(out) === false) {}
 }
 console.log('askPrompt OK');

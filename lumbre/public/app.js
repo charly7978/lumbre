@@ -1,5 +1,5 @@
-/* ============================================================
-   LUMBRE · aplicación
+﻿/* ============================================================
+   LUCIAN · aplicación
    Vanilla JS, sin dependencias. Estado local + API del servidor.
    ============================================================ */
 
@@ -13,8 +13,8 @@ const AGENTS = [
   { id: 'aduanas', name: 'Especialista en Aduanas', initials: 'EA', role: 'Importación y logística', color: '#63788a', bio: 'Anticipa aranceles, impuestos, certificaciones y etiquetado antes de que un envío quede trabado.', focus: ['Aranceles', 'Certificaciones', 'Couriers'] },
   { id: 'precios', name: 'Analista de Precios', initials: 'AP', role: 'Márgenes y rentabilidad', color: '#b56c4a', bio: 'Calcula costo aterrizado, precio directo, mayorista y galería. Busca el punto donde el precio no frena la venta ni te deja sin margen.', focus: ['Landed cost', 'Márgenes', 'Descuentos'] },
   { id: 'cazador', name: 'Cazador de Compradores', initials: 'CC', role: 'Prospección', color: '#8b7654', bio: 'Encuentra tiendas, distribuidores, interioristas y hoteles que ya venden diseño. Verifica contactos y descarta fantasmas.', focus: ['Prospectos', 'Contactos', 'Priorización'] },
-  { id: 'redactor', name: 'Redactor Comercial', initials: 'RC', role: 'Mensajes que abren puertas', color: '#a65d3f', bio: 'Escribe correos breves, específicos y humanos. Nada de plantillas con “espero que estés bien”. Un solo pedido por mensaje.', focus: ['Secuencias', 'Personalización', 'Objeciones'] },
-  { id: 'contenido', name: 'Director de Contenido', initials: 'CO', role: 'Redes y narrativa', color: '#9a6f8e', bio: 'Diseña contenido que muestra el objeto y el proceso, no que grita “comprá”. Piensa en series, no en posts sueltos.', focus: ['Calendario', 'Ganchos', 'Series'] },
+  { id: 'redactor', name: 'Redactor Comercial', initials: 'RC', role: 'Mensajes que abren puertas', color: '#a65d3f', bio: 'Escribe correos breves, específicos y humanos. Nada de plantillas con “espero que estés bien”. Un solo pedido por mensaje.', focus: ['Secuencias', 'Personalización', 'Objeciones'] },
+  { id: 'contenido', name: 'Director de Contenido', initials: 'CO', role: 'Redes y narrativa', color: '#9a6f8e', bio: 'Diseña contenido que muestra el objeto y el proceso, no que grita “comprá”. Piensa en series, no en posts sueltos.', focus: ['Calendario', 'Ganchos', 'Series'] },
   { id: 'cumplimiento', name: 'Guardián de Cumplimiento', initials: 'GC', role: 'Riesgos legales y reputación', color: '#6a7a86', bio: 'Revisa afirmaciones, bases legales de contacto, opt-out y promesas. Prefiere perder una venta antes que quemar la marca.', focus: ['Claims', 'Privacidad', 'Revisión'] },
   { id: 'redteam', name: 'Abogado del Diablo', initials: 'AD', role: 'Contradicción', color: '#8f4f45', bio: 'Su trabajo es encontrar por qué el plan puede fallar. Sin crueldad y sin diplomacia: si un número no cierra, lo dice.', focus: ['Supuestos', 'Agujeros', 'Escenarios'] },
   { id: 'memoria', name: 'Memoria y Aprendizaje', initials: 'MA', role: 'Aprendizaje acumulado', color: '#7c7a5c', bio: 'Extrae lo que esta misión enseñó para que la próxima no empiece de cero. Guarda solo lo que tiene evidencia.', focus: ['Aprendizajes', 'Patrones', 'Confianza'] },
@@ -22,9 +22,9 @@ const AGENTS = [
 ];
 
 const DEPTHS = {
-  rapida: { label: 'Rápida', description: 'Lo esencial para salir a vender esta semana. 8 pasos, sin contenido ni red team.', steps: 8, calls: 7, minutes: '2–4' },
-  estandar: { label: 'Estándar', description: 'El equipo completo: investigación, aduanas, precios, compradores, mensajes, contenido, cumplimiento y crítica.', steps: 12, calls: 10, minutes: '4–8' },
-  profunda: { label: 'Profunda', description: 'Todo lo anterior más una revisión y corrección obligatoria después del red team.', steps: 13, calls: 11, minutes: '6–12' },
+  rapida: { label: 'Rápida', description: 'Lo esencial para salir a vender esta semana. 8 pasos, sin contenido ni red team.', steps: 8, calls: 7, minutes: '2”“4' },
+  estandar: { label: 'Estándar', description: 'El equipo completo: investigación, aduanas, precios, compradores, mensajes, contenido, cumplimiento y crítica.', steps: 12, calls: 10, minutes: '4”“8' },
+  profunda: { label: 'Profunda', description: 'Todo lo anterior más una revisión y corrección obligatoria después del red team.', steps: 13, calls: 11, minutes: '6”“12' },
 };
 
 const GOALS = [
@@ -157,15 +157,21 @@ const text = (value, fallback = 'sin dato') => {
 };
 const truncate = (value, max = 160) => {
   const s = String(value ?? '');
-  return s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s;
+  return s.length > max ? `${s.slice(0, max - 1).trimEnd()}”¦` : s;
 };
 
 function money(value, currency = 'USD') {
   const n = num(value, 0);
   try {
-    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: currency || 'USD', maximumFractionDigits: 0 }).format(n);
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: currency || 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: Number.isInteger(n) ? 0 : 2,
+    }).format(n);
   } catch {
-    return `${currency || 'USD'} ${Math.round(n).toLocaleString('es-AR')}`;
+    const digits = Number.isInteger(n) ? 0 : 2;
+    return `${currency || 'USD'} ${n.toLocaleString('es-AR', { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
   }
 }
 function numFmt(value) {
@@ -239,11 +245,11 @@ function emptyState({ iconName = 'sun', title, text: body, actions = '' }) {
 function placeholderLamp(extra = '') {
   return `<div class="photo-placeholder ${extra}">
     <svg viewBox="0 0 120 120" fill="none" aria-hidden="true">
-      <circle cx="60" cy="52" r="34" stroke="#e7b66b" stroke-opacity=".22"/>
-      <path d="M38 66h44L70 34H50L38 66Z" fill="#e7b66b" fill-opacity=".92"/>
-      <path d="M60 66v28" stroke="#e7b66b" stroke-opacity=".55" stroke-width="2"/>
-      <path d="M46 97h28" stroke="#e7b66b" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/>
-      <circle cx="60" cy="71" r="3" fill="#fff8ec"/>
+      <circle cx="60" cy="52" r="34" stroke="#60a5fa" stroke-opacity=".22"/>
+      <path d="M38 66h44L70 34H50L38 66Z" fill="#60a5fa" fill-opacity=".92"/>
+      <path d="M60 66v28" stroke="#60a5fa" stroke-opacity=".55" stroke-width="2"/>
+      <path d="M46 97h28" stroke="#60a5fa" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="60" cy="71" r="3" fill="#eff6ff"/>
     </svg>
   </div>`;
 }
@@ -284,11 +290,13 @@ const S = {
   ui: {
     productQuery: '',
     productStatus: 'todos',
+    selectedProducts: [],
     inboxFilter: 'todos',
     inboxQuery: '',
     threadDraftEdit: null,
     contentFilter: 'todos',
     contentPlatform: 'todas',
+    contentProduct: 'todos',
     settingsTab: 'marca',
     openSteps: new Set(),
     ask: { agentId: 'director', question: '', result: null, loading: false },
@@ -314,7 +322,7 @@ function setSaveState(kind, message = '') {
   if (!el) return;
   clearTimeout(saveTimer);
   el.className = `save-state ${kind}`;
-  el.textContent = message || (kind === 'saving' ? 'Guardando…' : kind === 'saved' ? 'Guardado' : kind === 'error' ? 'Error al guardar' : '');
+  el.textContent = message || (kind === 'saving' ? 'Guardando”¦' : kind === 'saved' ? 'Guardado' : kind === 'error' ? 'Error al guardar' : '');
   if (kind === 'saved') saveTimer = setTimeout(() => { el.textContent = ''; el.className = 'save-state'; }, 2600);
 }
 
@@ -335,7 +343,7 @@ async function api(path, options = {}) {
     response = await fetch(path, init);
   } catch (error) {
     if (!silent) setSaveState('error');
-    throw new Error('No pude conectarme con el servidor de Lumbre. Revisá que la ventana negra siga abierta.');
+    throw new Error('No pude conectarme con el servidor de Lucian. Revisá que la ventana negra siga abierta.');
   }
   if (raw) {
     if (!silent) setSaveState(response.ok ? 'saved' : 'error');
@@ -464,7 +472,7 @@ function renderFatal(error) {
   if (!view) return;
   view.innerHTML = `<div class="empty">
     <div class="empty-illustration">${icon('alert')}</div>
-    <h3>No pude cargar Lumbre</h3>
+    <h3>No pude cargar Lucian</h3>
     <p>${esc(error.message || 'Error inesperado.')}</p>
     <div class="empty-actions"><button class="btn btn-primary" type="button" data-action="reload-state">${icon('refresh')} Reintentar</button></div>
   </div>`;
@@ -483,10 +491,12 @@ function navigate(hash) {
 }
 
 const VIEW_META = {
-  panel: ['Panel', 'Lumbre OS'],
+  panel: ['Hoy', 'Tu centro de operaciones'],
   productos: ['Productos', 'Tu catálogo'],
+  producto: ['Lámpara', 'La ruta completa del producto'],
   misiones: ['Misiones', 'El equipo en acción'],
-  bandeja: ['Bandeja', 'Conversaciones'],
+  ventas: ['Ventas', 'Lo vendido y lo que está por cerrar'],
+  bandeja: ['Conversaciones', 'Compradores reales, no leads'],
   contenido: ['Contenido', 'Narrativa y redes'],
   equipo: ['Equipo', 'Once especialistas'],
   mercados: ['Mercados', 'Inteligencia acumulada'],
@@ -501,7 +511,13 @@ function updateShell() {
     el.classList.toggle('active', target === view || (view === 'bandeja' && target === 'bandeja'));
   });
   const counts = S.state.counts || {};
-  const countMap = { products: counts.products, activeMissions: counts.activeMissions, drafts: counts.drafts, contentIdeas: counts.contentIdeas };
+  const countMap = {
+    products: counts.products,
+    activeMissions: counts.activeMissions,
+    drafts: counts.drafts,
+    contentIdeas: counts.contentIdeas,
+    sold: S.state.sales?.sold || 0,
+  };
   $$('[data-count]').forEach((el) => {
     const value = countMap[el.dataset.count] || 0;
     el.textContent = value > 99 ? '99+' : String(value);
@@ -535,6 +551,10 @@ function updateShell() {
   if (view === 'bandeja' && S.route.id && S.thread?.thread?.contact?.company) {
     $('#topbar-title').textContent = S.thread.thread.contact.company;
   }
+  if (view === 'producto' && S.route.id) {
+    const product = arr(S.state.products).find((p) => p.id === S.route.id);
+    if (product) $('#topbar-title').textContent = product.name;
+  }
 }
 
 function render() {
@@ -550,8 +570,9 @@ function render() {
   try {
     switch (next.view) {
       case 'panel': html = renderPanel(); break;
-      case 'productos': html = renderProducts(); break;
+      case 'productos': html = next.id ? renderProductRoute(next.id) : renderProducts(); break;
       case 'misiones': html = next.id === 'nueva' ? renderWizard() : next.id ? renderMissionView(next.id) : renderMissions(); break;
+      case 'ventas': html = renderVentas(); break;
       case 'bandeja': html = renderInbox(next.id); break;
       case 'contenido': html = renderContent(); break;
       case 'equipo': html = renderTeam(); break;
@@ -593,28 +614,28 @@ function maybeShowWelcome() {
   const products = S.state.counts?.products || 0;
   const demoLoaded = Boolean(onboarding.demoLoaded);
   openModal({
-    title: 'Bienvenido a Lumbre',
+    title: 'Bienvenido a Lucian',
     subtitle: 'El equipo comercial de un maker de lámparas. Sin planillas y sin depender de Airtable.',
     size: 'modal-lg',
     body: `<div style="display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:center">
       <div>
         <p class="eyebrow">Empezar</p>
         <p style="font-family:var(--serif);font-size:30px;line-height:1.12;margin-top:7px;letter-spacing:-.02em">Subí una lámpara.<br>El equipo hace el resto.</p>
-        <p style="color:var(--ink-3);font-size:13px;line-height:1.6;margin-top:12px">Lumbre investiga el mercado, calcula aduanas y precios, busca compradores, escribe los mensajes y arma el contenido. Vos revisás y decidís qué se envía.</p>
+        <p style="color:var(--ink-3);font-size:13px;line-height:1.6;margin-top:12px">Lucian investiga el mercado, calcula aduanas y precios, busca compradores, escribe los mensajes y arma el contenido. Vos revisás y decidís qué se envía.</p>
         <div class="onboard-steps" style="margin-top:16px">
           <span class="onboard-step"><span class="num">1</span> Cargá tu lámpara</span>
           <span class="onboard-step"><span class="num">2</span> Lanzá la misión</span>
           <span class="onboard-step"><span class="num">3</span> Revisá y enviá</span>
         </div>
       </div>
-      <div style="border-radius:18px;background:linear-gradient(150deg,#2b241d,#1d1813);padding:24px;display:grid;place-items:center;min-height:210px">
+      <div style="border-radius:18px;background:linear-gradient(150deg,#0b1220,#111a2e);padding:24px;display:grid;place-items:center;min-height:210px">
         <svg viewBox="0 0 140 150" fill="none" style="width:150px;filter:drop-shadow(0 15px 22px rgba(0,0,0,.3))">
-          <circle cx="70" cy="60" r="46" fill="#e7b66b" fill-opacity=".1"/>
-          <path d="M44 78h52L86 36H54L44 78Z" fill="#e7b66b"/>
-          <path d="M70 78v36" stroke="#b99a6e" stroke-width="2.5"/>
-          <path d="M53 117h34" stroke="#b99a6e" stroke-width="2.5" stroke-linecap="round"/>
-          <circle cx="70" cy="84" r="4" fill="#fff8ec"/>
-          <path d="M70 12v8M26 34l6 5M114 34l-6 5" stroke="#e7b66b" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+          <circle cx="70" cy="60" r="46" fill="#60a5fa" fill-opacity=".1"/>
+          <path d="M44 78h52L86 36H54L44 78Z" fill="#60a5fa"/>
+          <path d="M70 78v36" stroke="#3b82f6" stroke-width="2.5"/>
+          <path d="M53 117h34" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="70" cy="84" r="4" fill="#eff6ff"/>
+          <path d="M70 12v8M26 34l6 5M114 34l-6 5" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" opacity=".7"/>
         </svg>
       </div>
     </div>`,
@@ -627,6 +648,80 @@ function maybeShowWelcome() {
 /* ─────────────────────────────────────────────────────────────
    8. Panel
    ───────────────────────────────────────────────────────────── */
+
+function panelSalesHTML() {
+  const sales = S.state.sales || {};
+  const won = arr(sales.won);
+  if (!won.length) {
+    return `<section class="section">
+      <div class="section-head">
+        <div><h2 class="section-title">Ventas</h2><p class="section-sub">Todavía no hay ventas cerradas. Cuando aceptes una cotización o marques una conversación como Ganada, aparece acá.</p></div>
+        <a class="section-link" href="#/ventas">Ver ventas ${icon('arrowRight')}</a>
+      </div>
+      <div class="card card-pad" style="text-align:center">
+        <p class="muted small">Las cotizaciones abiertas y los ingresos los ves en la vista de Ventas. El ingreso se calcula solo con cotizaciones aceptadas.</p>
+      </div>
+    </section>`;
+  }
+  return `<section class="section">
+    <div class="section-head">
+      <div><h2 class="section-title">Ventas recientes</h2><p class="section-sub">${won.length} venta${won.length === 1 ? '' : 's'} · ${money(sales.revenue || 0, sales.currency)} ingresados.</p></div>
+      <a class="section-link" href="#/ventas">Ver todas ${icon('arrowRight')}</a>
+    </div>
+    <div class="card" style="padding:6px 0">
+      ${won.slice(0, 4).map((w) => `<a class="thread-row" href="#/bandeja/${encodeURIComponent(w.threadId)}" style="text-decoration:none">
+        <div class="thread-row-top">
+          <span class="avatar sm">${esc(initials(w.company || '?'))}</span>
+          <div style="min-width:0;flex:1">
+            <div class="thread-company">${esc(w.company)} <span class="badge badge-ok">Ganada</span></div>
+            <div class="thread-person">${esc(w.productName)}${w.quoteNumber ? ` · ${esc(w.quoteNumber)}` : ''}</div>
+          </div>
+          <b style="color:var(--ok)">${esc(money(w.total, w.currency))}</b>
+        </div>
+        <div class="thread-preview">${esc(w.acceptedAt ? `Cerrada ${relTime(w.acceptedAt)}` : 'Venta cerrada')}</div>
+      </a>`).join('')}
+    </div>
+  </section>`;
+}
+
+function panelDecisionsHTML() {
+  const threads = arr(S.state.threads);
+  const reviewThreads = threads.filter((t) => num(t.reviewCount) > 0).slice(0, 5);
+  const inbound = threads.filter((t) => t.awaitingReply).slice(0, 4);
+  if (!reviewThreads.length && !inbound.length) return '';
+  return `<section class="section" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px">
+    ${reviewThreads.length ? `<div>
+      <div class="section-head"><div><h2 class="section-title">Para aprobar</h2><p class="section-sub">${reviewThreads.length} conversación${reviewThreads.length === 1 ? '' : 'es'} con borradores por revisar.</p></div><a class="section-link" href="#/bandeja?filtro=revisar">Ver todas ${icon('arrowRight')}</a></div>
+      <div class="card" style="padding:6px 0">
+        ${reviewThreads.map((t) => `<a class="thread-row" href="#/bandeja/${encodeURIComponent(t.id)}" style="text-decoration:none">
+          <div class="thread-row-top">
+            <span class="avatar sm">${esc(initials(t.contact?.company || '?'))}</span>
+            <div style="min-width:0;flex:1">
+              <div class="thread-company">${esc(t.contact?.company || 'Contacto')} <span class="badge badge-warn">${t.reviewCount} por aprobar</span></div>
+              <div class="thread-person">${esc(truncate(t.draftPreview?.subject || t.nextStep || 'Borrador pendiente', 60))}</div>
+            </div>
+            <span class="thread-score">${esc(t.score || 0)}</span>
+          </div>
+        </a>`).join('')}
+      </div>
+    </div>` : '<div></div>'}
+    ${inbound.length ? `<div>
+      <div class="section-head"><div><h2 class="section-title">Te escribieron</h2><p class="section-sub">${inbound.length} respuesta${inbound.length === 1 ? '' : 's'} por leer.</p></div><a class="section-link" href="#/bandeja?filtro=responder">Ver todas ${icon('arrowRight')}</a></div>
+      <div class="card" style="padding:6px 0">
+        ${inbound.map((t) => `<a class="thread-row" href="#/bandeja/${encodeURIComponent(t.id)}" style="text-decoration:none">
+          <div class="thread-row-top">
+            <span class="avatar sm">${esc(initials(t.contact?.company || '?'))}</span>
+            <div style="min-width:0;flex:1">
+              <div class="thread-company">${esc(t.contact?.company || 'Contacto')} ${t.demo ? '<span class="badge badge-demo">Ejemplo</span>' : '<span class="badge badge-ok">Real</span>'}</div>
+              <div class="thread-person">${esc(truncate(t.lastMessage?.body || '', 70))}</div>
+            </div>
+            <span class="thread-score">${esc(t.score || 0)}</span>
+          </div>
+        </a>`).join('')}
+      </div>
+    </div>` : '<div></div>'}
+  </section>`;
+}
 
 function renderPanel() {
   const s = S.state;
@@ -650,13 +745,13 @@ function renderPanel() {
   const heroSub = active
     ? `La misión avanza paso a paso. Podés entrar a la sala, leer lo que produce cada especialista y cancelar si algo no te cierra.`
     : hasProducts
-      ? `Lumbre investiga el mercado, calcula aduanas y precios, busca compradores concretos y deja los mensajes listos para que los revises. Vos decidís qué se envía.`
+      ? `Lucian investiga el mercado, calcula aduanas y precios, busca compradores concretos y deja los mensajes listos para que los revises. Vos decidís qué se envía.`
       : `Cargá una lámpara con sus fotos, precio y notas. El equipo arma el plan comercial completo: a quién venderle, a qué precio, con qué mensaje y qué contenido.`;
 
   const onboardBanner = !onboardingDone
     ? `<div class="onboard">
         <div>
-          <h2>Poné Lumbre a tu nombre</h2>
+          <h2>Poné Lucian a tu nombre</h2>
           <p>Completá tu marca y tu correo para que los mensajes salgan con tu identidad, no con datos de ejemplo.</p>
           <div class="onboard-steps">
             <span class="onboard-step ${brand.name ? 'done' : ''}"><span class="num">${brand.name ? '✓' : '1'}</span> Nombre de marca</span>
@@ -677,7 +772,7 @@ function renderPanel() {
     ${onboardBanner}
     <section class="hero">
       <div class="hero-copy">
-        <span class="hero-kicker"><span class="dot"></span>${esc(brand.name || 'Lumbre')} · ${esc(brand.city || 'atelier digital')}</span>
+        <span class="hero-kicker"><span class="dot"></span>${esc(brand.name || 'Lucian')} · ${esc(brand.city || 'atelier digital')}</span>
         <h2 class="hero-title">${heroTitle}</h2>
         <p class="hero-sub">${heroSub}</p>
         <div class="hero-actions">
@@ -700,12 +795,12 @@ function renderPanel() {
         <div class="hero-glow"></div>
         <div class="hero-lamp">
           <svg viewBox="0 0 200 230" fill="none">
-            <path d="M64 116h72L120 46H80L64 116Z" fill="#e7b66b"/>
-            <path d="M100 116v58" stroke="#c0a377" stroke-width="3"/>
-            <path d="M77 178h46" stroke="#c0a377" stroke-width="3" stroke-linecap="round"/>
-            <circle cx="100" cy="123" r="5" fill="#fff8ec"/>
-            <path d="M100 20v10M40 48l8 7M160 48l-8 7M30 116h9M161 116h9" stroke="#e7b66b" stroke-width="2.5" stroke-linecap="round" opacity=".55"/>
-            <ellipse cx="100" cy="188" rx="72" ry="9" fill="#e7b66b" opacity=".08"/>
+            <path d="M64 116h72L120 46H80L64 116Z" fill="#60a5fa"/>
+            <path d="M100 116v58" stroke="#3b82f6" stroke-width="3"/>
+            <path d="M77 178h46" stroke="#3b82f6" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="100" cy="123" r="5" fill="#eff6ff"/>
+            <path d="M100 20v10M40 48l8 7M160 48l-8 7M30 116h9M161 116h9" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" opacity=".55"/>
+            <ellipse cx="100" cy="188" rx="72" ry="9" fill="#60a5fa" opacity=".08"/>
           </svg>
         </div>
         <div class="hero-note">
@@ -718,11 +813,14 @@ function renderPanel() {
     ${active ? activeMissionBanner(active) : ''}
 
     <section class="stat-grid">
-      ${statCard('Productos', counts.products || 0, 'box', 'en tu catálogo', '#/productos')}
-      ${statCard('Conversaciones calientes', counts.hot || 0, 'message', 'interesados o negociando', '#/bandeja?filtro=calientes', counts.hot ? 'warm' : '')}
-      ${statCard('Borradores listos', counts.drafts || 0, 'mail', counts.draftsToReview ? `${counts.draftsToReview} por aprobar` : 'esperando tu revisión', '#/bandeja', counts.drafts || counts.draftsToReview ? 'warm' : '')}
-      ${statCard('Piezas de contenido', counts.content || 0, 'image', 'ideas y publicadas', '#/contenido')}
+      ${statCard('Por aprobar', counts.draftsToReview || 0, 'mail', counts.draftsToReview ? 'borradores esperando tu OK' : 'nada pendiente', '#/bandeja?filtro=revisar', counts.draftsToReview ? 'warm' : '')}
+      ${statCard('Te escribieron', counts.awaitingReply || 0, 'message', counts.awaitingReply ? 'respuestas por leer' : 'sin novedades', '#/bandeja?filtro=responder', counts.awaitingReply ? 'warm' : '')}
+      ${statCard('Ventas cerradas', S.state.sales?.sold || 0, 'dollar', S.state.sales?.revenue ? `${money(S.state.sales.revenue, S.state.sales.currency)} ingresados` : 'todavía ninguna', '#/ventas', (S.state.sales?.sold || 0) ? 'warm' : '')}
+      ${statCard('Piezas de contenido', counts.content || 0, 'image', 'ideas, borradores y publicadas', '#/contenido')}
     </section>
+
+    ${panelSalesHTML()}
+    ${panelDecisionsHTML()}
 
     <div class="section" style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,.9fr);gap:22px">
       <div>
@@ -876,6 +974,201 @@ function agentMiniCard(agent) {
    9. Productos
    ───────────────────────────────────────────────────────────── */
 
+function renderVentas() {
+  const sales = S.state.sales || {};
+  const currency = sales.currency || 'USD';
+  const won = arr(sales.won);
+  const open = arr(sales.open);
+  const byProduct = arr(sales.byProduct);
+  return `<div class="page-head">
+    <div class="page-head-main">
+      <p class="eyebrow">Ventas</p>
+      <h2 class="page-title">Lo vendido y lo que está por cerrar.</h2>
+      <p class="page-sub">Una venta es una cotización aceptada o una conversación marcada como Ganada. El ingreso se calcula solo con cotizaciones aceptadas. Nada se inventa.</p>
+    </div>
+    <div class="page-actions">
+      <a class="btn btn-ghost btn-sm" href="#/bandeja?filtro=revisar">${icon('mail')} Por aprobar</a>
+      <a class="btn btn-primary btn-sm" href="#/bandeja">${icon('inbox')} Conversaciones</a>
+    </div>
+  </div>
+
+  <section class="stat-grid">
+    ${statCard('Ventas cerradas', sales.sold || 0, 'dollar', sales.sold ? 'conversaciones ganadas' : 'todavía ninguna', '', sales.sold ? 'warm' : '')}
+    ${statCard('Ingresos', money(sales.revenue || 0, currency), 'chart', 'cotizaciones aceptadas', '', '')}
+    ${statCard('Cotizaciones abiertas', sales.openQuotes || 0, 'mail', open.length ? 'borrador o enviada' : 'ninguna', '', sales.openQuotes ? 'warm' : '')}
+    ${statCard('Cotizaciones aceptadas', sales.acceptedQuotes || 0, 'check', 'cerraron la venta', '', '')}
+  </section>
+
+  <div class="section" style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,1fr);gap:22px">
+    <div>
+      <div class="section-head">
+        <div><h2 class="section-title">Ventas cerradas</h2><p class="section-sub">Cada fila es una conversación en etapa Ganada. El monto sale de la cotización aceptada.</p></div>
+      </div>
+      ${won.length ? `<div class="card" style="padding:6px 0">
+        ${won.map((w) => `<a class="thread-row" href="#/bandeja/${encodeURIComponent(w.threadId)}" style="text-decoration:none">
+          <div class="thread-row-top">
+            <span class="avatar sm">${esc(initials(w.company || '?'))}</span>
+            <div style="min-width:0;flex:1">
+              <div class="thread-company">${esc(w.company)} <span class="badge badge-ok">Ganada</span></div>
+              <div class="thread-person">${esc(w.productName)}${w.quoteNumber ? ` · ${esc(w.quoteNumber)}` : ''}</div>
+            </div>
+            <b style="color:var(--ok)">${esc(money(w.total, w.currency))}</b>
+          </div>
+          <div class="thread-preview">${esc(w.acceptedAt ? `Cerrada ${relTime(w.acceptedAt)} · ${dateTime(w.acceptedAt)}` : 'Venta cerrada')}</div>
+        </a>`).join('')}
+      </div>` : `<div class="card card-pad" style="text-align:center"><p class="muted small">Todavía no hay ventas. Marcá una conversación como Ganada o aceptá una cotización.</p></div>`}
+    </div>
+    <div>
+      <div class="section-head">
+        <div><h2 class="section-title">Cotizaciones abiertas</h2><p class="section-sub">Borrador o enviada: todavía no cerraron.</p></div>
+      </div>
+      ${open.length ? `<div class="card" style="padding:6px 0">
+        ${open.slice(0, 10).map((q) => `<a class="thread-row" href="#/bandeja/${encodeURIComponent(q.threadId)}" style="text-decoration:none">
+          <div class="thread-row-top">
+            <span class="avatar sm">${esc(initials(q.company || '?'))}</span>
+            <div style="min-width:0;flex:1">
+              <div class="thread-company">${esc(q.company)} <span class="badge badge-neutral">${esc(q.statusLabel)}</span></div>
+              <div class="thread-person">${esc(q.productName)} · ${esc(q.number)}</div>
+            </div>
+            <b>${esc(money(q.total, q.currency))}</b>
+          </div>
+          <div class="thread-preview">${esc(q.createdAt ? `Preparada ${relTime(q.createdAt)}` : '')}</div>
+        </a>`).join('')}
+      </div>` : `<div class="card card-pad" style="text-align:center"><p class="muted small">Sin cotizaciones abiertas. Preparalas desde una conversación.</p></div>`}
+    </div>
+  </div>
+
+  ${byProduct.length ? `<section class="section">
+    <div class="section-head">
+      <div><h2 class="section-title">Por lámpara</h2><p class="section-sub">Ventas e ingresos por producto. Hacé clic para ver la ruta completa.</p></div>
+    </div>
+    <div class="card" style="padding:6px 0">
+      ${byProduct.sort((a,b) => (b.revenue||0)-(a.revenue||0)).map((p) => `<a class="thread-row" href="#/productos/${encodeURIComponent(p.productId)}" style="text-decoration:none">
+        <div class="thread-row-top">
+          <span class="avatar sm">${esc(initials(p.productName || '?'))}</span>
+          <div style="min-width:0;flex:1">
+            <div class="thread-company">${esc(p.productName)} ${p.sold ? `<span class="badge badge-ok">${p.sold} venta${p.sold === 1 ? '' : 's'}</span>` : ''}</div>
+            <div class="thread-person">${p.quotes} cotización${p.quotes === 1 ? '' : 'es'} · ${p.accepted} aceptada${p.accepted === 1 ? '' : 's'}</div>
+          </div>
+          <b style="color:var(--ok)">${esc(money(p.revenue || 0, currency))}</b>
+        </div>
+      </a>`).join('')}
+    </div>
+  </section>` : ''}
+`;
+}
+
+function bindVentas() { /* sin filtros adicionales */ }
+
+function renderProductRoute(id) {
+  const product = arr(S.state.products).find((p) => p.id === id);
+  if (!product) {
+    return emptyState({ iconName: 'box', title: 'Lámpara no encontrada', text: 'Volvió al catálogo para elegir otra.', actions: '<a class="btn btn-primary" href="#/productos">Ir al catálogo</a>' });
+  }
+  const missions = arr(S.state.missions).filter((m) => m.productId === id);
+  const threads = arr(S.state.threads).filter((t) => t.productId === id);
+  const content = arr(S.state.content).filter((c) => c.productId === id);
+  const learnings = arr(S.state.learnings).filter((l) => String(l.scope || '').toLowerCase().includes(String(product.name || '').toLowerCase()));
+  const sales = (S.state.sales?.byProduct || []).find((b) => b.productId === id) || { quotes: 0, accepted: 0, revenue: 0, sold: 0 };
+  const currency = S.state.sales?.currency || product.currency || 'USD';
+  const margin = product.price > 0 && product.cost > 0 ? Math.round(((product.price - product.cost) / product.price) * 100) : null;
+  const draftsToReview = threads.reduce((acc, t) => acc + num(t.reviewCount), 0);
+  const hot = threads.filter((t) => ['interesado','negociando'].includes(t.stage)).length;
+
+  const missionBlocks = [...missions].sort((a,b) => new Date(b.createdAt||0)-new Date(a.createdAt||0)).map((m) => {
+    const mThreads = threads.filter((t) => t.missionId === m.id);
+    const mContent = content.filter((c) => c.missionId === m.id);
+    return `<div class="route-mission">
+      <div class="route-mission-head">
+        <div>
+          <div class="route-mission-title">${esc(m.name)} ${missionStatusBadge(m.status, m)}</div>
+          <div class="route-mission-sub">${esc((m.markets||[]).join(' · ') || 'Mercado global')} · ${esc(DEPTHS[m.depth]?.label || m.depth)} · ${esc(relTime(m.finishedAt || m.createdAt))}</div>
+        </div>
+        <a class="btn btn-ghost btn-xs" href="#/misiones/${encodeURIComponent(m.id)}">Ver misión ${icon('arrowRight')}</a>
+      </div>
+      ${mThreads.length ? `<div class="route-buyers">
+        <p class="tiny muted" style="margin-bottom:6px">${mThreads.length} comprador${mThreads.length===1?'':'es'} de esta misión</p>
+        ${mThreads.map((t) => `<a class="route-buyer" href="#/bandeja/${encodeURIComponent(t.id)}">
+          <span class="avatar sm">${esc(initials(t.contact?.company || '?'))}</span>
+          <span style="min-width:0;flex:1">
+            <b class="truncate" style="display:block;font-size:12.5px">${esc(t.contact?.company || 'Contacto')}</b>
+            <span class="tiny muted">${esc(STAGES[t.stage]||t.stage)}${t.score?` · prioridad ${t.score}`:''}${t.awaitingReply?' · te escribió':''}</span>
+          </span>
+          ${t.demo ? '<span class="badge badge-demo">Ejemplo</span>' : t.awaitingReply ? '<span class="badge badge-ok">Real</span>' : ''}
+          ${t.reviewCount ? `<span class="badge badge-warn">${t.reviewCount} por aprobar</span>` : ''}
+          ${icon('chevronRight','icon-sm')}
+        </a>`).join('')}
+      </div>` : '<p class="tiny muted" style="margin-top:8px">Esta misión no creó conversaciones (sin compradores verificados).</p>'}
+      ${mContent.length ? `<div class="route-content">
+        <p class="tiny muted" style="margin:8px 0 6px">${mContent.length} pieza${mContent.length===1?'':'s'} de contenido</p>
+        <div class="cluster">${mContent.map((c) => `<a class="badge badge-neutral" href="#/contenido" style="text-decoration:none">${esc(c.platform || 'Contenido')} · ${esc(CONTENT_STATUS[c.status]||c.status)}</a>`).join('')}</div>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+
+  return `<div class="page-head">
+    <div class="page-head-main">
+      <p class="eyebrow">Lámpara</p>
+      <h2 class="page-title">${esc(product.name)}</h2>
+      <p class="page-sub">${esc(product.code || 'sin código')} · ${esc(product.category || 'Lámpara')} · ${esc(money(product.price, product.currency))}${product.status ? ` · ${esc(product.status)}` : ''}.</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-ghost" type="button" data-action="edit-product" data-id="${attr(product.id)}">${icon('edit')} Editar</button>
+      <a class="btn btn-primary" href="#/misiones/nueva?product=${encodeURIComponent(product.id)}">${icon('spark')} Lanzar misión</a>
+    </div>
+  </div>
+
+  <div class="product-route-head">
+    <div class="product-route-photo">${productImage(product)}</div>
+    <div class="product-route-info">
+      <div class="product-route-facts">
+        ${product.materials ? `<span class="fact">${icon('factory')} ${esc(truncate(product.materials, 40))}</span>` : ''}
+        ${product.weightGrams ? `<span class="fact">${icon('scale')} ${numFmt(product.weightGrams)} g</span>` : ''}
+        ${margin !== null ? `<span class="fact">${icon('chart')} margen ${margin}%</span>` : ''}
+        ${product.capacityPerWeek ? `<span class="fact">${icon('clock')} ${product.capacityPerWeek}/sem</span>` : ''}
+        ${product.leadTimeDays ? `<span class="fact">${icon('truck')} ${product.leadTimeDays} días</span>` : ''}
+        ${product.paymentLink ? `<a class="fact" href="${attr(safeUrl(product.paymentLink))}" target="_blank" rel="noopener noreferrer">${icon('dollar')} Link de pago</a>` : ''}
+      </div>
+      ${product.description ? `<p style="margin-top:10px;color:var(--ink-2);font-size:13.5px;line-height:1.6">${esc(product.description)}</p>` : ''}
+      ${product.notes ? `<p class="tiny muted" style="margin-top:8px">${esc(product.notes)}</p>` : ''}
+    </div>
+  </div>
+
+  <section class="stat-grid">
+    ${statCard('Misiones', missions.length, 'spark', missions.length ? 'pasadas del equipo' : 'sin misiones aún', '', '')}
+    ${statCard('Compradores', threads.length, 'users', threads.length ? `${hot} calientes` : 'ninguno aún', '', '')}
+    ${statCard('Por aprobar', draftsToReview, 'mail', draftsToReview ? 'borradores pendientes' : 'nada pendiente', '', draftsToReview ? 'warm' : '')}
+    ${statCard('Ventas', sales.sold || 0, 'dollar', sales.revenue ? `${money(sales.revenue, currency)} ingresados` : 'todavía ninguna', '#/ventas', sales.sold ? 'warm' : '')}
+    ${statCard('Contenido', content.length, 'image', content.filter((c)=>c.status==='publicado').length ? `${content.filter((c)=>c.status==='publicado').length} publicado${content.filter((c)=>c.status==='publicado').length===1?'':'s'}` : 'ideas y borradores', '', '')}
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div><h2 class="section-title">El recorrido</h2><p class="section-sub">De la ficha a la venta: cada misión, sus compradores y lo que se publicó.</p></div>
+      ${missions.length ? '' : `<a class="btn btn-primary btn-sm" href="#/misiones/nueva?product=${encodeURIComponent(product.id)}">Lanzar la primera misión</a>`}
+    </div>
+    ${missions.length ? `<div class="route-timeline">${missionBlocks}</div>` : emptyState({ iconName:'spark', title:'Todavía no hay misiones', text:'Lanzá una misión para que el equipo investigue, busque compradores y deje los borradores.', actions:`<a class="btn btn-primary" href="#/misiones/nueva?product=${encodeURIComponent(product.id)}">${icon('spark')} Lanzar la primera</a>` })}
+  </section>
+
+  ${content.length ? `<section class="section">
+    <div class="section-head">
+      <div><h2 class="section-title">Contenido del producto</h2><p class="section-sub">Lo que la IA preparó y dónde se publicó.</p></div>
+      <a class="section-link" href="#/contenido">Ver todo ${icon('arrowRight')}</a>
+    </div>
+    <div class="content-list">${content.map(contentCardHTML).join('')}</div>
+  </section>` : ''}
+
+  ${learnings.length ? `<section class="section">
+    <div class="section-head">
+      <div><h2 class="section-title">Aprendizajes</h2><p class="section-sub">Lo que el equipo aprendió sobre esta lámpara.</p></div>
+    </div>
+    <div class="learning-list">${learnings.map(learningCardHTML).join('')}</div>
+  </section>` : ''}
+`;
+}
+
+function bindProductRoute(id) { /* sin filtros adicionales */ }
+
 function renderProducts() {
   const products = arr(S.state.products);
   return `<div class="page-head">
@@ -887,6 +1180,7 @@ function renderProducts() {
     <div class="page-actions">
       <button class="btn btn-ghost" type="button" data-action="import-products">${icon('upload')} Importar CSV</button>
       <button class="btn btn-ghost" type="button" data-action="campaign-catalog" ${products.length ? '' : 'disabled'}>${icon('spark')} Campaña de catálogo</button>
+      ${S.ui.selectedProducts.length ? `<button class="btn btn-accent" type="button" data-action="campaign-selected">${icon('spark')} Poner a la venta (${S.ui.selectedProducts.length})</button>` : ''}
       <button class="btn btn-primary" type="button" data-action="new-product">${icon('plus')} Nueva lámpara</button>
     </div>
     <input type="file" id="product-import-input" accept=".csv,text/csv" hidden>
@@ -894,7 +1188,7 @@ function renderProducts() {
 
   ${products.length ? `
   <div class="filterbar">
-    <div class="search-field">${icon('search')}<input class="input" id="product-search" type="search" placeholder="Buscar por nombre, código o material…" value="${attr(S.ui.productQuery)}"></div>
+    <div class="search-field">${icon('search')}<input class="input" id="product-search" type="search" placeholder="Buscar por nombre, código o material”¦" value="${attr(S.ui.productQuery)}"></div>
     <select class="select" id="product-status-filter" style="max-width:180px">
       ${[['todos', 'Todos los estados'], ['listo', 'Listos'], ['borrador', 'Borradores'], ['archivado', 'Archivados']].map(([v, l]) => `<option value="${v}" ${S.ui.productStatus === v ? 'selected' : ''}>${l}</option>`).join('')}
     </select>
@@ -925,14 +1219,17 @@ function productGridHTML() {
 
 function productCard(product) {
   const margin = product.price > 0 && product.cost > 0 ? Math.round(((product.price - product.cost) / product.price) * 100) : null;
-  return `<article class="product-card">
+  return `<article class="product-card ${S.ui.selectedProducts.includes(product.id) ? 'selected' : ''}">
     <div class="product-photo">
+      <label class="product-select" title="Seleccionar para poner a la venta">
+        <input type="checkbox" data-action="toggle-product-select" data-id="${attr(product.id)}" ${S.ui.selectedProducts.includes(product.id) ? 'checked' : ''}>
+      </label>
       ${productImage(product)}
       <div class="product-badges">${demoBadge(product.demo)}<span class="badge ${product.status === 'listo' ? 'badge-ok' : product.status === 'archivado' ? 'badge-neutral' : 'badge-warn'}">${esc(product.status || 'borrador')}</span></div>
       <span class="product-price-tag">${esc(money(product.price, product.currency))}</span>
     </div>
     <div class="product-body">
-      <h3 class="product-name">${esc(product.name)}</h3>
+      <h3 class="product-name"><a href="#/productos/${encodeURIComponent(product.id)}" style="color:inherit;text-decoration:none">${esc(product.name)}</a></h3>
       <p class="product-code">${esc(product.code || 'sin código')} · ${esc(product.category || 'Lámpara')}</p>
       ${product.description ? `<p class="product-desc">${esc(product.description)}</p>` : `<p class="product-desc muted">Sin descripción. Agregá medidas o materiales para que el equipo escriba mejor.</p>`}
       <div class="product-meta">
@@ -991,8 +1288,9 @@ function bindProducts() {
   }
 }
 
-function openCampaignModal() {
-  const products = arr(S.state.products).filter((product) => product.status !== 'archivado');
+function openCampaignModal(productIds = null) {
+  const selected = productIds || S.ui.selectedProducts || [];
+  const products = arr(S.state.products).filter((product) => product.status !== 'archivado' && (selected.length ? selected.includes(product.id) : true));
   if (!products.length) {
     toast('Cargá al menos un producto activo antes de lanzar una campaña.', 'error');
     return;
@@ -1004,6 +1302,7 @@ function openCampaignModal() {
     title: 'Campaña de catálogo',
     subtitle: `${products.length} producto${products.length === 1 ? '' : 's'} · una misión por producto, en cola`,
     body: `<form id="campaign-form" autocomplete="off">
+      <input type="hidden" name="productIds" value="${attr((productIds || S.ui.selectedProducts || []).join(','))}">
       <div class="form-grid">
         <div class="field full"><label for="campaign-strategy">Cómo repartir los mercados</label>
           <select class="select" id="campaign-strategy" name="strategy">
@@ -1018,7 +1317,7 @@ function openCampaignModal() {
         </select></div>
         <div class="field"><label for="campaign-name">Nombre</label><input class="input" id="campaign-name" name="name" placeholder="Catálogo de temporada"></div>
       </div>
-      <div class="artifact-callout mt-3"><b>Qué va a pasar</b>Lumbre crea una misión por producto. Las misiones esperan en cola de a dos, buscan compradores, verifican y dejan los borradores en la bandeja. Nada se envía sin tu aprobación (salvo que actives el piloto automático).</div>
+      <div class="artifact-callout mt-3"><b>Qué va a pasar</b>Lucian crea una misión por producto. Las misiones esperan en cola de a dos, buscan compradores, verifican y dejan los borradores en la bandeja. Nada se envía sin tu aprobación (salvo que actives el piloto automático).</div>
     </form>`,
     footer: `<button class="btn btn-ghost" type="button" data-action="close-modal">Cancelar</button>
       <button class="btn btn-primary" type="button" data-action="launch-campaign">${icon('spark')} Lanzar campaña</button>`,
@@ -1031,9 +1330,11 @@ async function launchCampaign() {
   const fd = new FormData(form);
   const markets = String(fd.get('markets') || '').split(/[,;\n]+/).map((market) => market.trim()).filter(Boolean);
   try {
+    const productIds = String(fd.get('productIds') || '').split(',').map((id) => id.trim()).filter(Boolean);
     const result = await api('/api/campaigns', {
       method: 'POST',
       body: {
+        productIds,
         marketStrategy: String(fd.get('strategy') || 'rotate'),
         markets,
         depth: String(fd.get('depth') || ''),
@@ -1041,6 +1342,7 @@ async function launchCampaign() {
       },
     });
     closeModal(true);
+    S.ui.selectedProducts = [];
     const created = result.campaign?.created?.length || 0;
     const skipped = result.campaign?.skipped?.length || 0;
     toast(`Campaña creada: ${created} misión${created === 1 ? '' : 'es'} en cola${skipped ? ` · ${skipped} producto${skipped === 1 ? '' : 's'} omitido${skipped === 1 ? '' : 's'}` : ''}.`);
@@ -1080,16 +1382,19 @@ function openProductModal(id = null) {
       <div class="form-grid">
         <div class="field full"><label for="pf-name">Nombre <span class="req">*</span></label><input class="input" id="pf-name" name="name" required value="${attr(product?.name || '')}" placeholder="Ej.: Aurora 01"></div>
         <div class="field"><label for="pf-code">Código / SKU</label><input class="input" id="pf-code" name="code" value="${attr(product?.code || '')}" placeholder="AUR-01"></div>
-        <div class="field"><label for="pf-category">Categoría</label><input class="input" id="pf-category" name="category" value="${attr(product?.category || 'Lámpara')}" placeholder="Colgante, de mesa, aplique…"></div>
+        <div class="field"><label for="pf-category">Categoría</label><input class="input" id="pf-category" name="category" value="${attr(product?.category || 'Lámpara')}" placeholder="Colgante, de mesa, aplique”¦"></div>
         <div class="field"><label for="pf-price">Precio de venta</label><input class="input" id="pf-price" name="price" type="number" min="0" step="0.01" value="${attr(product?.price ?? '')}" placeholder="240"></div>
         <div class="field"><label for="pf-currency">Moneda</label><select class="select" id="pf-currency" name="currency">${CURRENCIES.map((c) => `<option value="${c}" ${(product?.currency || settings.mission?.currency || b.currency || 'USD') === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
         <div class="field"><label for="pf-cost">Costo de producción</label><input class="input" id="pf-cost" name="cost" type="number" min="0" step="0.01" value="${attr(product?.cost ?? '')}" placeholder="80"><p class="field-hint">Materiales, impresión, terminación y packaging.</p></div>
         <div class="field"><label for="pf-weight">Peso (gramos)</label><input class="input" id="pf-weight" name="weightGrams" type="number" min="0" step="1" value="${attr(product?.weightGrams ?? '')}" placeholder="1200"></div>
         <div class="field"><label for="pf-dimensions">Medidas</label><input class="input" id="pf-dimensions" name="dimensions" value="${attr(product?.dimensions || '')}" placeholder="Ø 32 cm · alto 24 cm · cable 180 cm"></div>
+        <div class="field"><label for="pf-capacity">Capacidad semanal</label><input class="input" id="pf-capacity" name="capacityPerWeek" type="number" min="0" step="1" value="${attr(product?.capacityPerWeek ?? '')}" placeholder="8"><p class="field-hint">Unidades que podés fabricar por semana sin romper plazos.</p></div>
+        <div class="field"><label for="pf-leadtime">Plazo de fabricación (días)</label><input class="input" id="pf-leadtime" name="leadTimeDays" type="number" min="0" step="1" value="${attr(product?.leadTimeDays ?? '')}" placeholder="14"><p class="field-hint">Desde la confirmación del pago hasta el despacho.</p></div>
+        <div class="field full"><label for="pf-payment">Link de pago o seña</label><input class="input" id="pf-payment" name="paymentLink" type="url" value="${attr(product?.paymentLink || '')}" placeholder="https://link.mercadopago.com.ar/”¦ o https://buy.stripe.com/”¦"><p class="field-hint">Se incluye en las cotizaciones para cerrar sin idas y vueltas.</p></div>
         <div class="field"><label for="pf-status">Estado</label><select class="select" id="pf-status" name="status">${[['borrador', 'Borrador'], ['listo', 'Listo para vender'], ['archivado', 'Archivado']].map(([v, l]) => `<option value="${v}" ${(product?.status || 'borrador') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
         <div class="field full"><label for="pf-materials">Materiales y terminación</label><input class="input" id="pf-materials" name="materials" value="${attr(product?.materials || '')}" placeholder="PLA / PETG, difusor opal, cable textil, casquillo E27"></div>
         <div class="field full"><label for="pf-description">Descripción corta</label><textarea class="textarea" id="pf-description" name="description" rows="3" placeholder="Qué la hace distinta, en dos o tres líneas.">${esc(product?.description || '')}</textarea></div>
-        <div class="field full"><label for="pf-notes">Notas para el equipo</label><textarea class="textarea" id="pf-notes" name="notes" rows="3" placeholder="Capacidad de producción, colores, plazos, certificaciones pendientes, precio mínimo…">${esc(product?.notes || '')}</textarea><p class="field-hint">Todo lo que un vendedor nuevo necesitaría saber antes de hablar con un comprador.</p></div>
+        <div class="field full"><label for="pf-notes">Notas para el equipo</label><textarea class="textarea" id="pf-notes" name="notes" rows="3" placeholder="Capacidad de producción, colores, plazos, certificaciones pendientes, precio mínimo”¦">${esc(product?.notes || '')}</textarea><p class="field-hint">Todo lo que un vendedor nuevo necesitaría saber antes de hablar con un comprador.</p></div>
       </div>
     </div>
   </form>`;
@@ -1191,6 +1496,9 @@ async function saveProduct() {
     cost: num(data.cost, 0),
     weightGrams: num(data.weightGrams, 0),
     dimensions: data.dimensions,
+    capacityPerWeek: num(data.capacityPerWeek, 0),
+    leadTimeDays: num(data.leadTimeDays, 0),
+    paymentLink: data.paymentLink,
     materials: data.materials,
     description: data.description,
     notes: data.notes,
@@ -1223,6 +1531,7 @@ function renderMissions() {
     </div>
     <div class="page-actions">
       ${arr(S.state.products).length ? `<button class="btn btn-ghost" type="button" data-action="campaign-catalog">${icon('spark')} Campaña de catálogo</button>` : ''}
+      ${missions.length ? `<button class="btn btn-danger" type="button" data-action="delete-all-missions">${icon('trash')} Borrar todas (${missions.length})</button>` : ''}
       <button class="btn btn-primary" type="button" data-action="new-mission">${icon('plus')} Nueva misión</button>
     </div>
   </div>
@@ -1369,8 +1678,8 @@ function renderWizard() {
         <div class="summary-row"><span>Objetivo</span><b>${esc(GOALS.find((g) => g.id === w.goal)?.title || w.goal)}</b></div>
         <div class="summary-row"><span>Mercados</span><b>${esc(w.markets.join(', ') || 'sin elegir')}</b></div>
         <div class="summary-row"><span>Profundidad</span><b>${esc(DEPTHS[w.depth]?.label || w.depth)}</b></div>
-        <div class="summary-row"><span>Pasos</span><b>${DEPTHS[w.depth]?.steps || '—'}</b></div>
-        <div class="summary-row"><span>Tiempo estimado</span><b>${esc(DEPTHS[w.depth]?.minutes || '—')} min</b></div>
+        <div class="summary-row"><span>Pasos</span><b>${DEPTHS[w.depth]?.steps || '””'}</b></div>
+        <div class="summary-row"><span>Tiempo estimado</span><b>${esc(DEPTHS[w.depth]?.minutes || '””')} min</b></div>
         <div class="summary-row"><span>Modo</span><b>${esc(modeLabel)}</b></div>
       </div>
       ${!S.state.flags?.ai ? '<div class="summary-note warn">Sin IA configurada, esta misión se ejecuta en demo. Sirve para recorrer todo el flujo con datos de ejemplo.</div>' : ''}
@@ -1428,7 +1737,7 @@ async function launchWizard() {
   if (!w.productId) { toast('Elegí un producto.', 'error'); return; }
   if (!w.markets.length) { toast('Elegí al menos un mercado.', 'error'); w.step = 3; render(); return; }
   const button = $('[data-action="wizard-launch"]');
-  if (button) { button.disabled = true; button.innerHTML = `${icon('refresh', 'spin')} Preparando…`; }
+  if (button) { button.disabled = true; button.innerHTML = `${icon('refresh', 'spin')} Preparando”¦`; }
   try {
     const result = await api('/api/missions', {
       method: 'POST',
@@ -1488,7 +1797,7 @@ async function loadMission(id) {
 }
 
 function missionSkeleton() {
-  return `<div class="card card-pad" style="margin-bottom:18px"><div class="progress"><div class="progress-bar" style="width:24%"></div></div><p class="muted small mt-2">Abriendo la sala de misión…</p></div>
+  return `<div class="card card-pad" style="margin-bottom:18px"><div class="progress"><div class="progress-bar" style="width:24%"></div></div><p class="muted small mt-2">Abriendo la sala de misión”¦</p></div>
     <div class="card card-pad" style="min-height:280px;display:grid;place-items:center"><div style="text-align:center"><span class="pulse" style="display:inline-block">${icon('spark', 'icon-xl')}</span><p class="muted small mt-2">Leyendo lo que produjo el equipo.</p></div></div>`;
 }
 
@@ -1790,7 +2099,7 @@ function artifactBrief(a) {
     ${a.publico_primario ? `<div class="artifact-section"><h4>Público primario</h4><p>${esc(a.publico_primario)}</p></div>` : ''}
     ${arr(a.publicos_secundarios).length ? `<div class="artifact-section"><h4>Públicos secundarios</h4>${listBlock(a.publicos_secundarios)}</div>` : ''}
     ${arr(a.paises).length ? `<div class="artifact-section"><h4>Países y canales</h4><div class="country-grid">${a.paises.map((p) => artifactCard(p.pais, `${esc(p.motivo || '')}${p.canal ? `<br><b>Canal:</b> ${esc(p.canal)}` : ''}`, p.dificultad ? `<span class="badge badge-${p.dificultad === 'alta' ? 'danger' : p.dificultad === 'baja' ? 'ok' : 'warn'}">${esc(p.dificultad)}</span>` : '')).join('')}</div></div>` : ''}
-    ${arr(a.angulos).length ? `<div class="artifact-section"><h4>Ángulos</h4><div class="artifact-grid-2">${a.angulos.map((x) => artifactCard(x.angulo, x.prueba || '', x.uso ? `<span class="badge badge-neutral">${esc(x.uso)}</span>` : '')).join('')}</div></div>` : ''}
+    ${arr(a.angulos).length ? `<div class="artifact-section"><h4>Ãngulos</h4><div class="artifact-grid-2">${a.angulos.map((x) => artifactCard(x.angulo, x.prueba || '', x.uso ? `<span class="badge badge-neutral">${esc(x.uso)}</span>` : '')).join('')}</div></div>` : ''}
     ${arr(a.riesgos).length ? `<div class="artifact-callout warn"><b>Riesgos que hay que mirar</b>${listBlock(a.riesgos)}</div>` : ''}
     ${arr(a.supuestos).length ? `<div class="artifact-section"><h4>Supuestos</h4>${listBlock(a.supuestos)}</div>` : ''}
     ${arr(a.preguntas_abiertas).length ? `<div class="artifact-section"><h4>Preguntas abiertas</h4>${listBlock(a.preguntas_abiertas)}</div>` : ''}
@@ -1802,7 +2111,7 @@ function artifactResearch(a) {
   return `<div class="artifact">
     ${a.panorama ? `<div class="artifact-lead">${esc(a.panorama)}</div>` : ''}
     ${arr(a.tendencias).length ? `<div class="artifact-section"><h4>Tendencias</h4><div class="artifact-grid-2">${a.tendencias.map((t) => artifactCard(t.tendencia, `${esc(t.evidencia || '')}${t.fuente ? `<br>${sourceLink(t.fuente)}` : ''}`, t.fuente ? `<span class="badge ${t.fuente_verificada ? 'badge-ok' : 'badge-warn'}">${t.fuente_verificada ? 'Confirmado en fuente' : 'Hipótesis del modelo'}</span>` : '')).join('')}</div></div>` : ''}
-    ${arr(a.competidores).length ? `<div class="artifact-section"><h4>Competencia</h4>${tableBlock(['Competidor', 'País', 'Precio', 'Canal', 'Fortaleza', 'Hueco', 'Fuente'], a.competidores.map((c) => [c.nombre, c.pais, c.precio, c.canal, c.fortaleza, c.hueco, c.fuente ? `<span class="badge ${c.fuente_verificada ? 'badge-ok' : 'badge-warn'}">${c.fuente_verificada ? 'Confirmado' : 'Hipótesis'}</span>` : '—']))}</div>` : ''}
+    ${arr(a.competidores).length ? `<div class="artifact-section"><h4>Competencia</h4>${tableBlock(['Competidor', 'País', 'Precio', 'Canal', 'Fortaleza', 'Hueco', 'Fuente'], a.competidores.map((c) => [c.nombre, c.pais, c.precio, c.canal, c.fortaleza, c.hueco, c.fuente ? `<span class="badge ${c.fuente_verificada ? 'badge-ok' : 'badge-warn'}">${c.fuente_verificada ? 'Confirmado' : 'Hipótesis'}</span>` : '””']))}</div>` : ''}
     ${obj(a.demanda).senales?.length || a.demanda?.temporadas || a.demanda?.terminos?.length ? `<div class="artifact-section"><h4>Demanda</h4>${listBlock(a.demanda.senales)}${a.demanda.temporadas ? `<p class="small"><b>Temporadas:</b> ${esc(a.demanda.temporadas)}</p>` : ''}${arr(a.demanda.terminos).length ? `<div class="artifact-chips">${a.demanda.terminos.map((t) => `<span class="artifact-chip">${esc(t)}</span>`).join('')}</div>` : ''}</div>` : ''}
     ${arr(a.canales).length ? `<div class="artifact-section"><h4>Canales</h4><div class="artifact-grid-2">${a.canales.map((c) => artifactCard(c.canal, `${esc(c.por_que || '')}${c.esfuerzo ? `<br><b>Esfuerzo:</b> ${esc(c.esfuerzo)}` : ''}`)).join('')}</div></div>` : ''}
     ${a.conclusion ? `<div class="artifact-callout"><b>Conclusión</b>${esc(a.conclusion)}</div>` : ''}
@@ -1874,7 +2183,7 @@ function artifactEnrichment(a) {
   return `<div class="artifact">
     ${kvBlock([['Revisados', a.revisados], ['Con email', a.encontrados], ['Verificados', a.verificados], ['Sin contacto', a.sin_contacto]])}
     ${a.metodo ? `<p class="small muted">${esc(a.metodo)}</p>` : ''}
-    ${arr(a.detalle).length ? `<div class="artifact-section"><h4>Detalle</h4>${tableBlock(['Comprador', 'Email', 'Estado', 'Nota'], a.detalle.map((d) => [d.comprador, d.email || '—', d.estado, d.nota]))}</div>` : ''}
+    ${arr(a.detalle).length ? `<div class="artifact-section"><h4>Detalle</h4>${tableBlock(['Comprador', 'Email', 'Estado', 'Nota'], a.detalle.map((d) => [d.comprador, d.email || '””', d.estado, d.nota]))}</div>` : ''}
     ${a.demo ? '<p class="artifact-footnote">Datos de ejemplo. En una misión real, las direcciones se buscan en sitios públicos y Hunter; no se inventan emails.</p>' : ''}
   </div>`;
 }
@@ -1891,7 +2200,7 @@ function artifactOutreach(a) {
     </div>`).join('')}</div></div>` : ''}
     ${arr(a.secuencia).length ? `<div class="artifact-section"><h4>Secuencia</h4><div class="plan-days">${a.secuencia.map((s) => `<div class="plan-day"><span class="plan-num">${esc(s.dia ?? s.paso ?? '·')}</span><div class="plan-content"><h5>${esc(s.objetivo || s.asunto || '')}</h5>${s.asunto ? `<p><b>Asunto:</b> ${esc(s.asunto)}</p>` : ''}${s.cuerpo ? `<div class="message-body" style="margin-top:5px">${esc(s.cuerpo)}</div>` : ''}</div></div>`).join('')}</div></div>` : ''}
     ${arr(a.whatsapp).length ? `<div class="artifact-section"><h4>WhatsApp / DM</h4><div class="stack">${a.whatsapp.map((w) => `<div class="message-card"><div class="message-subject">${esc(w.comprador || '')}</div><div class="message-body">${esc(w.mensaje || '')}</div><div class="message-actions">${copyButton(w.mensaje || '', 'Copiar mensaje')}</div></div>`).join('')}</div></div>` : ''}
-    ${arr(a.objeciones).length ? `<div class="artifact-section"><h4>Objeciones y respuestas</h4><div class="stack">${a.objeciones.map((o) => `<div class="artifact-card"><h5>“${esc(o.objecion || '')}”</h5><p>${esc(o.respuesta || '')}</p></div>`).join('')}</div></div>` : ''}
+    ${arr(a.objeciones).length ? `<div class="artifact-section"><h4>Objeciones y respuestas</h4><div class="stack">${a.objeciones.map((o) => `<div class="artifact-card"><h5>“${esc(o.objecion || '')}”</h5><p>${esc(o.respuesta || '')}</p></div>`).join('')}</div></div>` : ''}
     ${arr(a.reglas).length ? `<div class="artifact-section"><h4>Reglas de envío</h4>${listBlock(a.reglas)}</div>` : ''}
     ${a.firma ? `<div class="artifact-section"><h4>Firma</h4><div class="artifact-quote">${nl2br(a.firma)}</div></div>` : ''}
     ${a.demo ? '<p class="artifact-footnote">Mensajes de ejemplo. No se enviaron a nadie. Revisalos antes de usar un correo real.</p>' : ''}
@@ -1906,7 +2215,7 @@ function artifactContent(a) {
       ${c.guion ? `<p class="content-script"><b>Guion:</b> ${esc(c.guion)}</p>` : ''}
       ${c.caption ? `<div class="content-caption">${esc(c.caption)}</div>` : ''}
       ${arr(c.hashtags).length ? `<div class="hashtags">${c.hashtags.map((h) => `<span>${esc(h)}</span>`).join('')}</div>` : ''}
-      <div class="content-foot"><span class="content-cta"><b>CTA:</b> ${esc(c.cta || '—')}</span>${copyButton(`${c.gancho || ''}\n\n${c.caption || ''}\n\n${arr(c.hashtags).join(' ')}`, 'Copiar pieza')}</div>
+      <div class="content-foot"><span class="content-cta"><b>CTA:</b> ${esc(c.cta || '””')}</span>${copyButton(`${c.gancho || ''}\n\n${c.caption || ''}\n\n${arr(c.hashtags).join(' ')}`, 'Copiar pieza')}</div>
     </div>`).join('')}</div></div>` : ''}
     ${a.serie ? `<div class="artifact-callout"><b>Serie: ${esc(a.serie.nombre || '')}</b>${esc(a.serie.descripcion || '')}${arr(a.serie.episodios).length ? `<div class="artifact-chips mt-2">${a.serie.episodios.map((e) => `<span class="artifact-chip">${esc(e)}</span>`).join('')}</div>` : ''}</div>` : ''}
     ${arr(a.ganchos).length ? `<div class="artifact-section"><h4>Ganchos</h4>${listBlock(a.ganchos)}</div>` : ''}
@@ -1934,7 +2243,7 @@ function artifactRedteam(a) {
     ${a.sello ? `<div class="artifact-quote">${esc(a.sello)}</div>` : ''}
     ${a.veredicto ? `<div class="artifact-callout warn"><b>Veredicto: ${esc(a.veredicto)}</b>El plan necesita estos ajustes antes de salir.</div>` : ''}
     ${arr(a.supuestos_fragiles).length ? `<div class="artifact-section"><h4>Supuestos frágiles</h4><div class="stack">${a.supuestos_fragiles.map((s) => `<div class="artifact-card"><h5>${esc(s.supuesto || '')}</h5><p><b>Por qué falla:</b> ${esc(s.por_que_falla || '')}</p>${s.prueba_barata ? `<p style="color:var(--ok);margin-top:5px"><b>Prueba barata:</b> ${esc(s.prueba_barata)}</p>` : ''}</div>`).join('')}</div></div>` : ''}
-    ${arr(a.agujeros).length ? `<div class="artifact-section"><h4>Agujeros</h4>${tableBlock(['Área', 'Problema', 'Impacto', 'Arreglo'], a.agujeros.map((h) => [h.area, h.problema, h.impacto, h.arreglo]))}</div>` : ''}
+    ${arr(a.agujeros).length ? `<div class="artifact-section"><h4>Agujeros</h4>${tableBlock(['Ãrea', 'Problema', 'Impacto', 'Arreglo'], a.agujeros.map((h) => [h.area, h.problema, h.impacto, h.arreglo]))}</div>` : ''}
     ${arr(a.escenarios).length ? `<div class="artifact-section"><h4>Escenarios</h4><div class="artifact-grid-2">${a.escenarios.map((e) => artifactCard(e.escenario, `<b>Probabilidad:</b> ${esc(e.probabilidad || '')}<br><b>Plan B:</b> ${esc(e.plan_b || '')}`)).join('')}</div></div>` : ''}
     ${arr(a.preguntas_dificiles).length ? `<div class="artifact-section"><h4>Preguntas difíciles</h4>${listBlock(a.preguntas_dificiles)}</div>` : ''}
     ${arr(a.lo_que_sobra).length ? `<div class="artifact-callout danger"><b>Lo que sobra</b>${listBlock(a.lo_que_sobra)}</div>` : ''}
@@ -1976,10 +2285,10 @@ function artifactLearning(a) {
 
 const INBOX_FILTERS = [
   ['todos', 'Todos'],
-  ['calientes', 'Calientes'],
-  ['responder', 'Responder'],
-  ['borradores', 'Listos'],
+  ['responder', 'Para responder'],
   ['revisar', 'Por aprobar'],
+  ['calientes', 'Calientes'],
+  ['ventas', 'Ventas'],
   ['nuevos', 'Nuevos'],
 ];
 
@@ -1988,13 +2297,14 @@ function threadMatchesFilter(thread, filter) {
   if (filter === 'responder') return Boolean(thread.awaitingReply);
   if (filter === 'borradores') return num(thread.draftCount) > 0;
   if (filter === 'revisar') return num(thread.reviewCount) > 0 || num(thread.blockedCount) > 0;
+  if (filter === 'ventas') return thread.stage === 'ganado';
   if (filter === 'nuevos') return thread.stage === 'nuevo';
   return true;
 }
 
 function filteredThreads() {
   const q = String(S.ui.inboxQuery || '').trim().toLowerCase();
-  return sortByDate(arr(S.state?.threads), 'lastActivityAt').filter((thread) => {
+  const base = arr(S.state?.threads).filter((thread) => {
     if (!threadMatchesFilter(thread, S.ui.inboxFilter)) return false;
     if (!q) return true;
     return [
@@ -2002,6 +2312,13 @@ function filteredThreads() {
       thread.contact?.country, thread.contact?.city, thread.contact?.type,
       thread.nextStep, STAGES[thread.stage],
     ].some((value) => String(value || '').toLowerCase().includes(q));
+  });
+  // Lo que necesita tu decisión va primero: respuestas reales y borradores por aprobar.
+  return base.sort((a, b) => {
+    const ra = (a.awaitingReply ? 1000 : 0) + (num(a.reviewCount) > 0 ? 500 : 0) + num(a.score);
+    const rb = (b.awaitingReply ? 1000 : 0) + (num(b.reviewCount) > 0 ? 500 : 0) + num(b.score);
+    if (rb !== ra) return rb - ra;
+    return new Date(b.lastActivityAt || 0) - new Date(a.lastActivityAt || 0);
   });
 }
 
@@ -2024,15 +2341,17 @@ function threadRowsHTML() {
         </div>
         <span class="thread-score" title="Prioridad">${esc(thread.score || 0)}</span>
       </div>
-      <div class="thread-preview ${thread.lastMessage?.direction === 'in' ? 'in' : ''}">${esc(thread.lastMessage?.body || thread.draftPreview?.body || thread.nextStep || 'Sin mensajes todavía.')}</div>
+      <div class="thread-preview ${thread.lastMessage?.direction === 'in' ? 'in' : ''}">${esc(thread.awaitingReply ? 'Te escribió: ' : '')}${esc(thread.lastMessage?.body || thread.draftPreview?.body || thread.nextStep || 'Sin mensajes todavía.')}</div>
       <div class="thread-badges">
         ${demoBadge(thread.demo)}
+        ${!thread.demo && !thread.suppressed ? '<span class="badge badge-ok">Comprador real</span>' : ''}
         ${thread.unverified ? '<span class="badge badge-warn">Sin verificar</span>' : ''}
         ${thread.suppressed ? '<span class="badge badge-danger">No contactar</span>' : ''}
         ${thread.draftCount ? `<span class="badge badge-amber">${thread.draftCount} listo${thread.draftCount === 1 ? '' : 's'}</span>` : ''}
         ${thread.reviewCount ? `<span class="badge badge-warn">${thread.reviewCount} por aprobar</span>` : ''}
         ${thread.blockedCount ? `<span class="badge badge-danger">${thread.blockedCount} bloqueado${thread.blockedCount === 1 ? '' : 's'}</span>` : ''}
-        ${thread.awaitingReply ? '<span class="badge badge-ok">Espera respuesta</span>' : ''}
+        ${thread.awaitingReply ? '<span class="badge badge-ok">Te escribió</span>' : ''}
+        ${thread.stage === 'ganado' ? '<span class="badge badge-ok">Venta ganada</span>' : ''}
         ${thread.nextFollowUp ? `<span class="badge badge-neutral">${icon('calendar')} ${esc(dateShort(thread.nextFollowUp))}</span>` : ''}
       </div>
     </a>`;
@@ -2057,10 +2376,13 @@ function renderInbox(id) {
     <div class="page-head-main">
       <p class="eyebrow">Bandeja</p>
       <h2 class="page-title">Personas, no leads.</h2>
-      <p class="page-sub">Cada conversación tiene un borrador listo, un siguiente paso y el contexto para responder sin improvisar. Nada se envía sin que lo confirmes.</p>
+      <p class="page-sub">Cada conversación es un comprador: real o de ejemplo. Mirá si te escribió en serio, qué quiere y qué tenés que aprobar. Nada se envía sin que lo confirmes.</p>
     </div>
     <div class="page-actions">
+      ${S.state.flags?.email && S.state.settings?.email?.provider === 'gmail' ? `<button class="btn btn-ghost btn-sm" type="button" data-action="check-inbox">${icon('refresh')} Revisar correos</button>` : ''}
       <a class="btn btn-ghost btn-sm" href="/api/export/threads.csv" download>${icon('download')} Exportar CSV</a>
+      ${pendingResendCount() ? `<button class="btn btn-accent btn-sm" type="button" data-action="prepare-resends">${icon('send')} Preparar reenvíos (${pendingResendCount()})</button>` : ''}
+      ${threads.length ? `<button class="btn btn-danger btn-sm" type="button" data-action="delete-all-threads">${icon('trash')} Borrar todas (${threads.length})</button>` : ''}
       <a class="btn btn-primary btn-sm" href="#/misiones/nueva">${icon('plus')} Nueva misión</a>
     </div>
   </div>
@@ -2069,8 +2391,8 @@ function renderInbox(id) {
     <aside class="inbox-list ${id ? 'hide-mobile' : ''}">
       <div class="inbox-head">
         <div class="between"><h2>Conversaciones</h2><span class="badge badge-neutral">${threads.length}</span></div>
-        <p class="tiny muted" style="margin-top:2px">${totalDrafts ? `${totalDrafts} borrador${totalDrafts === 1 ? '' : 'es'} esperando tu revisión` : 'Sin borradores pendientes'}</p>
-        <div class="search-field" style="margin-top:10px">${icon('search')}<input class="input" id="inbox-search" type="search" value="${attr(S.ui.inboxQuery || '')}" placeholder="Buscar empresa, persona o país…" aria-label="Buscar conversaciones"></div>
+        <p class="tiny muted" style="margin-top:2px">${threads.length} conversaciones · ${threads.filter((t) => t.awaitingReply).length} te escribieron · ${threads.reduce((a, t) => a + num(t.reviewCount), 0)} por aprobar · ${threads.filter((t) => t.stage === 'ganado').length} ventas</p>
+        <div class="search-field" style="margin-top:10px">${icon('search')}<input class="input" id="inbox-search" type="search" value="${attr(S.ui.inboxQuery || '')}" placeholder="Buscar empresa, persona o país”¦" aria-label="Buscar conversaciones"></div>
         <div class="inbox-filters" id="inbox-filters">
           ${INBOX_FILTERS.map(([value, label]) => `<button class="chip ${S.ui.inboxFilter === value ? 'active' : ''}" type="button" data-action="inbox-filter" data-filter="${value}">${label}</button>`).join('')}
         </div>
@@ -2091,7 +2413,7 @@ function inboxEmptyHTML() {
 }
 
 function threadSkeleton() {
-  return `<div class="inbox-empty"><span class="pulse">${icon('mail')}</span><p style="margin-top:8px">Abriendo la conversación…</p></div>`;
+  return `<div class="inbox-empty"><span class="pulse">${icon('mail')}</span><p style="margin-top:8px">Abriendo la conversación”¦</p></div>`;
 }
 
 function threadDetailHTML(data) {
@@ -2110,7 +2432,7 @@ function threadDetailHTML(data) {
       <a class="icon-btn bordered" href="#/bandeja" aria-label="Volver a la bandeja" title="Volver">${icon('arrowLeft')}</a>
       <span class="avatar lg">${esc(initials(contact.company || contact.name || '?'))}</span>
       <div style="min-width:0;flex:1">
-        <div class="thread-hero-name">${esc(contact.company || 'Contacto')} ${demoBadge(thread.demo)} ${thread.unverified ? '<span class="badge badge-warn">Sin verificar</span>' : ''} ${suppressed ? '<span class="badge badge-danger">No contactar</span>' : ''}</div>
+        <div class="thread-hero-name">${esc(contact.company || 'Contacto')} ${demoBadge(thread.demo)} ${!thread.demo && !suppressed ? '<span class="badge badge-ok">Comprador real</span>' : ''} ${thread.unverified ? '<span class="badge badge-warn">Sin verificar</span>' : ''} ${suppressed ? '<span class="badge badge-danger">No contactar</span>' : ''} ${thread.awaitingReply ? '<span class="badge badge-ok">Te escribió</span>' : ''}</div>
         <div class="thread-hero-sub">
           <span>${esc(contact.name || 'Sin nombre')}${contact.role ? ` · ${esc(contact.role)}` : ''}</span>
           ${contact.email ? `<a href="mailto:${attr(contact.email)}">${esc(contact.email)}</a>` : '<span style="color:var(--danger)">Sin email</span>'}
@@ -2123,12 +2445,13 @@ function threadDetailHTML(data) {
           ${Object.entries(STAGES).map(([value, label]) => `<option value="${value}" ${thread.stage === value ? 'selected' : ''}>${label}</option>`).join('')}
         </select>
         <button class="btn btn-ghost btn-sm" type="button" data-action="edit-contact" data-id="${attr(thread.id)}">${icon('edit')} Contacto</button>
+        ${!suppressed ? `<button class="btn btn-ghost btn-sm" type="button" data-action="new-quote" data-id="${attr(thread.id)}">${icon('dollar')} Cotizar</button>` : ''}
         <button class="btn btn-primary btn-sm" type="button" data-action="analyze-thread" data-id="${attr(thread.id)}">${icon('wand')} Analizar</button>
         <button class="icon-btn danger" type="button" data-action="delete-thread" data-id="${attr(thread.id)}" aria-label="Eliminar conversación" title="Eliminar conversación">${icon('trash')}</button>
       </div>
     </div>
     ${suppressed ? `<div class="artifact-callout danger mt-3"><b>Este contacto está en la lista de no contactar</b>${thread.optOut?.rule ? ` Detectado por: ${esc(thread.optOut.rule)}.` : ''} No se puede enviar ni descargar un correo. Si fue un error, quitá la supresión en Ajustes → No contactar; los borradores volverán a revisión.</div>` : ''}
-    ${thread.unverified ? `<div class="artifact-callout warn mt-3"><b>Este prospecto no está verificado</b><p class="mt-2">${esc(thread.unverifiedReason || 'Se creó antes de que Lumbre exigiera sitio web o email comprobables.')} Confirmá que la tienda existe y cuál es su canal antes de enviar cualquier mensaje.</p></div>` : ''}
+    ${thread.unverified ? `<div class="artifact-callout warn mt-3"><b>Este prospecto no está verificado</b><p class="mt-2">${esc(thread.unverifiedReason || 'Se creó antes de que Lucian exigiera sitio web o email comprobables.')} Confirmá que la tienda existe y cuál es su canal antes de enviar cualquier mensaje.</p></div>` : ''}
     <div class="thread-facts">
       <span class="fact">${icon('target')} Prioridad <b>${esc(thread.score || 0)}</b></span>
       <span class="fact">${icon('mail')} ${readyDrafts.length} listo${readyDrafts.length === 1 ? '' : 's'}</span>
@@ -2137,6 +2460,7 @@ function threadDetailHTML(data) {
       ${suppressed ? '<span class="fact">' + icon('shield') + ' No contactar</span>' : ''}
       ${thread.nextFollowUp ? `<span class="fact">${icon('calendar')} Seguimiento ${esc(dateTime(thread.nextFollowUp))}</span>` : ''}
       <span class="fact">${icon('clock')} ${esc(relTime(thread.lastActivityAt || thread.updatedAt))}</span>
+      ${thread.lastAnalysis?.intencion ? `<span class="fact">${icon('wand')} Intención: <b>${esc(String(thread.lastAnalysis.intencion).replace(/_/g, ' '))}</b></span>` : ''}
       ${product ? `<span class="fact">${icon('box')} ${esc(product.name)}</span>` : ''}
       ${mission ? `<a class="fact" href="#/misiones/${encodeURIComponent(mission.id)}" style="text-decoration:none">${icon('spark')} ${esc(mission.name)}</a>` : ''}
       ${contact.website ? `<a class="fact" href="${attr(safeUrl(contact.website) || '#')}" target="_blank" rel="noopener noreferrer" style="text-decoration:none">${icon('globe')} ${esc(truncate(contact.website.replace(/^https?:\/\//, ''), 32))}</a>` : ''}
@@ -2154,6 +2478,11 @@ function threadDetailHTML(data) {
           ${messages.length ? `<div class="conversation">${messages.map((message) => messageBubbleHTML(message, thread)).join('')}</div>` : `<div class="soft"><p class="small muted">Todavía no hay mensajes. Abajo podés registrar lo que respondió el comprador o crear un borrador nuevo.</p></div>`}
         </section>
 
+        ${arr(thread.quotes).length ? `<section class="thread-section">
+          <div class="thread-section-head"><h3>Cotizaciones</h3><span class="tiny muted">${arr(thread.quotes).length} preparada${arr(thread.quotes).length === 1 ? '' : 's'}</span></div>
+          ${quotesHTML(thread)}
+        </section>` : ''}
+
         <section class="thread-section">
           <div class="thread-section-head">
             <h3>Borradores</h3>
@@ -2169,7 +2498,7 @@ function threadDetailHTML(data) {
           <div class="thread-section-head"><h3>Registrar respuesta del comprador</h3><span class="badge badge-info">Opcional</span></div>
           <form class="composer" id="inbound-form" data-thread-id="${attr(thread.id)}">
             <div class="field"><label for="inbound-subject">Asunto</label><input class="input" id="inbound-subject" name="subject" placeholder="Re: tu consulta" maxlength="300"></div>
-            <div class="field"><label for="inbound-body">Lo que respondió</label><textarea class="textarea" id="inbound-body" name="body" rows="4" placeholder="Pegá el correo o el mensaje. Lumbre lo analiza y prepara el siguiente paso." required></textarea></div>
+            <div class="field"><label for="inbound-body">Lo que respondió</label><textarea class="textarea" id="inbound-body" name="body" rows="4" placeholder="Pegá el correo o el mensaje. Lucian lo analiza y prepara el siguiente paso." required></textarea></div>
             <div class="composer-foot">
               <label class="checkbox"><input type="checkbox" name="analyze" checked><span>Analizar con el equipo y preparar un borrador de respuesta</span></label>
               <button class="btn btn-primary btn-sm" type="submit">${icon('spark')} Registrar y analizar</button>
@@ -2188,10 +2517,10 @@ function threadDetailHTML(data) {
         <div class="side-block">
           <h4>Notas de la conversación</h4>
           <form id="thread-notes-form" data-thread-id="${attr(thread.id)}">
-            <div class="field"><textarea class="textarea notes-area" id="thread-notes" name="notes" rows="4" placeholder="Qué dijo, qué le importa, qué prometiste…">${esc(thread.notes || '')}</textarea></div>
+            <div class="field"><textarea class="textarea notes-area" id="thread-notes" name="notes" rows="4" placeholder="Qué dijo, qué le importa, qué prometiste”¦">${esc(thread.notes || '')}</textarea></div>
             <div class="field mt-2"><label for="thread-next-step">Siguiente paso</label><input class="input" id="thread-next-step" name="nextStep" value="${attr(thread.nextStep || '')}" maxlength="500" placeholder="Ej.: mandar ficha y plazo"></div>
             <div class="field mt-2"><label for="thread-followup">Fecha de seguimiento</label><input class="input" id="thread-followup" name="nextFollowUp" type="datetime-local" value="${attr(dateTimeLocal(thread.nextFollowUp))}"></div>
-            <div class="field mt-2"><label for="thread-score">Prioridad (0–100)</label><input class="input" id="thread-score" name="score" type="number" min="0" max="100" value="${attr(thread.score || 0)}"></div>
+            <div class="field mt-2"><label for="thread-score">Prioridad (0”“100)</label><input class="input" id="thread-score" name="score" type="number" min="0" max="100" value="${attr(thread.score || 0)}"></div>
             <button class="btn btn-ghost btn-sm btn-block mt-3" type="submit">${icon('check')} Guardar notas</button>
           </form>
         </div>
@@ -2207,6 +2536,7 @@ function messageBubbleHTML(message, thread) {
   return `<div class="msg ${out ? 'out' : 'in'}">
     <div class="msg-head"><span>${esc(who)}</span><span>·</span><span>${esc(CHANNEL_LABEL[message.channel] || message.channel || 'email')}</span></div>
     <div class="msg-bubble">${message.subject ? `<div class="msg-subject">${esc(message.subject)}</div>` : ''}${esc(message.body || '')}</div>
+    ${message.deliveryNote ? `<div class="draft-note danger" style="margin-top:5px">${icon('alert')} <span>${esc(message.deliveryNote)}</span></div>` : ''}
     <div class="msg-time">${esc(dateTime(message.at))}${message.status === 'enviado_manual' ? ' · marcado como enviado' : message.status === 'recibido' ? ' · recibido' : ''}</div>
   </div>`;
 }
@@ -2257,6 +2587,7 @@ function threadDraftsHTML(thread) {
         </div>
         ${sent ? `<span class="tiny muted nowrap">${esc(dateShort(draft.sentAt || draft.updatedAt || draft.createdAt))}</span>` : ''}
       </div>
+      ${draft.reattemptOf ? `<div class="draft-note warn">${icon('send')} <span><b>Reenvío:</b> ${esc(draft.note || 'Correo que no se entregó. Revisá y enviá por tu correo.')}</span></div>` : ''}
       ${review && draft.reviewNote ? `<div class="draft-note warn">${icon('alert')} <span>${esc(draft.reviewNote)}</span></div>` : ''}
       ${blocked ? `<div class="draft-note danger">${icon('lock')} <span>${esc(draft.blockedReason || 'Bloqueado por cumplimiento o red team. No se puede enviar.')}</span></div>` : ''}
       ${suppressed ? '<div class="draft-note danger">' + icon('shield') + ' <span>Este contacto pidió no recibir más mensajes. Quitá la supresión en Ajustes para habilitarlo.</span></div>' : ''}
@@ -2302,8 +2633,8 @@ function threadAnalysisHTML(thread) {
     <div class="analysis-grid">
       <div class="analysis-item"><span>Intención</span><b>${esc(String(analysis.intencion || 'sin dato').replace(/_/g, ' '))}</b></div>
       <div class="analysis-item"><span>Sentimiento</span><b>${esc(analysis.sentimiento || 'sin dato')}</b></div>
-      <div class="analysis-item"><span>Prioridad</span><b>${esc(analysis.score ?? thread.score ?? '—')}</b></div>
-      <div class="analysis-item"><span>Etapa sugerida</span><b>${esc(STAGES[analysis.etapa] || analysis.etapa || '—')}</b></div>
+      <div class="analysis-item"><span>Prioridad</span><b>${esc(analysis.score ?? thread.score ?? '””')}</b></div>
+      <div class="analysis-item"><span>Etapa sugerida</span><b>${esc(STAGES[analysis.etapa] || analysis.etapa || '””')}</b></div>
     </div>
     ${arr(analysis.senales).length ? `<ul>${analysis.senales.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}
     ${analysis.siguiente_paso ? `<p class="tiny" style="margin-top:8px"><b>Siguiente paso:</b> ${esc(analysis.siguiente_paso)}</p>` : ''}
@@ -2413,7 +2744,7 @@ async function addInboundMessage(form) {
   const subject = String(form.querySelector('#inbound-subject')?.value || '').trim();
   const analyze = Boolean(form.querySelector('[name="analyze"]')?.checked);
   const button = form.querySelector('button[type="submit"]');
-  if (button) { button.disabled = true; button.innerHTML = `${icon('refresh', 'spin')} Analizando…`; }
+  if (button) { button.disabled = true; button.innerHTML = `${icon('refresh', 'spin')} Analizando”¦`; }
   try {
     const result = await api(`/api/threads/${encodeURIComponent(id)}/messages`, {
       method: 'POST',
@@ -2435,7 +2766,7 @@ async function addInboundMessage(form) {
 async function analyzeCurrentThread(button) {
   const id = S.thread?.thread?.id;
   if (!id) return;
-  if (button) { button.disabled = true; button.innerHTML = `${icon('refresh', 'spin')} Leyendo…`; }
+  if (button) { button.disabled = true; button.innerHTML = `${icon('refresh', 'spin')} Leyendo”¦`; }
   try {
     const result = await api(`/api/threads/${encodeURIComponent(id)}/analyze`, { method: 'POST' });
     S.thread.thread = result.thread;
@@ -2448,6 +2779,163 @@ async function analyzeCurrentThread(button) {
   }
 }
 
+function quoteStatusBadge(status) {
+  const map = {
+    borrador: ['neutral', 'Borrador'],
+    enviada: ['info', 'Enviada'],
+    aceptada: ['ok', 'Aceptada'],
+    rechazada: ['danger', 'Rechazada'],
+  };
+  const [tone, label] = map[status] || ['neutral', 'Cotización'];
+  return `<span class="badge badge-${tone}">${esc(label)}</span>`;
+}
+
+function quotesHTML(thread) {
+  const quotes = arr(thread.quotes);
+  if (!quotes.length) return '';
+  return quotes.map((quote) => {
+    const quantity = num(quote.quantity, 1);
+    const total = num(quote.total, 0);
+    const accepted = quote.status === 'aceptada';
+    const rejected = quote.status === 'rechazada';
+    return `<div class="draft-card ${accepted ? 'sent' : ''}">
+      <div class="draft-head">
+        <div style="min-width:0;flex:1">
+          <div class="draft-subject">${esc(quote.number || 'Cotización')} · ${esc(quote.productName || 'Producto')}</div>
+          <div class="thread-badges" style="margin-top:5px">
+            ${quoteStatusBadge(quote.status)}
+            <span class="badge badge-neutral">${quantity} × ${esc(money(quote.unitPrice, quote.currency))}</span>
+            <span class="badge badge-neutral">Total ${esc(money(total, quote.currency))}</span>
+            ${quote.validUntil ? `<span class="badge badge-neutral">Válida hasta ${esc(dateShort(quote.validUntil))}</span>` : ''}
+          </div>
+        </div>
+        <span class="tiny muted nowrap">${esc(dateShort(quote.createdAt))}</span>
+      </div>
+      <div class="draft-body">
+        ${quote.shipping > 0 ? `<div>Envío: ${esc(money(quote.shipping, quote.currency))}</div>` : ''}
+        ${quote.discount > 0 ? `<div>Descuento: −${esc(money(quote.discount, quote.currency))}</div>` : ''}
+        ${quote.taxAmount > 0 ? `<div>Impuestos (${num(quote.taxRate)}%): ${esc(money(quote.taxAmount, quote.currency))}</div>` : ''}
+        ${quote.notes ? `<div class="mt-2">${esc(quote.notes)}</div>` : ''}
+        ${quote.paymentLink ? `<div class="mt-2"><a href="${attr(safeUrl(quote.paymentLink) || '#')}" target="_blank" rel="noopener noreferrer">${esc(truncate(quote.paymentLink, 60))}</a></div>` : '<div class="tiny muted mt-2">Sin link de pago: la confirmación se pide por correo.</div>'}
+      </div>
+      <div class="draft-actions">
+        ${!accepted ? `<button class="btn btn-primary btn-xs" type="button" data-action="quote-status" data-id="${attr(thread.id)}" data-quote-id="${attr(quote.id)}" data-status="aceptada">${icon('check')} Aceptada</button>` : ''}
+        ${!rejected && !accepted ? `<button class="btn btn-ghost btn-xs" type="button" data-action="quote-status" data-id="${attr(thread.id)}" data-quote-id="${attr(quote.id)}" data-status="rechazada">Rechazada</button>` : ''}
+        ${accepted ? `<span class="tiny muted">Cierra la venta y reinicia la postventa desde hoy.</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function quotePreviewHTML(data, currency) {
+  const quantity = Math.max(1, Math.floor(num(data.quantity, 1)));
+  const unit = Math.max(0, num(data.unitPrice, 0));
+  const shipping = Math.max(0, num(data.shipping, 0));
+  const subtotal = quantity * unit;
+  const discount = Math.min(subtotal, Math.max(0, num(data.discount, 0)));
+  const taxRate = Math.max(0, Math.min(100, num(data.taxRate, 0)));
+  const taxable = subtotal - discount + shipping;
+  const tax = taxable * taxRate / 100;
+  const total = taxable + tax;
+  return `<div class="between"><span>${quantity} × ${esc(money(unit, currency))}</span><b>${esc(money(subtotal, currency))}</b></div>
+    ${shipping > 0 ? `<div class="between"><span>Envío</span><b>${esc(money(shipping, currency))}</b></div>` : ''}
+    ${discount > 0 ? `<div class="between"><span>Descuento</span><b>−${esc(money(discount, currency))}</b></div>` : ''}
+    ${tax > 0 ? `<div class="between"><span>Impuestos (${taxRate}%)</span><b>${esc(money(tax, currency))}</b></div>` : ''}
+    <div class="between" style="border-top:1px solid var(--line);margin-top:6px;padding-top:8px"><b>Total</b><b>${esc(money(total, currency))}</b></div>`;
+}
+
+function openQuoteModal(thread) {
+  const product = arr(S.state.products).find((item) => item.id === thread.productId) || {};
+  const settings = S.state.settings || {};
+  const brand = S.state.brand || {};
+  const currency = product.currency || brand.currency || 'USD';
+  const paymentLink = product.paymentLink || settings.sales?.paymentLink || '';
+  const validDays = num(settings.sales?.quoteValidityDays, 15) || 15;
+  const body = `<form id="quote-form" data-thread-id="${attr(thread.id)}">
+    <div class="form-section">
+      <p class="form-section-title">${esc(product.name || 'Producto del hilo')}</p>
+      <p class="form-section-sub">La cotización se arma con estos datos, sin IA: precio, cantidad, plazo y link de pago salen de tu ficha.${num(product.capacityPerWeek) > 0 ? ` Capacidad: ${num(product.capacityPerWeek)} por semana.` : ''}${num(product.leadTimeDays) > 0 ? ` Plazo: ${num(product.leadTimeDays)} días.` : ''}</p>
+      <div class="form-grid">
+        <div class="field"><label for="q-quantity">Cantidad</label><input class="input" id="q-quantity" name="quantity" type="number" min="1" step="1" value="1" required></div>
+        <div class="field"><label for="q-price">Precio unitario (${esc(currency)})</label><input class="input" id="q-price" name="unitPrice" type="number" min="0" step="0.01" value="${attr(num(product.price, 0))}" required></div>
+        <div class="field"><label for="q-shipping">Envío</label><input class="input" id="q-shipping" name="shipping" type="number" min="0" step="0.01" value="0"><p class="field-hint">Dejalo en 0 si el envío se cotiza aparte.</p></div>
+        <div class="field"><label for="q-discount">Descuento</label><input class="input" id="q-discount" name="discount" type="number" min="0" step="0.01" value="0"></div>
+        <div class="field"><label for="q-tax">Impuestos (%)</label><input class="input" id="q-tax" name="taxRate" type="number" min="0" max="100" step="0.1" value="0"></div>
+        <div class="field"><label for="q-valid">Validez (días)</label><input class="input" id="q-valid" name="validDays" type="number" min="1" max="120" step="1" value="${attr(validDays)}"></div>
+        <div class="field full"><label for="q-payment">Link de pago</label><input class="input" id="q-payment" name="paymentLink" type="url" value="${attr(paymentLink)}" placeholder="https://”¦"><p class="field-hint">Si lo dejás vacío, el correo pide confirmación y el link se envía después.</p></div>
+        <div class="field full"><label for="q-notes">Nota para el comprador</label><textarea class="textarea" id="q-notes" name="notes" rows="3" placeholder="Condiciones especiales, color, embalaje, fecha de entrega”¦"></textarea></div>
+      </div>
+    </div>
+    <div class="soft" id="quote-preview" style="margin-top:12px">${quotePreviewHTML({ quantity: 1, unitPrice: num(product.price, 0) }, currency)}</div>
+    <label class="checkbox mt-3"><input type="checkbox" name="approve" value="1"><span>Dejar el borrador listo para enviar (revisé precio, envío y plazo).</span></label>
+  </form>`;
+  openModal({
+    title: 'Preparar cotización',
+    subtitle: 'Un precio claro y un link de pago convierten el interés en pedido.',
+    size: 'modal-lg',
+    body,
+    footer: `<button class="btn btn-ghost" type="button" data-action="close-modal">Cancelar</button>
+      <button class="btn btn-primary" type="button" data-action="save-quote" data-id="${attr(thread.id)}">${icon('dollar')} Preparar cotización</button>`,
+    onMount: (root) => {
+      const form = $('#quote-form', root);
+      const preview = $('#quote-preview', root);
+      if (!form || !preview) return;
+      const update = () => {
+        const data = Object.fromEntries(new FormData(form).entries());
+        preview.innerHTML = quotePreviewHTML(data, currency);
+      };
+      ['quantity', 'unitPrice', 'shipping', 'discount', 'taxRate'].forEach((name) => {
+        form.querySelector(`[name="${name}"]`)?.addEventListener('input', update);
+      });
+    },
+  });
+}
+
+async function saveQuote(threadId) {
+  const form = $('#quote-form');
+  if (!form) return;
+  const data = Object.fromEntries(new FormData(form).entries());
+  const button = $('[data-action="save-quote"]');
+  if (button) { button.disabled = true; button.innerHTML = `${icon('refresh', 'spin')} Preparando”¦`; }
+  try {
+    const result = await api(`/api/threads/${encodeURIComponent(threadId)}/quotes`, {
+      method: 'POST',
+      body: {
+        quantity: num(data.quantity, 1),
+        unitPrice: num(data.unitPrice, 0),
+        shipping: num(data.shipping, 0),
+        discount: num(data.discount, 0),
+        taxRate: num(data.taxRate, 0),
+        validDays: num(data.validDays, 15),
+        paymentLink: String(data.paymentLink || '').trim(),
+        notes: String(data.notes || ''),
+        approve: data.approve === '1',
+      },
+    });
+    closeModal();
+    await loadState({ silent: true, render: false });
+    await refreshThread();
+    toast(`Cotización ${result.quote.number} preparada. Revisá el borrador y enviá cuando esté listo.`);
+  } catch (error) {
+    toast(error.message, 'error');
+    if (button) { button.disabled = false; button.innerHTML = `${icon('dollar')} Preparar cotización`; }
+  }
+}
+
+async function setQuoteStatusUI(threadId, quoteId, status) {
+  try {
+    await api(`/api/threads/${encodeURIComponent(threadId)}/quotes/${encodeURIComponent(quoteId)}`, {
+      method: 'PATCH',
+      body: { status },
+    });
+    await loadState({ silent: true, render: false });
+    await refreshThread();
+    toast(status === 'aceptada' ? 'Venta cerrada. La postventa arranca hoy.' : 'Estado de la cotización actualizado.');
+  } catch (error) {
+    toast(error.message, 'error');
+  }
+}
+
 function openContactModal(thread) {
   const contact = thread.contact || {};
   openModal({
@@ -2457,14 +2945,14 @@ function openContactModal(thread) {
       <div class="form-grid">
         <div class="field"><label for="ct-company">Empresa</label><input class="input" id="ct-company" name="company" value="${attr(contact.company || '')}" required></div>
         <div class="field"><label for="ct-name">Persona</label><input class="input" id="ct-name" name="name" value="${attr(contact.name || '')}"></div>
-        <div class="field"><label for="ct-role">Rol</label><input class="input" id="ct-role" name="role" value="${attr(contact.role || '')}" placeholder="Compras, dueño, curador…"></div>
-        <div class="field"><label for="ct-type">Tipo</label><input class="input" id="ct-type" name="type" value="${attr(contact.type || '')}" placeholder="tienda, estudio, hotel…"></div>
+        <div class="field"><label for="ct-role">Rol</label><input class="input" id="ct-role" name="role" value="${attr(contact.role || '')}" placeholder="Compras, dueño, curador”¦"></div>
+        <div class="field"><label for="ct-type">Tipo</label><input class="input" id="ct-type" name="type" value="${attr(contact.type || '')}" placeholder="tienda, estudio, hotel”¦"></div>
         <div class="field full"><label for="ct-email">Email</label><input class="input" id="ct-email" name="email" type="email" value="${attr(contact.email || '')}" placeholder="compras@tienda.com"></div>
         <div class="field"><label for="ct-country">País</label><input class="input" id="ct-country" name="country" value="${attr(contact.country || '')}"></div>
         <div class="field"><label for="ct-city">Ciudad</label><input class="input" id="ct-city" name="city" value="${attr(contact.city || '')}"></div>
-        <div class="field full"><label for="ct-website">Sitio web</label><input class="input" id="ct-website" name="website" value="${attr(contact.website || '')}" placeholder="https://…"></div>
+        <div class="field full"><label for="ct-website">Sitio web</label><input class="input" id="ct-website" name="website" value="${attr(contact.website || '')}" placeholder="https://”¦"></div>
       </div>
-      <p class="field-hint mt-3">Lumbre no inventa direcciones. Si no tenés un email verificado, dejalo vacío y usá el formulario del sitio o el contacto manual.</p>
+      <p class="field-hint mt-3">Lucian no inventa direcciones. Si no tenés un email verificado, dejalo vacío y usá el formulario del sitio o el contacto manual.</p>
     </form>`,
     footer: `<button class="btn btn-ghost" type="button" data-action="close-modal">Cancelar</button><button class="btn btn-primary" type="button" data-action="save-contact" data-id="${attr(thread.id)}">${icon('check')} Guardar contacto</button>`,
   });
@@ -2488,7 +2976,7 @@ async function saveContact(threadId) {
 
 function openDraftModal(thread) {
   const last = [...arr(thread.messages)].reverse()[0];
-  const subject = last?.subject ? `Re: ${String(last.subject).replace(/^Re:\s*/i, '')}` : (thread.contact?.company ? `Una pieza de ${S.state.brand?.name || 'Lumbre'} para ${thread.contact.company}` : '');
+  const subject = last?.subject ? `Re: ${String(last.subject).replace(/^Re:\s*/i, '')}` : (thread.contact?.company ? `Una pieza de ${S.state.brand?.name || 'Lucian'} para ${thread.contact.company}` : '');
   openModal({
     title: 'Nuevo borrador',
     subtitle: 'Escribilo una vez. Después podés editarlo, copiarlo o enviarlo con confirmación.',
@@ -2592,12 +3080,14 @@ async function deleteDraft(threadId, draftId) {
 function openSendModal(thread, draft) {
   const contact = thread.contact || {};
   const settings = S.state.settings || {};
-  const from = settings.email?.from || (S.state.brand?.email ? `${S.state.brand?.name || 'Lumbre'} <${S.state.brand.email}>` : '');
+  const from = settings.email?.from || (S.state.brand?.email ? `${S.state.brand?.name || 'Lucian'} <${S.state.brand.email}>` : '');
   const valid = isEmail(contact.email);
   const demoEmail = isDemoEmail(contact.email);
   const suppressed = Boolean(thread.suppressed);
+  const gmailReady = settings.email?.provider === 'gmail' && Boolean(S.state.flags?.email);
   const canResend = Boolean(S.state.flags?.email) && valid && !demoEmail && !suppressed;
   const canWebhook = Boolean(settings.email?.webhookUrl) && valid && !demoEmail && !suppressed;
+  const canGmail = gmailReady && valid && !demoEmail && !suppressed;
   const limits = S.state.limits || {};
   const subject = draft.subject || '(sin asunto)';
   openModal({
@@ -2607,7 +3097,7 @@ function openSendModal(thread, draft) {
     body: `${suppressed ? '<div class="artifact-callout danger"><b>No contactar</b>Este contacto pidió no recibir más mensajes. Quitá la supresión en Ajustes → No contactar para habilitar el envío.</div>' : ''}
     <div class="artifact-callout ${valid ? '' : suppressed ? '' : 'warn'}">
       <b>${valid ? `Va a ${esc(contact.email)}` : 'Sin email: envío por formulario o LinkedIn'}</b>
-      ${valid ? `Desde: ${esc(from || 'sin remitente configurado')}. Asunto: ${esc(subject)}.` : 'Podés copiar el texto, enviarlo por el formulario de la tienda o LinkedIn y marcarlo como contactado. Lumbre no inventa direcciones.'}
+      ${valid ? `Desde: ${esc(from || 'sin remitente configurado')}. Asunto: ${esc(subject)}.` : 'Podés copiar el texto, enviarlo por el formulario de la tienda o LinkedIn y marcarlo como contactado. Lucian no inventa direcciones.'}
     </div>
     ${demoEmail ? '<div class="artifact-callout warn mt-3"><b>Email de ejemplo</b>Este contacto es demo (example.com). Podés copiar el texto, descargar el .eml o marcarlo como enviado, pero no se envía a nadie real.</div>' : ''}
     ${limits.limit ? `<p class="small muted mt-3">Hoy: ${limits.used || 0} de ${limits.limit} envíos usados${limits.warmup ? ` · calentamiento, día ${limits.day}` : ''}.</p>` : ''}
@@ -2624,15 +3114,17 @@ function openSendModal(thread, draft) {
     </div>
     <div class="form-section"><p class="form-section-title">Cómo lo mandás</p>
       <div class="stack">
-        <div class="integration-card"><span class="status-dot ${canResend ? 'ok' : 'muted'}"></span><div><h4>Resend ${canResend ? '· listo' : '· no configurado'}</h4><p>${canResend ? 'Envío real desde tu dominio verificado. Se respeta el límite diario y el calentamiento.' : demoEmail ? 'Bloqueado para emails de ejemplo.' : 'Configurá Resend en Ajustes → Correo si querés enviar desde Lumbre.'}</p></div></div>
-        <div class="integration-card"><span class="status-dot ${canWebhook ? 'ok' : 'muted'}"></span><div><h4>Webhook propio ${canWebhook ? '· listo' : '· opcional'}</h4><p>${canWebhook ? 'Lumbre manda el mensaje a tu automatización; tu servicio hace el envío final.' : 'Ideal si ya tenés Make, n8n o un servidor propio.'}</p></div></div>
+        ${gmailReady ? `<div class="integration-card"><span class="status-dot ok"></span><div><h4>Gmail · listo</h4><p>Envío real desde ${esc(settings.email?.from || 'tu Gmail')} con tu contraseña de aplicación. Sale directo, sin copiar nada.</p></div></div>` : ''}
+        <div class="integration-card"><span class="status-dot ${canResend ? 'ok' : 'muted'}"></span><div><h4>Resend ${canResend ? '· listo' : '· no configurado'}</h4><p>${canResend ? 'Envío real desde tu dominio verificado.' : 'Requiere verificar un dominio en Resend.'}</p></div></div>
+        <div class="integration-card"><span class="status-dot ${canWebhook ? 'ok' : 'muted'}"></span><div><h4>Webhook propio ${canWebhook ? '· listo' : '· opcional'}</h4><p>${canWebhook ? 'Lucian manda el mensaje a tu automatización.' : 'Ideal si ya tenés Make, n8n o un servidor propio.'}</p></div></div>
       </div>
     </div>`,
     footer: `${suppressed ? '<span class="tiny muted" style="margin-right:auto">Contacto en la lista de no contactar.</span>' : ''}
       <button class="btn btn-ghost" type="button" data-action="close-modal">Cancelar</button>
+      ${canGmail ? `<button class="btn btn-accent" type="button" data-action="send-channel" data-channel="gmail" data-id="${attr(thread.id)}" data-draft-id="${attr(draft.id)}">${icon('send')} Enviar con Gmail</button>` : ''}
       ${canWebhook ? `<button class="btn btn-ghost" type="button" data-action="send-channel" data-channel="webhook" data-id="${attr(thread.id)}" data-draft-id="${attr(draft.id)}">${icon('send')} Webhook</button>` : ''}
-      ${canResend ? `<button class="btn btn-accent" type="button" data-action="send-channel" data-channel="resend" data-id="${attr(thread.id)}" data-draft-id="${attr(draft.id)}">${icon('send')} Enviar con Resend</button>` : ''}
-      <button class="btn ${canResend || canWebhook ? 'btn-ghost' : 'btn-primary'}" type="button" data-action="send-channel" data-channel="manual" data-id="${attr(thread.id)}" data-draft-id="${attr(draft.id)}" ${suppressed ? 'disabled' : ''}>${icon('check')} Ya lo envié</button>`,
+      ${canResend && !gmailReady ? `<button class="btn btn-ghost" type="button" data-action="send-channel" data-channel="resend" data-id="${attr(thread.id)}" data-draft-id="${attr(draft.id)}">${icon('send')} Enviar con Resend</button>` : ''}
+      <button class="btn ${canGmail || canResend || canWebhook ? 'btn-ghost' : 'btn-primary'}" type="button" data-action="send-channel" data-channel="manual" data-id="${attr(thread.id)}" data-draft-id="${attr(draft.id)}" ${suppressed ? 'disabled' : ''}>${icon('check')} Ya lo envié</button>`,
   });
 }
 
@@ -2646,7 +3138,7 @@ async function sendDraftChannel(threadId, draftId, channel) {
     title: real ? 'Enviar correo real' : 'Marcar como enviado',
     message: real
       ? `Se va a enviar un correo a ${contact.email || 'el contacto'} desde ${S.state.settings?.email?.from || S.state.brand?.email || 'tu remitente'}. Esta acción no se puede deshacer.`
-      : `Confirmá que ya enviaste este mensaje a ${contact.company || contact.email || 'el contacto'} ${contact.email ? 'desde tu correo' : 'por el formulario o LinkedIn'}. Lumbre solo lo registra; no envía nada.`,
+      : `Confirmá que ya enviaste este mensaje a ${contact.company || contact.email || 'el contacto'} ${contact.email ? 'desde tu correo' : 'por el formulario o LinkedIn'}. Lucian solo lo registra; no envía nada.`,
     details: real ? 'Revisá asunto, cuerpo y destinatario antes de continuar.' : '',
     confirmLabel: real ? 'Sí, enviar' : 'Sí, ya lo envié',
     danger: real,
@@ -2735,6 +3227,7 @@ function filteredContent() {
   return sortByDate(arr(S.state?.content), 'createdAt').filter((item) => {
     if (S.ui.contentFilter !== 'todos' && item.status !== S.ui.contentFilter) return false;
     if (S.ui.contentPlatform !== 'todas' && String(item.platform || '').toLowerCase() !== S.ui.contentPlatform.toLowerCase()) return false;
+    if (S.ui.contentProduct && S.ui.contentProduct !== 'todos' && item.productId !== S.ui.contentProduct) return false;
     if (!q) return true;
     return [item.platform, item.format, item.hook, item.caption, item.script, item.cta, item.day, arr(item.hashtags).join(' ')]
       .some((value) => String(value || '').toLowerCase().includes(q));
@@ -2762,11 +3255,12 @@ function renderContent() {
   return `<div class="page-head">
     <div class="page-head-main">
       <p class="eyebrow">Contenido</p>
-      <h2 class="page-title">Mostrar la luz, no gritar “comprá”.</h2>
+      <h2 class="page-title">Mostrar la luz, no gritar “comprá”.</h2>
       <p class="page-sub">El equipo convierte cada lámpara en una serie de piezas: la sombra, el proceso, el objeto en una casa real. Revisá, editá y publicá a tu ritmo.</p>
     </div>
     <div class="page-actions">
       <a class="btn btn-ghost btn-sm" href="#/misiones/nueva">${icon('spark')} Pedir contenido al equipo</a>
+      ${all.length ? `<button class="btn btn-danger btn-sm" type="button" data-action="delete-all-content">${icon('trash')} Borrar todo (${all.length})</button>` : ''}
     </div>
   </div>
 
@@ -2778,13 +3272,17 @@ function renderContent() {
   </section>
 
   ${all.length ? `<div class="filterbar mt-4">
-    <div class="search-field">${icon('search')}<input class="input" id="content-search" type="search" value="${attr(S.ui.contentQuery || '')}" placeholder="Buscar gancho, caption o plataforma…"></div>
+    <div class="search-field">${icon('search')}<input class="input" id="content-search" type="search" value="${attr(S.ui.contentQuery || '')}" placeholder="Buscar gancho, caption o plataforma”¦"></div>
     <select class="select" id="content-status-filter" style="max-width:170px" aria-label="Filtrar por estado">
       ${[['todos', 'Todos los estados'], ['idea', 'Ideas'], ['borrador', 'Borradores'], ['publicado', 'Publicadas'], ['archivado', 'Archivadas']].map(([value, label]) => `<option value="${value}" ${S.ui.contentFilter === value ? 'selected' : ''}>${label}</option>`).join('')}
     </select>
     <select class="select" id="content-platform-filter" style="max-width:170px" aria-label="Filtrar por plataforma">
       <option value="todas" ${S.ui.contentPlatform === 'todas' ? 'selected' : ''}>Todas las plataformas</option>
       ${platforms.map((p) => `<option value="${attr(p)}" ${S.ui.contentPlatform === p ? 'selected' : ''}>${esc(p)}</option>`).join('')}
+    </select>
+    <select class="select" id="content-product-filter" style="max-width:170px" aria-label="Filtrar por lámpara">
+      <option value="todos" ${S.ui.contentProduct === 'todos' ? 'selected' : ''}>Todas las lámparas</option>
+      ${arr(S.state?.products).map((p) => `<option value="${attr(p.id)}" ${S.ui.contentProduct === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
     </select>
     <span class="small muted" id="content-count">${filteredContent().length} pieza${filteredContent().length === 1 ? '' : 's'}</span>
   </div>
@@ -2815,7 +3313,8 @@ function contentCardHTML(item) {
       <div style="min-width:0;flex:1">
         <div class="content-platform">${icon('image')} ${esc(item.platform || 'Sin plataforma')}${item.format ? ` · ${esc(item.format)}` : ''} ${demoBadge(item.demo)}</div>
         <div class="content-hook">${esc(item.hook || '(sin gancho)')}</div>
-        ${product || mission ? `<p class="tiny muted" style="margin-top:4px">${product ? esc(product.name) : ''}${product && mission ? ' · ' : ''}${mission ? `<a href="#/misiones/${encodeURIComponent(mission.id)}" style="color:var(--amber-deep);text-decoration:none">${esc(mission.name)}</a>` : ''}</p>` : ''}
+        ${product ? `<p class="tiny" style="margin-top:4px"><a href="#/productos/${encodeURIComponent(product.id)}" style="color:var(--amber-deep);text-decoration:none;font-weight:600">${esc(product.name)}</a>${mission ? ` · <a href="#/misiones/${encodeURIComponent(mission.id)}" style="color:var(--muted);text-decoration:none">${esc(mission.name)}</a>` : ''}</p>` : (mission ? `<p class="tiny muted" style="margin-top:4px"><a href="#/misiones/${encodeURIComponent(mission.id)}" style="color:var(--amber-deep);text-decoration:none">${esc(mission.name)}</a></p>` : '')}
+        ${item.status === 'publicado' ? `<p class="tiny" style="margin-top:4px;color:var(--ok)">${icon('check','icon-sm')} Publicado${item.publishedAt ? ` el ${esc(dateTime(item.publishedAt))}` : ''}${item.publishedUrl ? ` · <a href="${attr(safeUrl(item.publishedUrl))}" target="_blank" rel="noopener noreferrer" style="color:var(--ok);text-decoration:underline">ver publicación</a>` : ''}</p>` : ''}
       </div>
       <span class="content-day">${esc(item.day || '')}</span>
     </div>
@@ -2823,17 +3322,60 @@ function contentCardHTML(item) {
     ${item.caption ? `<div class="content-caption">${esc(item.caption)}</div>` : ''}
     ${arr(item.hashtags).length ? `<div class="hashtags" style="margin-top:8px">${item.hashtags.map((h) => `<span>${esc(h)}</span>`).join('')}</div>` : ''}
     <div class="content-foot">
-      <span class="content-cta"><b>CTA:</b> ${esc(item.cta || '—')}</span>
+      <span class="content-cta"><b>CTA:</b> ${esc(item.cta || '””')}</span>
       <div class="cluster">
         <select class="select" style="min-height:30px;font-size:11px;max-width:130px" data-content-status="${attr(item.id)}" aria-label="Estado de la pieza">
           ${Object.entries(CONTENT_STATUS).map(([value, label]) => `<option value="${value}" ${item.status === value ? 'selected' : ''}>${label}</option>`).join('')}
         </select>
+        ${item.status !== 'publicado' ? `<button class="btn btn-ghost btn-xs" type="button" data-action="content-publish" data-id="${attr(item.id)}">${icon('check')} Publicar</button>` : ''}
         <button class="btn btn-ghost btn-xs" type="button" data-action="content-edit" data-id="${attr(item.id)}">${icon('edit')} Editar</button>
         ${copyButton(`${item.hook || ''}\n\n${item.caption || ''}\n\n${arr(item.hashtags).join(' ')}`, 'Copiar pieza')}
         <button class="btn btn-ghost btn-xs" type="button" data-action="content-delete" data-id="${attr(item.id)}" aria-label="Eliminar pieza" title="Eliminar">${icon('trash')}</button>
       </div>
     </div>
   </article>`;
+}
+
+function openPublishModal(item) {
+  openModal({
+    title: 'Marcar como publicada',
+    subtitle: item.platform || 'Contenido',
+    size: 'modal-sm',
+    body: `<form id="publish-form" data-id="${attr(item.id)}">
+      <div class="form-grid">
+        <div class="field full"><label for="pub-url">Enlace de la publicación (opcional)</label><input class="input" id="pub-url" name="publishedUrl" type="url" value="${attr(item.publishedUrl || '')}" placeholder="https://instagram.com/p/..."></div>
+        <div class="field full"><label for="pub-date">Publicado el</label><input class="input" id="pub-date" name="publishedAt" type="datetime-local" value="${attr(dateTimeLocal(item.publishedAt || new Date().toISOString()))}"></div>
+      </div>
+      <p class="field-hint mt-2">Si no tenés el enlace todavía, dejalo vacío: se anota la fecha y después podés agregarlo desde Editar.</p>
+    </form>`,
+    footer: `<button class="btn btn-ghost" type="button" data-action="close-modal">Cancelar</button>
+      <button class="btn btn-primary" type="button" data-action="save-publish" data-id="${attr(item.id)}">${icon('check')} Marcar publicada</button>`,
+  });
+}
+
+async function savePublish(id) {
+  const form = $('#publish-form');
+  if (!form) return;
+  const data = Object.fromEntries(new FormData(form).entries());
+  const url = String(data.publishedUrl || '').trim();
+  try {
+    const result = await api(`/api/content/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: {
+        status: 'publicado',
+        publishedUrl: url,
+        publishedAt: data.publishedAt ? new Date(data.publishedAt).toISOString() : undefined,
+      },
+    });
+    const index = arr(S.state.content).findIndex((c) => c.id === id);
+    if (index >= 0) S.state.content[index] = result.item;
+    closeModal();
+    updateShell();
+    applyContentList();
+    toast('Pieza marcada como publicada.');
+  } catch (error) {
+    toast(error.message, 'error');
+  }
 }
 
 function bindContent() {
@@ -2848,6 +3390,8 @@ function bindContent() {
   if (status) status.addEventListener('change', () => { S.ui.contentFilter = status.value; applyContentList(); });
   const platform = $('#content-platform-filter');
   if (platform) platform.addEventListener('change', () => { S.ui.contentPlatform = platform.value; applyContentList(); });
+  const product = $('#content-product-filter');
+  if (product) product.addEventListener('change', () => { S.ui.contentProduct = product.value; applyContentList(); });
 }
 
 function applyContentList() {
@@ -2884,7 +3428,7 @@ function openContentModal(item) {
     body: `<form id="content-form" data-id="${attr(item.id)}">
       <div class="form-grid">
         <div class="field"><label for="cnt-platform">Plataforma</label><input class="input" id="cnt-platform" name="platform" value="${attr(item.platform || '')}" list="platform-list"><datalist id="platform-list">${CONTENT_PLATFORMS.map((p) => `<option value="${attr(p)}">`).join('')}</datalist></div>
-        <div class="field"><label for="cnt-format">Formato</label><input class="input" id="cnt-format" name="format" value="${attr(item.format || '')}" placeholder="Reel, carrusel, historia…"></div>
+        <div class="field"><label for="cnt-format">Formato</label><input class="input" id="cnt-format" name="format" value="${attr(item.format || '')}" placeholder="Reel, carrusel, historia”¦"></div>
         <div class="field"><label for="cnt-day">Día / momento</label><input class="input" id="cnt-day" name="day" value="${attr(item.day || '')}" placeholder="Día 1"></div>
         <div class="field"><label for="cnt-status">Estado</label><select class="select" id="cnt-status" name="status">${Object.entries(CONTENT_STATUS).map(([value, label]) => `<option value="${value}" ${item.status === value ? 'selected' : ''}>${label}</option>`).join('')}</select></div>
         <div class="field full"><label for="cnt-hook">Gancho</label><input class="input" id="cnt-hook" name="hook" value="${attr(item.hook || '')}" maxlength="240"></div>
@@ -2892,6 +3436,8 @@ function openContentModal(item) {
         <div class="field full"><label for="cnt-caption">Caption</label><textarea class="textarea" id="cnt-caption" name="caption" rows="6">${esc(item.caption || '')}</textarea></div>
         <div class="field full"><label for="cnt-hashtags">Hashtags</label><input class="input" id="cnt-hashtags" name="hashtags" value="${attr(arr(item.hashtags).join(' '))}" placeholder="#luzdecora #lamparas3d"></div>
         <div class="field full"><label for="cnt-cta">Llamada a la acción</label><input class="input" id="cnt-cta" name="cta" value="${attr(item.cta || '')}"></div>
+        <div class="field full"><label for="cnt-published-url">Enlace de la publicación (si ya se publicó)</label><input class="input" id="cnt-published-url" name="publishedUrl" type="url" value="${attr(item.publishedUrl || '')}" placeholder="https://instagram.com/p/..."></div>
+        <div class="field"><label for="cnt-published-at">Publicado el</label><input class="input" id="cnt-published-at" name="publishedAt" type="datetime-local" value="${attr(dateTimeLocal(item.publishedAt))}"></div>
       </div>
     </form>`,
     footer: `<button class="btn btn-ghost" type="button" data-action="close-modal">Cancelar</button><button class="btn btn-primary" type="button" data-action="save-content" data-id="${attr(item.id)}">${icon('check')} Guardar pieza</button>`,
@@ -2909,6 +3455,8 @@ async function saveContentEdit(id) {
       body: {
         platform: data.platform, format: data.format, day: data.day, status: data.status,
         hook: data.hook, script: data.script, caption: data.caption, cta: data.cta, hashtags,
+        publishedUrl: String(data.publishedUrl || '').trim(),
+        publishedAt: data.publishedAt ? new Date(data.publishedAt).toISOString() : (data.publishedUrl ? undefined : ''),
       },
     });
     const index = arr(S.state.content).findIndex((c) => c.id === id);
@@ -2926,7 +3474,7 @@ async function deleteContent(id) {
   const item = arr(S.state.content).find((c) => c.id === id);
   const confirmed = await confirmAction({
     title: 'Eliminar pieza',
-    message: `¿Eliminar “${item?.hook || 'esta pieza'}”? No se puede recuperar.`,
+    message: `¿Eliminar “${item?.hook || 'esta pieza'}”? No se puede recuperar.`,
     confirmLabel: 'Eliminar',
     danger: true,
   });
@@ -2974,7 +3522,7 @@ function renderTeam() {
     </div>
   </div>
 
-  <section class="card card-pad" style="background:linear-gradient(145deg,#fff8ec,rgba(255,250,241,.7));border-color:#e6d3b2">
+  <section class="card card-pad" style="background:linear-gradient(145deg,#eff6ff,rgba(255,250,241,.7));border-color:#e6d3b2">
     <div class="section-head" style="margin-bottom:12px">
       <div>
         <p class="eyebrow">Consulta directa</p>
@@ -2998,7 +3546,7 @@ function renderTeam() {
         <div class="artifact-chips">
           ${(ASK_SUGGESTIONS[ask.agentId] || ASK_SUGGESTIONS.director).map((question) => `<button class="chip" type="button" data-action="ask-suggestion" data-question="${attr(question)}">${esc(truncate(question, 56))}</button>`).join('')}
         </div>
-        <button class="btn btn-primary" type="submit" id="ask-submit" ${ask.loading ? 'disabled' : ''}>${ask.loading ? `${icon('refresh', 'spin')} Pensando…` : `${icon('spark')} Preguntar`}</button>
+        <button class="btn btn-primary" type="submit" id="ask-submit" ${ask.loading ? 'disabled' : ''}>${ask.loading ? `${icon('refresh', 'spin')} Pensando”¦` : `${icon('spark')} Preguntar`}</button>
       </div>
     </form>
     ${!S.state.flags?.ai ? '<div class="artifact-callout warn mt-3"><b>Modo demo</b>Sin una IA configurada, las respuestas son ejemplos del sistema. Configurá un proveedor en Ajustes para consultas reales sobre tus datos.</div>' : ''}
@@ -3050,7 +3598,7 @@ async function askTeamSubmit() {
   if (!question) { toast('Escribí una pregunta concreta.', 'error'); form.querySelector('#ask-question')?.focus(); return; }
   S.ui.ask = { ...S.ui.ask, agentId, question, loading: true };
   const button = $('#ask-submit');
-  if (button) { button.disabled = true; button.innerHTML = `${icon('refresh', 'spin')} Pensando…`; }
+  if (button) { button.disabled = true; button.innerHTML = `${icon('refresh', 'spin')} Pensando”¦`; }
   try {
     const result = await api('/api/ask', { method: 'POST', body: { question, agentId } });
     S.ui.ask = { agentId, question, result, loading: false };
@@ -3315,7 +3863,8 @@ const SEARCH_PROVIDERS = [
 
 const EMAIL_PROVIDERS = [
   ['manual', 'Manual · exportar .eml y marcar como enviado'],
-  ['resend', 'Resend · envío real desde Lumbre'],
+  ['gmail', 'Gmail · envío real con contraseña de aplicación (recomendado)'],
+  ['resend', 'Resend · envío real desde tu dominio verificado'],
   ['webhook', 'Webhook propio · Make, n8n o tu servidor'],
 ];
 
@@ -3339,7 +3888,7 @@ function settingsPageHead() {
     <div class="page-head-main">
       <p class="eyebrow">Ajustes</p>
       <h2 class="page-title">Tu sistema, tus reglas.</h2>
-      <p class="page-sub">Todo vive en tu computadora. Conectá solo lo que quieras usar: Lumbre funciona en modo demo sin una sola clave, y envía correos reales únicamente cuando vos lo confirmás.</p>
+      <p class="page-sub">Todo vive en tu computadora. Conectá solo lo que quieras usar: Lucian funciona en modo demo sin una sola clave, y envía correos reales únicamente cuando vos lo confirmás.</p>
     </div>
     <div class="page-actions">
       <a class="btn btn-ghost btn-sm" href="#/ajustes?tab=ayuda">${icon('shield')} Ver ayuda</a>
@@ -3375,6 +3924,7 @@ function settingsForm(tab, title, subtitle, body, note = '') {
     </div>
     <div class="form-actions">
       <button class="btn btn-primary" type="submit">${icon('check')} Guardar cambios</button>
+      <button class="btn btn-ghost" type="button" data-action="ai-configure">${icon('wand')} Configurar con IA</button>
       <span class="form-note">${note}</span>
     </div>
   </form>`;
@@ -3392,7 +3942,7 @@ function settingsBrandHTML() {
         : 'Completá al menos nombre, quién está detrás y un correo de contacto. Sin eso, el equipo escribe con datos genéricos.',
     )}
     <div class="form-grid">
-      <div class="field"><label for="brand-name">Nombre de la marca <span class="req">*</span></label><input class="input" id="brand-name" name="brandName" value="${attr(brand.name || '')}" required placeholder="Lumbre"></div>
+      <div class="field"><label for="brand-name">Nombre de la marca <span class="req">*</span></label><input class="input" id="brand-name" name="brandName" value="${attr(brand.name || '')}" required placeholder="Lucian"></div>
       <div class="field"><label for="brand-maker">Quién está detrás</label><input class="input" id="brand-maker" name="brandMaker" value="${attr(brand.maker || '')}" placeholder="Tu nombre o el del taller"></div>
       <div class="field full"><label for="brand-tagline">Frase corta</label><input class="input" id="brand-tagline" name="brandTagline" value="${attr(brand.tagline || '')}" placeholder="Lámparas de diseño impresas en 3D"></div>
       <div class="field"><label for="brand-city">Ciudad</label><input class="input" id="brand-city" name="brandCity" value="${attr(brand.city || '')}" placeholder="Rosario"></div>
@@ -3419,7 +3969,7 @@ function settingsAIHTML() {
       ready,
       ready
         ? `${selected.label || ai.provider} está configurado. Las misiones reales consumen tokens de tu cuenta.`
-        : 'Sin una clave, Lumbre funciona en modo demo con respuestas simuladas. El flujo es el mismo; los datos no.',
+        : 'Sin una clave, Lucian funciona en modo demo con respuestas simuladas. El flujo es el mismo; los datos no.',
       testButton('ai', 'Probar conexión') + ` <button class="btn btn-ghost btn-sm" type="button" data-action="load-models">${icon('list' in ICON_PATHS ? 'list' : 'search')} Ver modelos</button>`,
     )}
     <div class="form-grid">
@@ -3432,14 +3982,14 @@ function settingsAIHTML() {
         <p class="field-hint">Las claves se guardan en texto plano en tu carpeta de datos. Si ya hay una, ves solo los últimos cuatro caracteres: dejá el campo como está para conservarla. ${selected.keyUrl ? `<a href="${attr(safeUrl(selected.keyUrl))}" target="_blank" rel="noopener noreferrer" id="ai-key-link">Conseguir una clave ${icon('external', 'icon-sm')}</a>` : '<span id="ai-key-link"></span>'}</p>
       </div>
       <div class="field full"><label for="ai-base">Dirección del servicio (base URL)</label><input class="input" id="ai-base" name="baseUrl" value="${attr(ai.baseUrl || selected.baseUrl || '')}" placeholder="https://api.openai.com/v1"><p class="field-hint">Para OpenAI, OpenRouter, Gemini, Groq, DeepSeek, Mistral, Ollama o cualquier servidor compatible con OpenAI.</p></div>
-      <div class="field"><label for="ai-model">Modelo de texto</label><input class="input" id="ai-model" name="model" value="${attr(ai.model || '')}" list="ai-model-list" placeholder="${attr(selected.model || 'nombre-del-modelo')}"><datalist id="ai-model-list">${arr(selected.models).map((m) => `<option value="${attr(m)}">`).join('')}</datalist></div>
+      <div class="field"><label for="ai-model">Modelo de texto</label><input class="input" id="ai-model" name="model" value="${attr(typeof ai.model === 'string' ? ai.model : (ai.model?.id || ''))}" list="ai-model-list" placeholder="${attr(typeof selected.model === 'string' ? selected.model : (selected.model?.id || 'nombre-del-modelo'))}"><datalist id="ai-model-list">${arr(selected.models).map((m) => { const id = typeof m === 'string' ? m : (m.id || m.name || m.model || ''); return `<option value="${attr(id)}">`; }).join('')}</datalist></div>
       <div class="field"><label for="ai-vision">Modelo con visión (opcional)</label><input class="input" id="ai-vision" name="visionModel" value="${attr(ai.visionModel || '')}" placeholder="Se usa para leer fotos de producto"><p class="field-hint">Si tu modelo principal no ve imágenes, indicá uno que sí. Si no, el equipo trabaja con el texto y las notas.</p></div>
       <div class="field"><label for="ai-temp">Creatividad</label><div class="range-row"><input type="range" id="ai-temp" name="temperature" min="0" max="1.2" step="0.1" value="${attr(ai.temperature ?? 0.6)}"><span class="range-value" id="ai-temp-value">${esc(ai.temperature ?? 0.6)}</span></div><p class="field-hint">Baja para precios y aduanas; más alta para narrativa y contenido.</p></div>
-      <div class="field"><label for="ai-max">Máximo de tokens por respuesta</label><input class="input" id="ai-max" name="maxTokens" type="number" min="512" max="16000" step="128" value="${attr(ai.maxTokens ?? 8192)}"><p class="field-hint">Más tokens = respuestas más largas y mayor costo. Los pasos largos (red team, plan) necesitan 8000 o más; si el modelo corta el JSON, Lumbre amplía el límite sola y reintenta.</p></div>
+      <div class="field"><label for="ai-max">Máximo de tokens por respuesta</label><input class="input" id="ai-max" name="maxTokens" type="number" min="512" max="16000" step="128" value="${attr(ai.maxTokens ?? 8192)}"><p class="field-hint">Más tokens = respuestas más largas y mayor costo. Los pasos largos (red team, plan) necesitan 8000 o más; si el modelo corta el JSON, Lucian amplía el límite sola y reintenta.</p></div>
     </div>
     ${testResultBox('ai')}
     <div class="cluster mt-3" id="ai-models"></div>
-    <div class="artifact-callout info mt-3"><b>Qué se paga y qué no</b>Lumbre es gratis y corre en tu máquina. Solo pagás el proveedor de IA que elijas, y únicamente cuando lanzás una misión real o hacés una prueba de conexión.</div>`;
+    <div class="artifact-callout info mt-3"><b>Qué se paga y qué no</b>Lucian es gratis y corre en tu máquina. Solo pagás el proveedor de IA que elijas, y únicamente cuando lanzás una misión real o hacés una prueba de conexión.</div>`;
   return settingsForm('ia', 'El motor que piensa', 'Elegí un proveedor y pegá una clave. El modo demo no necesita nada de esto.', body, 'La prueba de conexión hace una llamada real y puede tener un costo mínimo.');
 }
 
@@ -3453,7 +4003,7 @@ function settingsSearchHTML() {
       'Búsqueda web',
       Boolean(flags.search),
       search.provider === 'duckduckgo'
-        ? 'Sin clave: Lumbre usa instancias públicas de SearXNG (y DuckDuckGo como último recurso). Si una consulta falla, lo dice y no inventa resultados.'
+        ? 'Sin clave: Lucian usa instancias públicas de SearXNG (y DuckDuckGo como último recurso). Si una consulta falla, lo dice y no inventa resultados.'
         : search.provider === 'none'
           ? 'La búsqueda está apagada. El equipo solo usará lo que ya sabés y tus datos.'
           : flags.search
@@ -3472,7 +4022,7 @@ function settingsSearchHTML() {
 
     <div class="form-section">
       <p class="form-section-title">Verificación de contactos</p>
-      <p class="form-section-sub">Hunter es opcional. Sin Hunter, Lumbre busca correos públicos en los sitios que encuentra y nunca inventa direcciones.</p>
+      <p class="form-section-sub">Hunter es opcional. Sin Hunter, Lucian busca correos públicos en los sitios que encuentra y nunca inventa direcciones.</p>
       ${settingsStatusCard(
         'Hunter.io',
         Boolean(flags.hunter),
@@ -3496,35 +4046,46 @@ function settingsEmailHTML() {
   const configured = Boolean(S.state.flags?.email) || Boolean(email.webhookUrl);
   const body = `
     ${settingsStatusCard(
-      'Envío desde Lumbre',
+      'Envío desde Lucian',
       configured,
       configured
-        ? `${email.provider === 'resend' ? 'Resend' : 'Webhook'} está configurado. Lumbre nunca envía sin tu confirmación y respeta el límite diario.`
+        ? `${email.provider === 'resend' ? 'Resend' : 'Webhook'} está configurado. Lucian nunca envía sin tu confirmación y respeta el límite diario.`
         : 'Modo manual: preparás el mensaje, descargás el .eml o lo copiás, y lo enviás desde tu correo. Nada sale solo.',
       testButton('resend', 'Probar Resend', 'send') + ` ${testButton('email', 'Revisar configuración', 'check')}`,
     )}
     <div class="form-grid">
       <div class="field full"><label for="email-provider">Cómo se envían los correos</label><select class="select" id="email-provider" name="emailProvider">${EMAIL_PROVIDERS.map(([value, label]) => `<option value="${value}" ${email.provider === value ? 'selected' : ''}>${esc(label)}</option>`).join('')}</select><p class="field-hint">Manual es la opción más segura para empezar. Resend requiere un dominio verificado. El webhook es para quien ya tiene Make, n8n o un servidor propio.</p></div>
-      <div class="field"><label for="email-from">Remitente</label><input class="input" id="email-from" name="from" value="${attr(email.from || '')}" placeholder="${attr(brand.email ? `${brand.name || 'Lumbre'} <${brand.email}>` : 'Tu nombre <hola@tumarca.com>')}"><p class="field-hint">Nombre y correo. Debe coincidir con el dominio verificado en Resend.</p></div>
+      <div class="field full"><label for="email-smtp-user">Usuario de Gmail</label><input class="input" id="email-smtp-user" name="smtpUser" value="${attr(email.smtpUser || '')}" placeholder="tuemail@gmail.com"><p class="field-hint">Tu correo de Gmail. Se usa para conectarse al servidor SMTP de Gmail.</p></div>
+      <div class="field full"><label for="email-smtp-pass">Contraseña de aplicación de Gmail</label><div class="secret-row"><input class="input" id="email-smtp-pass" name="smtpPassword" type="password" value="${attr(email.smtpPassword || '')}" placeholder="16 letras (contraseña de aplicación)" autocomplete="new-password"><button class="btn btn-ghost btn-sm" type="button" data-action="clear-secret" data-path="email.smtpPassword">Borrar</button></div><p class="field-hint">No es tu contraseña normal. La generás en myaccount.google.com/apppasswords (16 letras, con o sin espacios). Con esto Lucian envía correos reales desde Gmail.</p></div>
+      <div class="field"><label for="email-from">Remitente</label><input class="input" id="email-from" name="from" value="${attr(email.from || '')}" placeholder="${attr(brand.email ? `${brand.name || 'Lucian'} <${brand.email}>` : 'Tu nombre <hola@tumarca.com>')}"><p class="field-hint">Nombre y correo. Con Gmail debe ser tu dirección de Gmail.</p></div>
       <div class="field"><label for="email-reply">Responder a</label><input class="input" id="email-reply" name="replyTo" value="${attr(email.replyTo || '')}" placeholder="Opcional"></div>
       <div class="field full"><label for="email-resend">Clave de Resend</label><div class="secret-row"><input class="input" id="email-resend" name="resendKey" type="password" value="${attr(email.resendKey || '')}" placeholder="re_..." autocomplete="new-password"><button class="btn btn-ghost btn-sm" type="button" data-action="clear-secret" data-path="email.resendKey">Borrar</button></div></div>
-      <div class="field full"><label for="email-webhook">Webhook de envío</label><input class="input" id="email-webhook" name="webhookUrl" value="${attr(email.webhookUrl || '')}" placeholder="https://tu-servidor.com/enviar"><p class="field-hint">Lumbre manda el mensaje a esta URL y tu automatización hace el envío final.</p></div>
-      <div class="field full"><label for="email-webhook-token">Token para correos entrantes</label><div class="secret-row"><input class="input" id="email-webhook-token" name="webhookToken" type="password" value="${attr(email.webhookToken || '')}" placeholder="Una frase larga y secreta" autocomplete="new-password"><button class="btn btn-ghost btn-sm" type="button" data-action="clear-secret" data-path="email.webhookToken">Borrar</button></div><p class="field-hint">Protege <code>/api/webhooks/email</code>. Si no hay token, Lumbre solo acepta correos entrantes desde esta computadora. Para recibir respuestas desde internet, configurá uno acá o en <code>LUMBRE_WEBHOOK_TOKEN</code>.</p></div>
+      <div class="field full"><label for="email-webhook">Webhook de envío</label><input class="input" id="email-webhook" name="webhookUrl" value="${attr(email.webhookUrl || '')}" placeholder="https://tu-servidor.com/enviar"><p class="field-hint">Lucian manda el mensaje a esta URL y tu automatización hace el envío final.</p></div>
+      <div class="field full"><label for="email-webhook-token">Token para correos entrantes</label><div class="secret-row"><input class="input" id="email-webhook-token" name="webhookToken" type="password" value="${attr(email.webhookToken || '')}" placeholder="Una frase larga y secreta" autocomplete="new-password"><button class="btn btn-ghost btn-sm" type="button" data-action="clear-secret" data-path="email.webhookToken">Borrar</button></div><p class="field-hint">Protege <code>/api/webhooks/email</code>. Si no hay token, Lucian solo acepta correos entrantes desde esta computadora. Para recibir respuestas desde internet, configurá uno acá o en <code>LUCIAN_WEBHOOK_TOKEN</code>.</p></div>
       <div class="field"><label for="email-limit">Límite diario</label><input class="input" id="email-limit" name="dailyLimit" type="number" min="1" max="200" value="${attr(email.dailyLimit || 20)}"><p class="field-hint">Hoy: ${num(limits.used)} de ${num(limits.limit || email.dailyLimit || 20)}${limits.warmup ? ` · calentamiento, día ${num(limits.day)}` : ''}.</p></div>
       <div class="field"><label class="switch" style="margin-top:24px"><input type="checkbox" name="warmup" ${email.warmup ? 'checked' : ''}><span class="track"></span><span>Calentamiento gradual</span></label><p class="field-hint">Empieza con pocos envíos por día y sube de a poco. Mejor reputación, menos spam.</p></div>
-      <div class="field full"><label for="email-footer">Pie de cumplimiento</label><textarea class="textarea" id="email-footer" name="footer" rows="4" placeholder="Ej.: Recibís este correo porque tu tienda trabaja con diseño. Podés responder “baja” para no recibir más.">${esc(email.footer || '')}</textarea><p class="field-hint">Se agrega al final de cada correo. Lumbre ya incluye la baja y tu identidad (marca, dirección y web).</p></div>
+      <div class="field full"><label for="email-footer">Pie de cumplimiento</label><textarea class="textarea" id="email-footer" name="footer" rows="4" placeholder="Ej.: Recibís este correo porque tu tienda trabaja con diseño. Podés responder “baja” para no recibir más.">${esc(email.footer || '')}</textarea><p class="field-hint">Se agrega al final de cada correo. Lucian ya incluye la baja y tu identidad (marca, dirección y web).</p></div>
     </div>
 
     <div class="form-section">
       <p class="form-section-title">Piloto automático · opcional</p>
-      <p class="form-section-sub">Cuando lo activás, Lumbre envía solo los borradores que ya pasaron cumplimiento y red team, respetando el límite diario y el calentamiento. Si algo no cuadra, ese mensaje se detiene y te avisa.</p>
+      <p class="form-section-sub">Cuando lo activás, Lucian envía solo los borradores que ya pasaron cumplimiento y red team, respetando el límite diario y el calentamiento. Si algo no cuadra, ese mensaje se detiene y te avisa.</p>
       <div class="form-grid">
         <div class="field full"><label class="switch"><input type="checkbox" name="emailAutopilot" ${email.autopilot ? 'checked' : ''}><span class="track"></span><span>Enviar automáticamente los borradores listos</span></label><p class="field-hint">Requiere Resend o webhook. En modo manual no se activa: marcar como enviado sin enviar sería un engaño.</p></div>
         <div class="field"><label for="email-spacing">Minutos entre envíos</label><input class="input" id="email-spacing" name="autopilotSpacingMin" type="number" min="1" max="120" value="${attr(email.autopilotSpacingMin || 5)}"><p class="field-hint">Un ritmo humano reduce el riesgo de spam.</p></div>
         <div class="field"><label class="switch" style="margin-top:24px"><input type="checkbox" name="emailFollowUps" ${email.followUps !== false ? 'checked' : ''}><span class="track"></span><span>Preparar seguimientos</span></label><p class="field-hint">Día 4 y día 10. Se detienen si hay respuesta o baja.</p></div>
-        <div class="field"><label class="switch" style="margin-top:24px"><input type="checkbox" name="emailPostSales" ${email.postSales !== false ? 'checked' : ''}><span class="track"></span><span>Postventa (fidelización)</span></label><p class="field-hint">Al marcar ganado: agradecimiento al día 3, feedback al día 30 y reorden al día 90. Sin piloto quedan “Por aprobar”.</p></div>
+        <div class="field"><label class="switch" style="margin-top:24px"><input type="checkbox" name="emailPostSales" ${email.postSales !== false ? 'checked' : ''}><span class="track"></span><span>Postventa (fidelización)</span></label><p class="field-hint">Al marcar ganado: agradecimiento al día 3, feedback al día 30 y reorden al día 90. Sin piloto quedan “Por aprobar”.</p></div>
       </div>
       ${S.state.outbox?.enabled ? `<div class="artifact-callout mt-2"><b>Cola de salida</b>${num(S.state.outbox.pending)} pendiente${num(S.state.outbox.pending) === 1 ? '' : 's'} · ${num(S.state.outbox.sent)} enviado${num(S.state.outbox.sent) === 1 ? '' : 's'}${S.state.outbox.nextAt ? ` · próximo ${new Date(S.state.outbox.nextAt).toLocaleString()}` : ''}.</div>` : ''}
+    </div>
+
+    <div class="form-section">
+      <p class="form-section-title">Cobros y cotizaciones</p>
+      <p class="form-section-sub">Una cotización clara y un link de pago convierten el interés en un pedido. Cada producto puede tener su propio link; este es el que se usa cuando no lo tiene.</p>
+      <div class="form-grid">
+        <div class="field full"><label for="sales-payment">Link de pago global</label><input class="input" id="sales-payment" name="salesPaymentLink" type="url" value="${attr(settings.sales?.paymentLink || '')}" placeholder="https://link.mercadopago.com.ar/”¦ o https://buy.stripe.com/”¦"><p class="field-hint">Se incluye en la cotización. Si está vacío, el correo pide confirmación y el link se envía después.</p></div>
+        <div class="field"><label for="sales-validity">Validez de la cotización (días)</label><input class="input" id="sales-validity" name="salesQuoteValidityDays" type="number" min="1" max="120" value="${attr(settings.sales?.quoteValidityDays || 15)}"></div>
+      </div>
     </div>
     ${testResultBox('resend')}
     ${testResultBox('email')}
@@ -3540,7 +4101,7 @@ function settingsNotifyHTML() {
   const events = notify.events || {};
   const body = `
     <div class="form-grid">
-      <div class="field full"><label class="switch"><input type="checkbox" name="notifyPaused" ${notify.paused ? 'checked' : ''}><span class="track"></span><span>Pausar todas las notificaciones</span></label><p class="field-hint">Lumbre sigue trabajando; solo deja de mandarte mensajes.</p></div>
+      <div class="field full"><label class="switch"><input type="checkbox" name="notifyPaused" ${notify.paused ? 'checked' : ''}><span class="track"></span><span>Pausar todas las notificaciones</span></label><p class="field-hint">Lucian sigue trabajando; solo deja de mandarte mensajes.</p></div>
     </div>
 
     <div class="form-section">
@@ -3555,7 +4116,7 @@ function settingsNotifyHTML() {
       <div class="form-grid">
         <div class="field full"><label class="switch"><input type="checkbox" name="telegramEnabled" ${telegram.enabled ? 'checked' : ''}><span class="track"></span><span>Activar Telegram</span></label></div>
         <div class="field full"><label for="tg-token">Token del bot</label><div class="secret-row"><input class="input" id="tg-token" name="tgToken" type="password" value="${attr(telegram.token || '')}" placeholder="123456789:AA..." autocomplete="new-password"><button class="btn btn-ghost btn-sm" type="button" data-action="clear-secret" data-path="notify.telegram.token">Borrar</button></div></div>
-        <div class="field"><label for="tg-chat">Chat o usuario</label><input class="input" id="tg-chat" name="tgChat" value="${attr(telegram.chatId || '')}" placeholder="Tu chat ID numérico"><p class="field-hint">Si no lo sabés, guardá el token, escribile al bot y usá “Buscar chats”.</p></div>
+        <div class="field"><label for="tg-chat">Chat o usuario</label><input class="input" id="tg-chat" name="tgChat" value="${attr(telegram.chatId || '')}" placeholder="Tu chat ID numérico"><p class="field-hint">Si no lo sabés, guardá el token, escribile al bot y usá “Buscar chats”.</p></div>
         <div class="field"><label for="tg-digest">Hora del resumen diario</label><input class="input" id="tg-digest" name="tgDigest" type="number" min="0" max="23" value="${attr(telegram.digestHour ?? 9)}"><p class="field-hint">Hora local de tu computadora.</p></div>
       </div>
       ${testResultBox('telegram')}
@@ -3568,17 +4129,17 @@ function settingsNotifyHTML() {
       ${settingsStatusCard(
         'WhatsApp',
         Boolean(S.state.flags?.whatsapp),
-        S.state.flags?.whatsapp ? 'El canal está configurado para avisarte y recibir respuestas.' : 'Sin configurar. No es necesario para usar Lumbre.',
+        S.state.flags?.whatsapp ? 'El canal está configurado para avisarte y recibir respuestas.' : 'Sin configurar. No es necesario para usar Lucian.',
         testButton('whatsapp', 'Enviar prueba', 'send'),
       )}
       <div class="form-grid">
         <div class="field full"><label class="switch"><input type="checkbox" name="whatsappEnabled" ${whatsapp.enabled ? 'checked' : ''}><span class="track"></span><span>Activar WhatsApp</span></label></div>
         <div class="field full"><label for="wa-token">Token permanente</label><div class="secret-row"><input class="input" id="wa-token" name="waToken" type="password" value="${attr(whatsapp.token || '')}" placeholder="Token de Meta" autocomplete="new-password"><button class="btn btn-ghost btn-sm" type="button" data-action="clear-secret" data-path="notify.whatsapp.token">Borrar</button></div></div>
         <div class="field"><label for="wa-phone">Phone Number ID</label><input class="input" id="wa-phone" name="waPhoneId" value="${attr(whatsapp.phoneNumberId || '')}" placeholder="ID del número en Meta"></div>
-        <div class="field"><label for="wa-to">Tu WhatsApp</label><input class="input" id="wa-to" name="waTo" value="${attr(whatsapp.to || '')}" placeholder="5491123456789"><p class="field-hint">Código de país + número, sin espacios ni “+”.</p></div>
-        <div class="field"><label for="wa-verify">Token de verificación del webhook</label><input class="input" id="wa-verify" name="waVerify" value="${attr(whatsapp.verifyToken || 'lumbre')}" placeholder="lumbre"></div>
+        <div class="field"><label for="wa-to">Tu WhatsApp</label><input class="input" id="wa-to" name="waTo" value="${attr(whatsapp.to || '')}" placeholder="5491123456789"><p class="field-hint">Código de país + número, sin espacios ni “+”.</p></div>
+        <div class="field"><label for="wa-verify">Token de verificación del webhook</label><input class="input" id="wa-verify" name="waVerify" value="${attr(whatsapp.verifyToken || 'lucian')}" placeholder="lucian"></div>
         <div class="field"><label for="wa-version">Versión de la API</label><input class="input" id="wa-version" name="waVersion" value="${attr(whatsapp.apiVersion || 'v23.0')}" placeholder="v23.0"></div>
-        <div class="field full"><label>URL del webhook para Meta</label><div class="field-row"><input class="input" readonly value="${attr(`${location.origin}/api/webhooks/whatsapp`)}"><button class="btn btn-ghost btn-sm" type="button" data-action="copy-webhook">${icon('copy')} Copiar</button></div><p class="field-hint">Esta dirección solo funciona si exponés Lumbre en internet con HTTPS.</p></div>
+        <div class="field full"><label>URL del webhook para Meta</label><div class="field-row"><input class="input" readonly value="${attr(`${location.origin}/api/webhooks/whatsapp`)}"><button class="btn btn-ghost btn-sm" type="button" data-action="copy-webhook">${icon('copy')} Copiar</button></div><p class="field-hint">Esta dirección solo funciona si exponés Lucian en internet con HTTPS.</p></div>
       </div>
       ${testResultBox('whatsapp')}
     </div>
@@ -3634,7 +4195,7 @@ function settingsSuppressionsHTML() {
   return `<div class="settings-form">
     <div class="form-section">
       <p class="form-section-title">Lista de no contactar</p>
-      <p class="form-section-sub">Si alguien pide la baja, agregalo acá. Lumbre no vuelve a escribirle en ninguna misión futura y bloquea los borradores pendientes de ese contacto.</p>
+      <p class="form-section-sub">Si alguien pide la baja, agregalo acá. Lucian no vuelve a escribirle en ninguna misión futura y bloquea los borradores pendientes de ese contacto.</p>
       <form id="suppression-form" class="form-grid" autocomplete="off">
         <div class="field"><label for="sup-email">Email exacto</label><input class="input" id="sup-email" name="email" type="email" placeholder="compras@tienda.com"></div>
         <div class="field"><label for="sup-domain">Dominio</label><input class="input" id="sup-domain" name="domain" placeholder="tienda.com"></div>
@@ -3643,13 +4204,13 @@ function settingsSuppressionsHTML() {
         <div class="field full"><label class="checkbox"><input type="checkbox" name="blockDomain"><span>Bloquear todo el dominio del email</span></label><p class="field-hint">Por defecto un email bloquea solo esa dirección. Marcá esta opción si querés bloquear a toda la empresa (no se puede con Gmail/Outlook ni dominios compartidos).</p></div>
         <div class="form-actions" style="grid-column:1/-1;margin-top:2px">
           <button class="btn btn-primary btn-sm" type="submit">${icon('plus')} Agregar a la lista</button>
-          <span class="form-note">Con un email alcanza. El campo “Dominio” se usa para bloquear una empresa por su dominio, sin cargar un email.</span>
+          <span class="form-note">Con un email alcanza. El campo “Dominio” se usa para bloquear una empresa por su dominio, sin cargar un email.</span>
         </div>
       </form>
     </div>
     <div class="form-section">
       <p class="form-section-title">${list.length ? `${list.length} contacto${list.length === 1 ? '' : 's'} bloqueado${list.length === 1 ? '' : 's'}` : 'Todavía no hay contactos bloqueados'}</p>
-      ${list.length ? `<div class="stack">${rows}</div>` : '<div class="artifact-callout info"><b>Sin bloqueos</b>Cuando alguien responda “BAJA” o “no me escribas más”, Lumbre lo detecta en la bandeja y lo agrega automáticamente.</div>'}
+      ${list.length ? `<div class="stack">${rows}</div>` : '<div class="artifact-callout info"><b>Sin bloqueos</b>Cuando alguien responda “BAJA” o “no me escribas más”, Lucian lo detecta en la bandeja y lo agrega automáticamente.</div>'}
     </div>
   </div>`;
 }
@@ -3657,7 +4218,7 @@ function settingsSuppressionsHTML() {
 function settingsDataHTML() {
   const counts = S.state.counts || {};
   const app = S.state.app || {};
-  const dataDir = app.dataDir || 'lumbre/data';
+  const dataDir = app.dataDir || 'lucian/data';
   const demoLoaded = Boolean(S.state.onboarding?.demoLoaded);
   const body = `
     <div class="data-card">
@@ -3694,7 +4255,7 @@ function settingsDataHTML() {
       <p class="form-section-title">Dónde vive todo</p>
       <div class="field-row"><input class="input" readonly value="${attr(dataDir)}"><button class="btn btn-ghost btn-sm" type="button" data-action="copy-el" data-target="data-dir-copy">${icon('copy')} Copiar</button></div>
       <textarea id="data-dir-copy" class="sr-only" readonly>${esc(dataDir)}</textarea>
-      <p class="field-hint">Esta carpeta contiene JSON y fotos. Podés copiarla a otra computadora. No la edites a mano mientras Lumbre está abierto.</p>
+      <p class="field-hint">Esta carpeta contiene JSON y fotos. Podés copiarla a otra computadora. No la edites a mano mientras Lucian está abierto.</p>
       <div class="kv-list mt-3">
         <div class="kv"><span>Productos</span><b>${num(counts.products)}</b></div>
         <div class="kv"><span>Misiones</span><b>${num(counts.missions)}</b></div>
@@ -3736,7 +4297,7 @@ function settingsHelpHTML() {
       </div>
     </div>
     <div class="form-section">
-      <p class="form-section-title">Lo que Lumbre no hace</p>
+      <p class="form-section-title">Lo que Lucian no hace</p>
       <div class="artifact-callout warn"><b>Sin promesas mágicas</b>No compra listas de correos, no inventa direcciones, no garantiza ventas, no reemplaza a un despachante de aduanas ni a un abogado. Los datos de mercado se investigan y se citan; las decisiones legales y fiscales las tomás vos.</div>
     </div>
     <div class="form-section">
@@ -3749,7 +4310,7 @@ function settingsHelpHTML() {
       </div>
     </div>`;
   return `<div class="settings-form">
-    <div class="form-section"><p class="form-section-title">Cómo empezar sin enredarte</p><p class="form-section-sub">Lumbre está pensada para una persona sola que hace lámparas, no para un departamento de ventas.</p></div>
+    <div class="form-section"><p class="form-section-title">Cómo empezar sin enredarte</p><p class="form-section-sub">Lucian está pensada para una persona sola que hace lámparas, no para un departamento de ventas.</p></div>
     ${body}
   </div>`;
 }
@@ -3794,7 +4355,7 @@ function bindSettings() {
       if (model) model.value = preset.model || '';
       if (vision) vision.value = preset.vision || '';
       if (note) note.textContent = preset.note || '';
-      if (list) list.innerHTML = arr(preset.models).map((m) => `<option value="${attr(m)}">`).join('');
+      if (list) list.innerHTML = arr(preset.models).map((m) => { const id = typeof m === 'string' ? m : (m.id || m.name || m.model || ''); return `<option value="${attr(id)}">`; }).join('');
       const link = $('#ai-key-link');
       if (link) {
         if (link.tagName === 'A') {
@@ -3813,6 +4374,46 @@ function bindSettings() {
   if (restore) restore.addEventListener('change', restoreBackupFile);
 }
 
+const AI_CONFIG_DEFAULT_GOAL = 'Analiza mi catalogo y configura Lucian para maximizar las ventas: elige los mejores mercados, profundidad, cantidad de prospectos, tono y limites de correo segun mis productos y situacion actual.';
+
+async function aiConfigureSettings() {
+  openModal({
+    title: 'Configuración con IA',
+    subtitle: 'La IA ajusta misiones, límites, seguimientos y cobros por vos. Nunca toca claves ni URLs de proveedores.',
+    body: `<div class="field full">
+      <label for="ai-config-goal">¿Qué querés que logre?</label>
+      <textarea class="textarea" id="ai-config-goal" rows="4" placeholder="Contale qué querés vender y dónde.">${esc(AI_CONFIG_DEFAULT_GOAL)}</textarea>
+      <p class="field-hint">Dejá el texto sugerido y aplicá la configuración óptima con un click.</p>
+    </div>`,
+    footer: `<button class="btn btn-ghost" type="button" data-action="close-modal">Cancelar</button>
+      <button class="btn btn-primary" type="button" id="ai-configure-apply">${icon('wand')} Que lo haga la IA</button>`,
+    onMount: (root) => {
+      const apply = root.querySelector('#ai-configure-apply');
+      if (apply) apply.addEventListener('click', () => applyAiConfiguration(root.querySelector('#ai-config-goal')?.value || ''));
+    }
+  });
+}
+
+async function applyAiConfiguration(goal) {
+  const button = $('#ai-configure-apply');
+  if (button) { button.disabled = true; button.innerHTML = `${icon('refresh', 'spin')} Configurando”¦`; }
+  try {
+    const result = await api('/api/settings/ai-configure', { method: 'POST', body: JSON.stringify({ goal }) });
+    closeModal();
+    await loadState({ silent: true, render: false });
+    render();
+    toast(result.summary || 'Configuración aplicada por la IA.');
+    openModal({
+      title: 'Configuración aplicada',
+      subtitle: 'La IA ajustó los parámetros de Lucian. No tocó ninguna clave.',
+      body: `<p>${esc(result.summary || 'Listo.')}</p>`,
+      footer: `<button class="btn btn-primary" type="button" data-action="close-modal">Entendido</button>`
+    });
+  } catch (error) {
+    toast(error.message, 'error');
+    if (button) { button.disabled = false; button.innerHTML = `${icon('wand')} Que lo haga la IA`; }
+  }
+}
 async function saveSettings(form) {
   const tab = form.dataset.settingsTab || 'marca';
   const fd = new FormData(form);
@@ -3870,6 +4471,8 @@ async function saveSettings(form) {
       email: {
         provider: val('emailProvider') || 'manual',
         resendKey: val('resendKey'),
+        smtpUser: val('smtpUser'),
+        smtpPassword: val('smtpPassword'),
         from: val('from'),
         replyTo: val('replyTo'),
         footer: val('footer'),
@@ -3881,6 +4484,10 @@ async function saveSettings(form) {
         autopilotSpacingMin: Math.max(1, Math.min(120, Math.round(num(val('autopilotSpacingMin'), 5)))),
         followUps: check('emailFollowUps'),
         postSales: check('emailPostSales'),
+      },
+      sales: {
+        paymentLink: val('salesPaymentLink'),
+        quoteValidityDays: Math.max(1, Math.min(120, Math.round(num(val('salesQuoteValidityDays'), 15)))),
       },
     };
   } else if (tab === 'notificaciones') {
@@ -3898,7 +4505,7 @@ async function saveSettings(form) {
           token: val('waToken'),
           phoneNumberId: val('waPhoneId'),
           to: val('waTo'),
-          verifyToken: val('waVerify') || 'lumbre',
+          verifyToken: val('waVerify') || 'lucian',
           apiVersion: val('waVersion') || 'v23.0',
         },
         events: {
@@ -3928,7 +4535,7 @@ async function saveSettings(form) {
 
   if (!patch) return;
   const button = form.querySelector('button[type="submit"]');
-  if (button) { button.disabled = true; button.innerHTML = `${icon('refresh', 'spin')} Guardando…`; }
+  if (button) { button.disabled = true; button.innerHTML = `${icon('refresh', 'spin')} Guardando”¦`; }
   try {
     const result = await api('/api/settings', { method: 'PUT', body: patch });
     S.state.settings = result.settings;
@@ -3954,7 +4561,7 @@ async function clearSecret(path) {
   };
   const confirmed = await confirmAction({
     title: 'Borrar credencial',
-    message: `¿Borrar ${labels[path] || 'esta credencial'}? Lumbre deja de usarla hasta que pegues una nueva.`,
+    message: `¿Borrar ${labels[path] || 'esta credencial'}? Lucian deja de usarla hasta que pegues una nueva.`,
     confirmLabel: 'Borrar',
     danger: true,
   });
@@ -3978,7 +4585,7 @@ function showTestResult(target, ok, payload) {
   if (payload !== undefined && payload !== null) {
     if (typeof payload === 'object') {
       details = Object.entries(payload).map(([key, value]) => {
-        const clean = value === null || value === undefined ? '—' : typeof value === 'object' ? JSON.stringify(value) : String(value);
+        const clean = value === null || value === undefined ? '””' : typeof value === 'object' ? JSON.stringify(value) : String(value);
         return `${key}: ${clean}`;
       }).join('\n');
     } else {
@@ -3994,7 +4601,7 @@ async function runSettingsTest(button) {
   if (!target) return;
   const original = button.innerHTML;
   button.disabled = true;
-  button.innerHTML = `${icon('refresh', 'spin')} Probando…`;
+  button.innerHTML = `${icon('refresh', 'spin')} Probando”¦`;
   try {
     const result = await api('/api/settings/test', { method: 'POST', body: { target }, silent: true });
     showTestResult(target, Boolean(result.ok), result.ok ? result.result : result.error);
@@ -4011,14 +4618,18 @@ async function runSettingsTest(button) {
 async function loadAIModels(button) {
   const original = button.innerHTML;
   button.disabled = true;
-  button.innerHTML = `${icon('refresh', 'spin')} Buscando…`;
+  button.innerHTML = `${icon('refresh', 'spin')} Buscando”¦`;
   const container = $('#ai-models');
   try {
     const result = await api('/api/ai/models', { silent: true });
     const models = arr(result.models);
     if (container) {
       container.innerHTML = models.length
-        ? `<span class="tiny muted">Modelos disponibles en ${esc(result.provider || 'el proveedor')}:</span>${models.map((model) => `<button class="chip" type="button" data-action="pick-model" data-model="${attr(model)}">${esc(model)}</button>`).join('')}`
+        ? `<span class="tiny muted">Modelos disponibles en ${esc(result.provider || 'el proveedor')}:</span>${models.map((model) => {
+            const id = typeof model === 'string' ? model : (model.id || model.name || model.model || '');
+            const label = typeof model === 'string' ? model : (model.label || model.displayName || model.name || id);
+            return `<button class="chip" type="button" data-action="pick-model" data-model="${attr(id)}">${esc(label)}</button>`;
+          }).join('')}`
         : '<span class="tiny muted">El proveedor no devolvió una lista de modelos. Podés escribirlo a mano.</span>';
     }
     toast(models.length ? `${models.length} modelos encontrados.` : 'No hay modelos para mostrar.', 'info');
@@ -4043,12 +4654,12 @@ function pickAIModel(model) {
 async function findTelegramChats(button) {
   const original = button.innerHTML;
   button.disabled = true;
-  button.innerHTML = `${icon('refresh', 'spin')} Buscando…`;
+  button.innerHTML = `${icon('refresh', 'spin')} Buscando”¦`;
   const container = $('#telegram-chats');
   try {
     const tokenField = $('#tg-token');
     const token = String(tokenField?.value || '').trim();
-    const body = token && !token.startsWith('••') ? { token } : {};
+    const body = token && !token.startsWith('”¢”¢') ? { token } : {};
     const result = await api('/api/settings/telegram/chats', { method: 'POST', body, silent: true });
     const chats = arr(result.chats);
     if (container) {
@@ -4080,7 +4691,7 @@ async function restoreBackupFile(event) {
   if (!file) return;
   const confirmed = await confirmAction({
     title: 'Restaurar copia de seguridad',
-    message: `Vas a reemplazar los datos actuales por “${file.name}”. Esta acción no se puede deshacer.`,
+    message: `Vas a reemplazar los datos actuales por “${file.name}”. Esta acción no se puede deshacer.`,
     details: 'Descargá una copia de lo actual antes de continuar si hay algo que te importa.',
     confirmLabel: 'Restaurar',
     danger: true,
@@ -4178,7 +4789,7 @@ function closeMobileNav() {
 async function cancelMission(id) {
   const confirmed = await confirmAction({
     title: 'Cancelar misión',
-    message: 'La misión se detiene en el paso actual. Lo que ya produjo queda guardado.',
+    message: 'La misión se cancela AHORA, incluso si la IA está respondiendo. Lo que ya produjo queda guardado.',
     confirmLabel: 'Cancelar misión',
     danger: true,
   });
@@ -4192,7 +4803,7 @@ async function cancelMission(id) {
     } else {
       render();
     }
-    toast('Cancelación pedida. La misión se detiene al terminar el paso actual.');
+    toast('Misión cancelada. La IA se detuvo y lo ya producido quedó guardado.');
   } catch (error) {
     toast(error.message, 'error');
   }
@@ -4234,11 +4845,103 @@ async function reconcileMission(id) {
   }
 }
 
+function pendingResendCount() {
+  return arr(S.state.threads).reduce((acc, t) => acc + num(t.pendingResends), 0);
+}
+
+async function prepareResends() {
+  const count = pendingResendCount();
+  if (!count) { toast('No hay reenvíos pendientes.', 'info'); return; }
+  const confirmed = await confirmAction({
+    title: 'Preparar reenvíos',
+    message: `¿Preparar ${count} borrador${count === 1 ? '' : 'es'} con el texto de los correos que no se entregaron?`,
+    details: 'Se crea un borrador listo en cada conversación. Después lo revisás y lo enviás por tu correo (Copiar o .eml). El intento original queda registrado.',
+    confirmLabel: 'Preparar',
+  });
+  if (!confirmed) return;
+  try {
+    const result = await api('/api/threads/prepare-resends', { method: 'POST' });
+    await loadState({ silent: true, render: false });
+    if (S.thread?.thread?.id) await loadThread(S.thread.thread.id, { force: true });
+    render();
+    toast(result.prepared ? `Se prepararon ${result.prepared} reenvíos. Revisá los borradores en cada conversación.` : 'Los reenvíos ya estaban preparados.');
+  } catch (error) {
+    toast(error.message, 'error');
+  }
+}
+
+async function deleteAllThreads() {
+  const threads = arr(S.state.threads);
+  if (!threads.length) { toast('No hay conversaciones para borrar.', 'info'); return; }
+  const confirmed = await confirmAction({
+    title: 'Borrar TODAS las conversaciones',
+    message: `¿Borrar las ${threads.length} conversaciones con todos sus mensajes, borradores y cotizaciones?`,
+    details: 'Esta acción no se puede deshacer. Tus lámparas, misiones y contenido quedan intactos.',
+    confirmLabel: 'Borrar todas',
+    danger: true,
+  });
+  if (!confirmed) return;
+  try {
+    const result = await api('/api/threads/all', { method: 'DELETE' });
+    S.thread = null;
+    await loadState({ silent: true, render: false });
+    render();
+    toast(`Se borraron ${result.deleted} conversaciones.`);
+  } catch (error) {
+    toast(error.message, 'error');
+  }
+}
+
+async function deleteAllContent() {
+  const items = arr(S.state.content);
+  if (!items.length) { toast('No hay contenido para borrar.', 'info'); return; }
+  const confirmed = await confirmAction({
+    title: 'Borrar TODO el contenido',
+    message: `¿Borrar las ${items.length} piezas de contenido (ideas, guiones y publicaciones)?`,
+    details: 'Esta acción no se puede deshacer. Tus lámparas, misiones y conversaciones quedan intactos.',
+    confirmLabel: 'Borrar todo',
+    danger: true,
+  });
+  if (!confirmed) return;
+  try {
+    const result = await api('/api/content/all', { method: 'DELETE' });
+    await loadState({ silent: true, render: false });
+    render();
+    toast(`Se borraron ${result.deleted} piezas de contenido.`);
+  } catch (error) {
+    toast(error.message, 'error');
+  }
+}
+
+async function deleteAllMissions() {
+  const missions = arr(S.state.missions);
+  if (!missions.length) { toast('No hay misiones para borrar.', 'info'); return; }
+  const running = missions.filter((m) => ['running', 'queued'].includes(m.status)).length;
+  const confirmed = await confirmAction({
+    title: 'Borrar TODAS las misiones',
+    message: `¿Borrar las ${missions.length} misiones? ${running ? `Hay ${running} en curso: se detendrán.` : ''} Se borra el registro de las misiones, pero NO las conversaciones ni el contenido que crearon.`,
+    details: 'Esta acción no se puede deshacer. Tus lámparas, conversaciones y contenido quedan intactos.',
+    confirmLabel: 'Borrar todas',
+    danger: true,
+  });
+  if (!confirmed) return;
+  try {
+    const result = await api('/api/missions/all', { method: 'DELETE' });
+    S.mission = null;
+    disconnectMission();
+    await loadState({ silent: true, render: false });
+    render();
+    toast(`Se borraron ${result.deleted} misiones. Las conversaciones y el contenido siguen ahí.`);
+  } catch (error) {
+    toast(error.message, 'error');
+  }
+}
+
 async function deleteMission(id) {
   const mission = arr(S.state.missions).find((m) => m.id === id);
   const confirmed = await confirmAction({
     title: 'Borrar misión',
-    message: `¿Borrar “${mission?.name || 'esta misión'}”? Se elimina el registro de la misión, pero no las conversaciones ni el contenido que ya creó.`,
+    message: `¿Borrar “${mission?.name || 'esta misión'}”? Se elimina el registro de la misión, pero no las conversaciones ni el contenido que ya creó.`,
     confirmLabel: 'Borrar',
     danger: true,
   });
@@ -4258,7 +4961,7 @@ async function deleteProduct(id) {
   const product = arr(S.state.products).find((p) => p.id === id);
   const confirmed = await confirmAction({
     title: 'Eliminar lámpara',
-    message: `¿Eliminar “${product?.name || 'este producto'}” y sus fotos? Las misiones y conversaciones anteriores conservan el nombre como referencia.`,
+    message: `¿Eliminar “${product?.name || 'este producto'}” y sus fotos? Las misiones y conversaciones anteriores conservan el nombre como referencia.`,
     confirmLabel: 'Eliminar',
     danger: true,
   });
@@ -4361,6 +5064,20 @@ async function handleAction(action, el) {
     case 'new-product': openProductModal(); return;
     case 'import-products': $('#product-import-input')?.click(); return;
     case 'campaign-catalog': openCampaignModal(); return;
+    case 'campaign-selected': {
+      if (!S.ui.selectedProducts.length) { toast('Seleccioná al menos un producto.', 'error'); return; }
+      openCampaignModal(S.ui.selectedProducts);
+      return;
+    }
+    case 'toggle-product-select': {
+      const id = el.dataset.id;
+      if (!id) return;
+      const idx = S.ui.selectedProducts.indexOf(id);
+      if (idx === -1) S.ui.selectedProducts.push(id);
+      else S.ui.selectedProducts.splice(idx, 1);
+      if (S.route.view === 'productos' && !S.route.id) render();
+      return;
+    }
     case 'launch-campaign': await launchCampaign(); return;
     case 'edit-product': openProductModal(el.dataset.id); return;
     case 'delete-product': await deleteProduct(el.dataset.id); return;
@@ -4404,6 +5121,27 @@ async function handleAction(action, el) {
     case 'mission-retry': await retryMission(el.dataset.id); return;
     case 'mission-reconcile': await reconcileMission(el.dataset.id); return;
     case 'mission-delete': await deleteMission(el.dataset.id); return;
+    case 'delete-all-missions': await deleteAllMissions(); return;
+    case 'delete-all-threads': await deleteAllThreads(); return;
+    case 'prepare-resends': await prepareResends(); return;
+    case 'check-inbox': {
+      const button = el;
+      const original = button.innerHTML;
+      button.disabled = true;
+      button.innerHTML = `${icon('refresh', 'spin')} Revisando…`;
+      try {
+        await api('/api/email/check-inbox', { method: 'POST' });
+        await loadState({ silent: true, render: false });
+        render();
+        toast('Bandeja revisada. Si hay respuestas nuevas, ya están acá.');
+      } catch (error) {
+        toast(error.message, 'error');
+        button.disabled = false;
+        button.innerHTML = original;
+      }
+      return;
+    }
+    case 'delete-all-content': await deleteAllContent(); return;
     case 'toggle-step': {
       const id = el.dataset.id;
       if (!id) return;
@@ -4442,6 +5180,9 @@ async function handleAction(action, el) {
       return;
     }
     case 'save-contact': await saveContact(el.dataset.id); return;
+    case 'ai-configure': await aiConfigureSettings(); return;
+    case 'save-quote': await saveQuote(el.dataset.id); return;
+    case 'quote-status': await setQuoteStatusUI(el.dataset.id, el.dataset.quoteId, el.dataset.status); return;
     case 'new-draft': {
       if (!S.thread?.thread) return;
       openDraftModal(S.thread.thread);
@@ -4470,6 +5211,12 @@ async function handleAction(action, el) {
     case 'download-eml': await downloadEml(el.dataset.id, el.dataset.draftId); return;
     case 'analyze-thread': await analyzeCurrentThread(el); return;
     case 'delete-thread': await deleteThread(el.dataset.id); return;
+    case 'content-publish': {
+      const item = arr(S.state.content).find((c) => c.id === el.dataset.id);
+      if (item) openPublishModal(item);
+      return;
+    }
+    case 'save-publish': await savePublish(el.dataset.id); return;
     case 'content-edit': {
       const item = arr(S.state.content).find((c) => c.id === el.dataset.id);
       if (item) openContentModal(item);
@@ -4581,8 +5328,10 @@ function bindTeam() {
 
 function bindView(route) {
   if (!route) return;
-  if (route.view === 'productos') bindProducts();
+  if (route.view === 'productos' && !route.id) bindProducts();
+  else if (route.view === 'productos' && route.id) bindProductRoute(route.id);
   else if (route.view === 'misiones' && route.id === 'nueva') bindWizard();
+  else if (route.view === 'ventas') bindVentas();
   else if (route.view === 'bandeja') bindInbox();
   else if (route.view === 'contenido') bindContent();
   else if (route.view === 'equipo') bindTeam();

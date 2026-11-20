@@ -1,7 +1,7 @@
-import zlib from 'node:zlib';
+﻿import zlib from 'node:zlib';
 
 /* ZIP mínimo, sin dependencias. Escribe entradas sin compresión y lee
-   archivos creados por Lumbre (método 0) o comprimidos con deflate (método 8). */
+   archivos creados por Lucian (método 0) o comprimidos con deflate (método 8). */
 
 const CRC_TABLE = (() => {
   const table = new Uint32Array(256);
@@ -101,7 +101,7 @@ export function readZip(buffer) {
   let cursor = centralOffset;
 
   for (let i = 0; i < count; i += 1) {
-    if (buffer.readUInt32LE(cursor) !== 0x02014b50) throw new Error('Índice ZIP dañado');
+    if (buffer.readUInt32LE(cursor) !== 0x02014b50) throw new Error('Ãndice ZIP dañado');
     const method = buffer.readUInt16LE(cursor + 10);
     const crc = buffer.readUInt32LE(cursor + 16);
     const compressedSize = buffer.readUInt32LE(cursor + 20);

@@ -1,6 +1,6 @@
-@echo off
-title Lumbre - sistema de ventas para lamparas de diseno
-cd /d "%~dp0"
+﻿@echo off
+title Lucian - sistema de ventas para lamparas de diseno
+cd /d "%~dp0lucian"
 where node >nul 2>nul
 if errorlevel 1 (
   echo.
@@ -12,5 +12,5 @@ if errorlevel 1 (
 )
 node server.mjs
 echo.
-echo Lumbre se cerro. Presiona una tecla para salir.
+echo Lucian se cerro. Presiona una tecla para salir.
 pause

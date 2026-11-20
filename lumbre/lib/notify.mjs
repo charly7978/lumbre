@@ -1,4 +1,4 @@
-import { fetchJson, sleep, truncate } from './util.mjs';
+﻿import { fetchJson, sleep, truncate } from './util.mjs';
 
 /* ─────────────────────────────────────────────────────────────
    Avisos al dueño. La regla es simple: interrumpir solo cuando
@@ -102,7 +102,7 @@ export class Notifier {
     return { sent: results.some((r) => r.ok), results };
   }
 
-  async handleOwnerText(text, channel = 'telegram', chatId = null) {
+  async handleOwnerText(text, channel = 'telegram', chatId = null, attachments = []) {
     const settings = this.store.settings();
     const ownerChatId = String(settings.notify?.telegram?.chatId || chatId || '');
     const effectiveChatId = String(chatId || ownerChatId);
@@ -110,7 +110,34 @@ export class Notifier {
       return '';
     }
     const clean = String(text || '').trim();
-    if (!clean) return '';
+    const files = Array.isArray(attachments) ? attachments : [];
+
+    // Transcripción de audios e imágenes adjuntas: el agente "ve" y "oye"
+    // antes de responder, igual que un asistente humano.
+    const images = [];
+    const transcripts = [];
+    for (const file of files) {
+      if (file?.type === 'image' && file.dataUrl) {
+        images.push({ dataUrl: file.dataUrl, mime: file.mime });
+      } else if (file?.type === 'audio' && file.buffer) {
+        try {
+          const { resolveAIConfig, transcribeAudio } = await import('./ai.mjs');
+          const cfg = resolveAIConfig(this.store.settings());
+          const transcript = await transcribeAudio(cfg, file.buffer, file.mime || 'audio/ogg');
+          if (transcript) transcripts.push(transcript);
+        } catch (error) {
+          transcripts.push(`[No pude transcribir el audio: ${truncate(error.message, 120)}]`);
+        }
+      }
+    }
+
+    const composite = [clean, ...transcripts.map((t) => `Audio transcrito: "${t}"`)]
+      .filter(Boolean)
+      .join('\n\n')
+      .trim();
+    const question = composite || (images.length ? 'El usuario envió una imagen. Describila y respondé.' : '');
+
+    if (!question && !images.length) return '';
 
     // sesion de memoria
     const sessions = this.store.get('telegramSessions') || {};
@@ -204,7 +231,7 @@ export class Notifier {
       session.pending = null;
     }
 
-    if (clean.length > 1800) {
+    if (question.length > 1800) {
       const msg = 'La pregunta es muy larga. Resumila en menos de 1800 caracteres.';
       this._appendHistory(session, 'user', clean);
       this._appendHistory(session, 'assistant', msg);
@@ -212,14 +239,14 @@ export class Notifier {
       return msg;
     }
     if (!this.ask) {
-      const msg = 'Todavía no puedo responder preguntas. Configurá una IA en Lumbre.';
+      const msg = 'Todavía no puedo responder preguntas. Configurá una IA en Lucian.';
       this._appendHistory(session, 'user', clean);
       this._appendHistory(session, 'assistant', msg);
       await this._persistSessions(sessions);
       return msg;
     }
 
-    this._appendHistory(session, 'user', clean);
+    this._appendHistory(session, 'user', question);
 
     // typing indicator via sendChatAction (best effort)
     try {
@@ -235,9 +262,9 @@ export class Notifier {
 
     let answer = '';
     try {
-      answer = await this.ask(clean, channel, session.history.slice(0, -1));
+      answer = await this.ask(question, channel, session.history.slice(0, -1), images);
     } catch (error) {
-      answer = `No pude consultar al equipo: ${truncate(error.message, 300)}. Revisá la configuración de IA en Lumbre.`;
+      answer = `No pude consultar al equipo: ${truncate(error.message, 300)}. Revisá la configuración de IA en Lucian.`;
     }
 
     // parse action
@@ -319,7 +346,7 @@ export class Notifier {
     const hot = threads.filter((t) => ['interesado', 'negociando'].includes(t.stage));
     const drafts = threads.reduce((acc, t) => acc + (t.drafts || []).filter((d) => d.status === 'listo').length, 0);
     const lines = [
-      `${settings.brand?.name || 'Lumbre'} — estado de hoy`,
+      `${settings.brand?.name || 'Lucian'} ”” estado de hoy`,
       `Misiones activas: ${active.length}`,
       `Leads calientes: ${hot.length}`,
       `Borradores listos: ${drafts}`,
@@ -334,10 +361,10 @@ export class Notifier {
 
   missionsText() {
     const missions = this.store.get('missions').slice(0, 6);
-    if (!missions.length) return 'Todavía no hay misiones. Creá una desde Lumbre con un producto y un objetivo.';
+    if (!missions.length) return 'Todavía no hay misiones. Creá una desde Lucian con un producto y un objetivo.';
     return missions.map((m) => {
       const status = { running: 'en curso', queued: 'en cola', done: 'terminada', done_with_warnings: 'terminada con avisos', error: 'con error', cancelled: 'cancelada' }[m.status] || m.status;
-      return `· ${m.name} — ${status}${m.demo ? ' (demo)' : ''}${m.status === 'running' ? ` ${m.progress || 0}%` : ''}`;
+      return `· ${m.name} ”” ${status}${m.demo ? ' (demo)' : ''}${m.status === 'running' ? ` ${m.progress || 0}%` : ''}`;
     }).join('\n');
   }
 
@@ -361,7 +388,7 @@ export class Notifier {
     const blocked = threads.reduce((acc, t) => acc + (t.drafts || []).filter((d) => d.status === 'bloqueado').length, 0);
     const followUps = threads.filter((t) => t.nextFollowUp && new Date(t.nextFollowUp).getTime() < Date.now() && !['ganado', 'perdido'].includes(t.stage));
 
-    const lines = [`${settings.brand?.name || 'Lumbre'} — resumen del día`, ''];
+    const lines = [`${settings.brand?.name || 'Lucian'} ”” resumen del día`, ''];
     lines.push(`Misiones activas: ${active.length}`);
     lines.push(`Terminadas en 24 h: ${finished.length}`);
     lines.push(`Respuestas nuevas: ${replies}`);
@@ -373,7 +400,7 @@ export class Notifier {
 
     if (hot.length) {
       const top = hot[0];
-      lines.push('', `Prioridad: ${top.contact?.company || 'un contacto'} (${top.contact?.country || ''}) — ${top.nextStep || 'revisar la conversación'}.`);
+      lines.push('', `Prioridad: ${top.contact?.company || 'un contacto'} (${top.contact?.country || ''}) ”” ${top.nextStep || 'revisar la conversación'}.`);
     } else if (active.length) {
       lines.push('', `En curso: ${active[0].name} (${active[0].progress || 0}%).`);
     } else if (drafts || review) {
@@ -426,11 +453,39 @@ export class Notifier {
           await this.store.setMeta({ telegramOffset: nextOffset });
           const message = update.message;
           if (String(message?.chat?.id) !== String(chatId)) continue;
-          if (!message?.text) {
-            try { await sendTelegramText(this.store.settings(), 'Puedo trabajar con texto; escribime el pedido y lo resuelvo.', { chatId: message.chat.id }); } catch { /* noop */ }
+          if (!message?.text && !message?.voice && !message?.audio && !(Array.isArray(message?.photo) && message.photo.length)) {
+            try { await sendTelegramText(this.store.settings(), 'Puedo trabajar con texto, audio e imágenes; enviame el pedido y lo resuelvo.', { chatId: message.chat.id }); } catch { /* noop */ }
             continue;
           }
-          const reply = await this.handleOwnerText(message.text, 'telegram', message.chat.id);
+          const attachments = [];
+          const token = settings.notify?.telegram?.token;
+          if (message?.voice?.file_id || message?.audio?.file_id) {
+            const fileId = message.voice?.file_id || message.audio?.file_id;
+            const mime = message.voice?.mime_type || message.audio?.mime_type || 'audio/ogg';
+            try {
+              const file = await telegramGetFile(token, fileId);
+              if (file?.file_path) {
+                const buffer = await fetchTelegramFile(token, file.file_path);
+                if (buffer) attachments.push({ type: 'audio', buffer, mime });
+              }
+            } catch { /* noop */ }
+          }
+          if (Array.isArray(message?.photo) && message.photo.length) {
+            const photo = message.photo[message.photo.length - 1];
+            try {
+              const file = await telegramGetFile(token, photo.file_id);
+              if (file?.file_path) {
+                const buffer = await fetchTelegramFile(token, file.file_path);
+                if (buffer) {
+                  const mime = 'image/jpeg';
+                  const base64 = Buffer.from(buffer).toString('base64');
+                  attachments.push({ type: 'image', dataUrl: `data:${mime};base64,${base64}`, mime });
+                }
+              }
+            } catch { /* noop */ }
+          }
+          const text = message?.text || message?.caption || '';
+          const reply = await this.handleOwnerText(text, 'telegram', message.chat.id, attachments);
           if (reply) await sendTelegramText(this.store.settings(), reply, { chatId: message.chat.id }).catch(() => {});
         }
       } catch (error) {
@@ -446,6 +501,23 @@ export class Notifier {
 /* ─────────────────────────────────────────────────────────────
    Transportes
    ───────────────────────────────────────────────────────────── */
+
+async function telegramGetFile(token, fileId) {
+  if (!token || !fileId) return null;
+  const url = `https://api.telegram.org/bot${token}/getFile?file_id=${encodeURIComponent(fileId)}`;
+  const { ok, data } = await fetchJson(url, { timeoutMs: 15000 });
+  if (!ok || !data?.ok) return null;
+  return data.result || null;
+}
+
+async function fetchTelegramFile(token, filePath) {
+  if (!token || !filePath) return null;
+  const url = `https://api.telegram.org/file/bot${token}/${filePath}`;
+  const response = await fetch(url);
+  if (!response.ok) return null;
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
 
 export async function sendTelegram(settings, text) {
   const token = settings.notify?.telegram?.token;
@@ -533,7 +605,7 @@ export async function testTelegram(settings) {
   const chatId = settings.notify?.telegram?.chatId;
   let sent = false;
   if (chatId) {
-    await sendTelegram(settings, `Lumbre conectado. Este es un mensaje de prueba para ${settings.brand?.name || 'tu marca'}.`);
+    await sendTelegram(settings, `Lucian conectado. Este es un mensaje de prueba para ${settings.brand?.name || 'tu marca'}.`);
     sent = true;
   }
   return { bot: me.data.result?.username || '', name: me.data.result?.first_name || '', sent };

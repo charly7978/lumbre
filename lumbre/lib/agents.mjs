@@ -1,4 +1,4 @@
-import fs from 'node:fs/promises';
+﻿import fs from 'node:fs/promises';
 import {
   asArray, asNumber, asObject, asString, clamp, cleanWebsite, humanError, normalizeDomain, nowISO,
   sleep, sniffImage, truncate, uid, uniqueBy,
@@ -39,7 +39,7 @@ const aiGate = createSemaphore(2);
 const running = new Set();
 
 function missionDelay(ms) {
-  const raw = process.env.LUMBRE_MOCK_DELAY;
+  const raw = process.env.LUCIAN_MOCK_DELAY;
   if (raw !== undefined) return Math.max(0, Number(raw) || 0);
   return ms;
 }
@@ -136,7 +136,7 @@ const MARKET_CITIES = {
   nicaragua: ['Managua'],
   cuba: ['La Habana'],
   suiza: ['Zúrich'],
-  'paises bajos': ['Ámsterdam'],
+  'paises bajos': ['Ãmsterdam'],
   belgica: ['Bruselas'],
   austria: ['Viena'],
   suecia: ['Estocolmo'],
@@ -221,7 +221,7 @@ async function gatherSearch(stepId, ctx, deps) {
     searchDepth: stepId === 'prospecting' ? (settings?.search?.prospectingDepth || 'advanced') : 'basic',
     onProgress: ({ query, found, engine }) => {
       const detail = engine ? ` vía ${engine}` : '';
-      logMission(deps.store, deps.broadcast, ctx.mission, `Fuente: “${truncate(query, 80)}” → ${found} resultados${detail}.`, 'search').catch(() => {});
+      logMission(deps.store, deps.broadcast, ctx.mission, `Fuente: “${truncate(query, 80)}” → ${found} resultados${detail}.`, 'search').catch(() => {});
     },
   });
   ctx.searchErrors = bundle.errors || [];
@@ -578,7 +578,7 @@ export function isNotBuyerSite(value) {
 export function normalizeProspectUrl(value) {
   const raw = asString(value).trim();
   if (!raw) return '';
-  if (/^(sin dato|sin datos|desconocido|no disponible|n\/?a|ninguno|ninguna|-|—)$/i.test(raw)) return '';
+  if (/^(sin dato|sin datos|desconocido|no disponible|n\/?a|ninguno|ninguna|-|””)$/i.test(raw)) return '';
   if (!/^https?:\/\//i.test(raw)) {
     if (/^[a-z0-9.-]+\.[a-z]{2,}(\/|$)/i.test(raw)) return cleanWebsite(`https://${raw}`);
     return '';
@@ -1464,7 +1464,7 @@ function buildMissionNotices({ mission, skipped, missionThreads, state, updated 
     notices.push({
       type: 'dedupe',
       level: 'info',
-      text: `${skipped.length} comprador${skipped.length === 1 ? '' : 'es'} no se repitieron: ${skipped.slice(0, 4).map((item) => `${item.company} (${item.reason})`).join('; ')}${skipped.length > 4 ? '…' : ''}.`,
+      text: `${skipped.length} comprador${skipped.length === 1 ? '' : 'es'} no se repitieron: ${skipped.slice(0, 4).map((item) => `${item.company} (${item.reason})`).join('; ')}${skipped.length > 4 ? '”¦' : ''}.`,
     });
   }
   const withoutDraft = missionThreads.filter((thread) => !(thread.drafts || []).length).length;
@@ -1786,14 +1786,14 @@ export async function releaseInterruptedMissions(store, { staleAfterMs = 15 * 60
     mission.currentStep = null;
     mission.finishedAt = nowISO();
     mission.error = failedStep
-      ? `${failedStep.title}: la misión se interrumpió (Lumbre se cerró o reinició). Reintentá para retomarla desde este paso.`
+      ? `${failedStep.title}: la misión se interrumpió (Lucian se cerró o reinició). Reintentá para retomarla desde este paso.`
       : 'La misión se interrumpió antes de terminar. Reintentá para retomarla.';
     await persist(store, mission);
     released.push(mission);
   }
   if (released.length) {
     await store.set('missions', missions);
-    await store.activity('system', `Se liberaron ${released.length} misión${released.length === 1 ? '' : 'es'} interrumpida${released.length === 1 ? '' : 's'} por un cierre de Lumbre.`);
+    await store.activity('system', `Se liberaron ${released.length} misión${released.length === 1 ? '' : 'es'} interrumpida${released.length === 1 ? '' : 's'} por un cierre de Lucian.`);
   }
   return { released: released.length, ids: released.map((m) => m.id) };
 }
@@ -1877,6 +1877,45 @@ export function selectRelevantLearnings(learnings = [], mission = {}) {
     ...memoryPool.filter((item) => item.pinned),
     ...memoryPool.filter((item) => !item.pinned && item.confidence === 'alta'),
   ], (item) => item.id).slice(0, 10);
+}
+
+/* Ejecuta un paso pero permite cancelarlo en caliente: si el dueño aprieta
+   "Cancelar" mientras la IA está pensando, no esperamos a que el paso termine.
+   El trabajo de fondo puede seguir unos segundos, pero la misión se marca
+   cancelada de inmediato y la interfaz respponde al instante. */
+class MissionCancelled extends Error {
+  constructor() { super('MISIÓN CANCELADA POR EL DUEÑO'); this.name = 'MissionCancelled'; }
+}
+
+async function runStepCancellable(stepId, ctx, deps, mission) {
+  const { store } = deps;
+  const isCancelled = () => Boolean(
+    mission.cancelRequested
+    || store.get('missions').find((m) => m.id === mission.id)?.cancelRequested
+    || store.get('missions').find((m) => m.id === mission.id)?.status === 'cancelled'
+  );
+  if (isCancelled()) throw new MissionCancelled();
+
+  let timer = null;
+  const cancelPromise = new Promise((_, reject) => {
+    timer = setInterval(() => {
+      if (isCancelled()) {
+        clearInterval(timer);
+        reject(new MissionCancelled());
+      }
+    }, 300);
+  });
+
+  try {
+    const output = await Promise.race([
+      executeStep(stepId, ctx, deps),
+      cancelPromise,
+    ]);
+    if (isCancelled()) throw new MissionCancelled();
+    return output;
+  } finally {
+    if (timer) clearInterval(timer);
+  }
 }
 
 async function runMissionNow(missionId, deps) {
@@ -2009,7 +2048,9 @@ async function runMissionNow(missionId, deps) {
 
       const started = Date.now();
       try {
-        const output = await executeStep(stepId, ctx, { store, broadcast, notifier, usage });
+        // Detección de cancelación DURANTE el paso: si el dueño cancela
+        // mientras la IA está respondiendo, no esperamos a que termine.
+        const output = await runStepCancellable(stepId, ctx, { store, broadcast, notifier, usage }, mission);
         ctx.artifacts[stepId] = output;
         mission.artifacts[stepId] = output;
         step.status = 'done';
@@ -2024,6 +2065,22 @@ async function runMissionNow(missionId, deps) {
         emitStep(broadcast, mission, step);
         await logMission(store, broadcast, mission, `${def.title}: listo. ${step.summary}`, 'done');
       } catch (error) {
+        if (error instanceof MissionCancelled) {
+          // Cancelación limpia: no es un error del paso.
+          mission.status = 'cancelled';
+          mission.phase = 'cancelled';
+          mission.finishedAt = nowISO();
+          mission.currentStep = null;
+          step.status = 'error';
+          step.endedAt = nowISO();
+          step.error = 'Cancelada por el dueño';
+          await persist(store, mission);
+          emitMission(broadcast, mission);
+          await logMission(store, broadcast, mission, 'Misión cancelada por el dueño.');
+          await store.activity('mission', `Misión cancelada: ${mission.name}.`, { missionId });
+          running.delete(missionId);
+          return;
+        }
         step.status = 'error';
         step.endedAt = nowISO();
         step.durationMs = Date.now() - started;
@@ -2143,7 +2200,7 @@ async function runMissionNow(missionId, deps) {
       try {
         await deps.onMissionFinished(mission);
       } catch (error) {
-        console.error('[Lumbre] No se pudo encolar el envío automático:', error?.message || error);
+        console.error('[Lucian] No se pudo encolar el envío automático:', error?.message || error);
       }
     }
   } catch (error) {
@@ -2157,7 +2214,7 @@ async function runMissionNow(missionId, deps) {
     await logMission(store, broadcast, mission, `La misión se detuvo: ${mission.error}`, 'error');
     await store.activity('mission', `Misión con error: ${mission.name}. ${mission.error}`, { missionId, demo });
     if (!demo && notifier && mission.status === 'error') {
-      await notifier.notify(`No pude terminar “${mission.name}”.\n\n${mission.error}\n\nPodés reintentar desde Lumbre.`, { kind: 'mission_error' }).catch(() => {});
+      await notifier.notify(`No pude terminar “${mission.name}”.\n\n${mission.error}\n\nPodés reintentar desde Lucian.`, { kind: 'mission_error' }).catch(() => {});
     }
   } finally {
     running.delete(missionId);
@@ -2169,7 +2226,7 @@ async function runMissionNow(missionId, deps) {
    amontonaban y la IA recibía ráfagas que terminaban en 429/413. Ahora las
    misiones esperan en cola (por defecto 2 activas) y arrancan en orden.
    El estado sigue siendo "queued" hasta que les toca, así la UI no miente. */
-const missionGate = createSemaphore(Math.max(1, Math.min(4, Number(process.env.LUMBRE_MAX_MISSIONS) || 2)));
+const missionGate = createSemaphore(Math.max(1, Math.min(4, Number(process.env.LUCIAN_MAX_MISSIONS) || 2)));
 const waitingMissions = new Set();
 
 export async function runMission(missionId, deps) {
@@ -2191,7 +2248,7 @@ export async function runMission(missionId, deps) {
 }
 
 export function missionQueueSize() {
-  return { active: running.size, waiting: waitingMissions.size, max: Math.max(1, Math.min(4, Number(process.env.LUMBRE_MAX_MISSIONS) || 2)) };
+  return { active: running.size, waiting: waitingMissions.size, max: Math.max(1, Math.min(4, Number(process.env.LUCIAN_MAX_MISSIONS) || 2)) };
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -2225,7 +2282,7 @@ function askContext(store) {
   };
 }
 
-export async function askTeam({ question, agentId = 'director', store, history = [], channel = 'web' }) {
+export async function askTeam({ question, agentId = 'director', store, history = [], channel = 'web', images = [] }) {
   const settings = store.settings();
   const agent = getAgent(agentId);
   if (!isAIReady(settings)) {
@@ -2256,6 +2313,7 @@ export async function askTeam({ question, agentId = 'director', store, history =
     prompt: askPrompt(agent.id, question, context, { history, channel }),
     temperature: channel === 'telegram' ? 0.5 : 0.55,
     maxTokens: channel === 'telegram' ? 1800 : 1300,
+    images: Array.isArray(images) ? images : [],
   }));
   await store.trackAgent(agent.id);
   return {

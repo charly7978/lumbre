@@ -1,4 +1,4 @@
-import http from 'node:http';
+﻿import http from 'node:http';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
@@ -17,7 +17,7 @@ import { hunterAccount } from './lib/hunter.mjs';
 import {
   assertCanSend, buildEml, composeEmail, dailyLimitInfo, detectOptOut, emailDomain, emlFilename,
   isSharedEmailDomain, isSuppressed, isValidEmail, normalizeCompany, normalizeEmail,
-  parseInbound, sendWithResend, sendWithWebhook, testResend,
+  parseEmailEvent, parseInbound, sendWithResend, sendWithWebhook, sendWithGmail, testResend,
 } from './lib/email.mjs';
 import { Notifier, parseWhatsAppWebhook, sendWhatsApp, telegramChats, testTelegram, testWhatsApp } from './lib/notify.mjs';
 import {
@@ -25,17 +25,25 @@ import {
 } from './lib/agents.mjs';
 import { DEPTHS, STEPS } from './lib/prompts.mjs';
 import { clearDemo, seedDemo } from './lib/demo.mjs';
+import { generateJson } from './lib/ai.mjs';
 import { Outbox } from './lib/outbox.mjs';
+import { productReadiness } from './lib/readiness.mjs';
+import { buildQuote, quoteLanguage, quoteNumber, quoteTotals, roundMoney, validUntilDate } from './lib/quotes.mjs';
 import { createZip, readZip } from './lib/zip.mjs';
+import { fetchNewEmails } from './lib/imap.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = process.env.LUMBRE_DATA_DIR ? path.resolve(process.env.LUMBRE_DATA_DIR) : path.join(__dirname, 'data');
+const DATA_DIR = process.env.LUCIAN_DATA_DIR ? path.resolve(process.env.LUCIAN_DATA_DIR) : path.join(__dirname, 'data');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const VERSION = '1.0.0';
-const HOST = process.env.LUMBRE_HOST || '127.0.0.1';
-const START_PORT = Number(process.env.PORT || process.env.LUMBRE_PORT || 4321);
+const HOST = process.env.LUCIAN_HOST || '127.0.0.1';
+const START_PORT = Number(process.env.PORT || process.env.LUCIAN_PORT || 4321);
 const BODY_LIMIT = 40 * 1024 * 1024;
 const RESTORE_LIMIT = 160 * 1024 * 1024;
+
+function isObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
 
 class HttpError extends Error {
   constructor(status, message) {
@@ -179,6 +187,23 @@ function threadSummary(thread, suppressions = []) {
   const blocked = drafts.filter((d) => d.status === 'bloqueado');
   const preview = ready[0] || review[0] || null;
   const applicableSuppressions = (suppressions || []).filter((item) => thread.demo || !item.demo);
+  // Cotizaciones resumidas: son lo que transforma una conversación en venta.
+  // Sin esto, el panel y la ruta del producto no podían mostrar ingresos sin
+  // abrir hilo por hilo.
+  const quotes = (thread.quotes || []).map((quote) => ({
+    id: quote.id,
+    number: quote.number || '',
+    status: quote.status || 'borrador',
+    total: Number(quote.total) || 0,
+    currency: quote.currency || 'USD',
+    productName: quote.productName || '',
+    quantity: Number(quote.quantity) || 1,
+    unitPrice: Number(quote.unitPrice) || 0,
+    createdAt: quote.createdAt || null,
+    sentAt: quote.sentAt || null,
+    acceptedAt: quote.acceptedAt || null,
+    draftId: quote.draftId || null,
+  }));
   return {
     id: thread.id,
     demo: Boolean(thread.demo),
@@ -195,6 +220,7 @@ function threadSummary(thread, suppressions = []) {
     draftCount: ready.length,
     reviewCount: review.length,
     blockedCount: blocked.length,
+    pendingResends: (thread.messages || []).filter((m) => m.direction === 'out' && m.deliveryNote).length,
     suppressed: Boolean(isSuppressed(thread.contact?.email, applicableSuppressions, thread.contact?.company)),
     optOut: thread.optOut || null,
     unverified: Boolean(thread.unverified),
@@ -211,6 +237,7 @@ function threadSummary(thread, suppressions = []) {
       reviewNote: preview.reviewNote || '',
       blockedReason: preview.blockedReason || '',
     } : null,
+    quotes,
   };
 }
 
@@ -259,6 +286,111 @@ function buildIntel(missions) {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   Ventas e ingresos: la respuesta a "¿dónde veo lo que vendí?".
+   Una venta es una conversación en etapa "ganado" o una cotización
+   aceptada. Los números salen de los datos, no de una planilla aparte.
+   ───────────────────────────────────────────────────────────── */
+
+const QUOTE_STATUS_LABELS = {
+  borrador: 'Borrador',
+  enviada: 'Enviada',
+  aceptada: 'Aceptada',
+  rechazada: 'Rechazada',
+};
+
+function buildSales(threads, products, currency = 'USD') {
+  const productName = (id) => products.find((product) => product.id === id)?.name || 'Producto';
+  const quotes = threads.flatMap((thread) => (thread.quotes || []).map((quote) => ({
+    ...quote,
+    threadId: thread.id,
+    company: thread.contact?.company || thread.contact?.name || 'Contacto',
+    productId: thread.productId,
+    productName: productName(thread.productId),
+    stage: thread.stage,
+  })));
+  const accepted = quotes.filter((quote) => quote.status === 'aceptada');
+  const revenue = roundMoney(accepted.reduce((acc, quote) => acc + (Number(quote.total) || 0), 0));
+  const wonThreads = threads
+    .filter((thread) => thread.stage === 'ganado')
+    .map((thread) => {
+      const quote = (thread.quotes || []).find((item) => item.status === 'aceptada') || (thread.quotes || [])[0];
+      return {
+        threadId: thread.id,
+        company: thread.contact?.company || thread.contact?.name || 'Contacto',
+        productId: thread.productId,
+        productName: productName(thread.productId),
+        quoteNumber: quote?.number || '',
+        total: Number(quote?.total) || 0,
+        currency: quote?.currency || currency,
+        acceptedAt: quote?.acceptedAt || null,
+        at: quote?.acceptedAt || thread.updatedAt || thread.createdAt,
+      };
+    })
+    .sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
+  const openQuotes = quotes
+    .filter((quote) => ['borrador', 'enviada'].includes(quote.status))
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  const byProduct = {};
+  for (const quote of quotes) {
+    const key = quote.productId || 'sin-producto';
+    const bucket = byProduct[key] || {
+      productId: key,
+      productName: productName(quote.productId),
+      quotes: 0,
+      accepted: 0,
+      revenue: 0,
+      sold: 0,
+    };
+    bucket.quotes += 1;
+    if (quote.status === 'aceptada') {
+      bucket.accepted += 1;
+      bucket.revenue = roundMoney(bucket.revenue + (Number(quote.total) || 0));
+    }
+    byProduct[key] = bucket;
+  }
+  for (const thread of threads.filter((item) => item.stage === 'ganado')) {
+    const key = thread.productId || 'sin-producto';
+    const bucket = byProduct[key] || {
+      productId: key,
+      productName: productName(thread.productId),
+      quotes: 0,
+      accepted: 0,
+      revenue: 0,
+      sold: 0,
+    };
+    bucket.sold += 1;
+    byProduct[key] = bucket;
+  }
+  return {
+    currency,
+    sold: wonThreads.length,
+    revenue,
+    acceptedQuotes: accepted.length,
+    openQuotes: openQuotes.length,
+    quotesByStatus: quotes.reduce((acc, quote) => {
+      acc[quote.status] = (acc[quote.status] || 0) + 1;
+      return acc;
+    }, {}),
+    quoteStatusLabels: QUOTE_STATUS_LABELS,
+    won: wonThreads,
+    open: openQuotes.map((quote) => ({
+      id: quote.id,
+      threadId: quote.threadId,
+      company: quote.company,
+      productId: quote.productId,
+      productName: quote.productName,
+      number: quote.number,
+      status: quote.status,
+      statusLabel: QUOTE_STATUS_LABELS[quote.status] || quote.status,
+      total: Number(quote.total) || 0,
+      currency: quote.currency || currency,
+      createdAt: quote.createdAt,
+    })),
+    byProduct: Object.values(byProduct),
+  };
+}
+
+/* ─────────────────────────────────────────────────────────────
    Arranque
    ───────────────────────────────────────────────────────────── */
 
@@ -289,11 +421,11 @@ function broadcast(missionId, event) {
 
 const notifier = new Notifier({
   store,
-  ask: async (question, channel = 'web', history = []) => {
-    const result = await askTeam({ question, agentId: 'director', store, history, channel });
+  ask: async (question, channel = 'web', history = [], images = []) => {
+    const result = await askTeam({ question, agentId: 'director', store, history, channel, images });
     return result.demo ? `(Modo demo) ${result.answer}` : result.answer;
   },
-  actions: { createMission, sendThreadMessage },
+  actions: { createMission, sendThreadMessage, createQuote, analyzeThread },
 });
 notifier.start();
 
@@ -301,15 +433,126 @@ const outbox = new Outbox({
   store,
   deliver: async ({ threadId, draftId }) => {
     const settings = store.settings();
-    const channel = settings.email?.provider === 'resend' ? 'resend' : 'webhook';
+    let channel = 'manual';
+    if (settings.email?.provider === 'resend' && settings.email?.resendKey) channel = 'resend';
+    else if (settings.email?.provider === 'gmail' && settings.email?.smtpUser && settings.email?.smtpPassword) channel = 'gmail';
+    else if (settings.email?.webhookUrl) channel = 'webhook';
     return sendThreadMessage(threadId, { draftId, channel });
   },
   notify: notifier,
 });
 outbox.start();
 
+/* ─────────────────────────────────────────────────────────────
+   Correo entrante por IMAP (Gmail): cada cierto tiempo se conecta
+   a Gmail, lee los correos nuevos y los procesa igual que el webhook.
+   No necesita dominio ni túnel: la conexión sale de esta PC.
+   ───────────────────────────────────────────────────────────── */
+let imapBusy = false;
+let imapTimer = null;
+
+async function pollGmailInbox() {
+  const settings = store.settings();
+  const email = settings.email || {};
+  if (email.provider !== 'gmail' || !email.smtpUser || !email.smtpPassword || email.imapEnabled === false) return;
+  if (imapBusy) return;
+  imapBusy = true;
+  try {
+    const meta = store.get('meta') || {};
+    const sinceUid = Number(meta.gmailLastUid) || 0;
+    const messages = await fetchNewEmails({
+      user: email.smtpUser,
+      appPassword: email.smtpPassword,
+      sinceUid,
+      limit: 20,
+    });
+    let maxUid = sinceUid;
+    for (const msg of messages) {
+      try {
+        await processInboundEmail({
+          from: msg.from,
+          to: msg.to,
+          subject: msg.subject,
+          text: msg.text,
+          html: msg.html,
+          messageId: msg.messageId,
+          inReplyTo: msg.inReplyTo,
+          references: msg.references,
+        });
+        if (msg.uid > maxUid) maxUid = msg.uid;
+      } catch (error) {
+        console.error('[Lucian] No se pudo procesar un correo entrante:', error.message);
+      }
+    }
+    if (maxUid !== sinceUid) await store.setMeta({ gmailLastUid: maxUid });
+  } catch (error) {
+    console.error('[Lucian] IMAP Gmail:', error.message);
+  } finally {
+    imapBusy = false;
+  }
+}
+
+function startImapPolling() {
+  if (imapTimer) clearInterval(imapTimer);
+  const settings = store.settings();
+  const email = settings.email || {};
+  if (email.provider !== 'gmail' || !email.smtpUser || !email.smtpPassword) return;
+  const minutes = Math.max(1, Math.min(60, Number(email.imapPollMinutes) || 2));
+  imapTimer = setInterval(pollGmailInbox, minutes * 60 * 1000);
+  imapTimer.unref?.();
+  // Primera pasada shortly after start
+  setTimeout(() => pollGmailInbox(), 5000).unref?.();
+  console.log(`  Correo entrante (IMAP Gmail): cada ${minutes} min`);
+}
+startImapPolling();
+
+/* Extrae el procesamiento de un correo entrante para reutilizarlo
+   desde el webhook y desde IMAP. Devuelve el hilo afectado. */
+async function processInboundEmail(inbound) {
+  const emailMatch = String(inbound.from || '').match(/<([^>]+)>/);
+  const email = (emailMatch ? emailMatch[1] : inbound.from || '').trim().toLowerCase();
+  if (!isValidEmail(email)) throw new Error('El remitente no es un email válido.');
+  let thread = findThreadForEmail(email, inbound);
+  if (!thread) thread = await createInboundThread(inbound, email);
+  const now = nowISO();
+  const message = {
+    id: uid('msg'),
+    direction: 'in',
+    channel: 'email',
+    subject: inbound.subject || '(sin asunto)',
+    body: truncate(inbound.text || inbound.html, 30000),
+    at: now,
+    status: 'recibido',
+    ...(inbound.messageId ? { messageId: inbound.messageId } : {}),
+    ...(inbound.inReplyTo ? { inReplyTo: inbound.inReplyTo } : {}),
+    ...(inbound.references?.length ? { references: inbound.references.join(' ') } : {}),
+  };
+  thread.messages = [...(thread.messages || []), message];
+  thread.lastActivityAt = now;
+  thread.updatedAt = now;
+  const optOut = await registerOptOut(thread, `${inbound.subject || ''}\n${message.body || ''}`, 'imap');
+  if (!optOut && thread.stage === 'contactado') thread.stage = 'respondio';
+  await store.set('threads', store.get('threads'));
+  await store.activity('reply', `Respuesta de ${email}: ${truncate(inbound.subject || message.body, 140)}`, { threadId: thread.id });
+
+  if (optOut) {
+    await notifier.notify(`${thread.contact?.company || email} pidió no recibir más mensajes.`, { kind: 'opt_out' }).catch(() => {});
+  } else if (isAIReady(store.settings())) {
+    try {
+      const result = await analyzeThread({ thread, store, apply: true });
+      if (result.analysis.score >= 75) {
+        await notifier.notify(
+          `Respuesta caliente de ${thread.contact?.company || email}.\n\n${truncate(message.body, 500)}\n\nSiguiente paso: ${result.analysis.siguiente_paso || 'revisar la conversación'}.`,
+          { kind: 'hot_reply' },
+        ).catch(() => {});
+      }
+    } catch { /* la respuesta ya quedó guardada */ }
+  }
+  return thread;
+}
+
 /* Una campaña de catálogo puede dejar misiones en cola durante horas. Si
-   Lumbre se reinicia, esos temporizadores en memoria se pierden. Acá se
+   Lucian se reinicia, esos temporizadores en memoria se pierden. Acá se
    retoman las misiones que nunca llegaron a empezar, en orden de creación.
    Las que estaban "running" las libera releaseInterruptedMissions para que
    el dueño pueda reintentarlas sin perder lo ya hecho. */
@@ -324,7 +567,7 @@ function resumeQueuedMissions() {
         broadcast,
         notifier,
         onMissionFinished: (finished) => outbox.scheduleMission(finished),
-      }).catch((error) => console.error('[Lumbre] No se pudo retomar una misión en cola:', error));
+      }).catch((error) => console.error('[Lucian] No se pudo retomar una misión en cola:', error));
     }, 500);
   }
   return queued.length;
@@ -356,7 +599,7 @@ function statePayload() {
     : null;
 
   return {
-    app: { name: 'Lumbre', version: VERSION, now: nowISO(), demoMode: flags.demo, dataDir: store.dataDir },
+    app: { name: 'Lucian', version: VERSION, now: nowISO(), demoMode: flags.demo, dataDir: store.dataDir },
     latestPlan,
     brand: settings.brand,
     settings: maskSettings(settings),
@@ -388,7 +631,20 @@ function statePayload() {
       suppressions: suppressions.length,
       replies: threads.reduce((acc, t) => acc + (t.messages || []).filter((m) => m.direction === 'in').length, 0),
     },
+    funnel: {
+      stages: ['nuevo', 'contactado', 'respondio', 'interesado', 'negociando', 'ganado', 'perdido']
+        .reduce((acc, stage) => ({ ...acc, [stage]: threads.filter((t) => t.stage === stage).length }), {}),
+      quotes: (threads.flatMap((t) => t.quotes || [])).reduce((acc, q) => {
+        acc[q.status] = (acc[q.status] || 0) + 1;
+        return acc;
+      }, {}),
+      missions: ['queued', 'running', 'done', 'done_with_warnings', 'error', 'cancelled']
+        .reduce((acc, status) => ({ ...acc, [status]: missions.filter((m) => m.status === status).length }), {}),
+      sold: threads.filter((t) => t.stage === 'ganado').length,
+      suppressed: suppressions.length,
+    },
     limits: dailyLimitInfo(settings, threads),
+    sales: buildSales(threads, products, settings.brand?.currency || 'USD'),
     outbox: outbox.status(),
     usage: meta.agentUsage || {},
     intel: buildIntel(missions),
@@ -424,11 +680,23 @@ async function processPhotos(input, existing, product) {
   return { photos, removed };
 }
 
+function validatePaymentLink(value) {
+  const raw = asString(value).trim().slice(0, 500);
+  if (!raw) return '';
+  let parsed;
+  try { parsed = new URL(raw); } catch { parsed = null; }
+  if (!parsed || !['http:', 'https:'].includes(parsed.protocol)) {
+    throw new HttpError(400, 'El link de pago debe ser una dirección http(s) válida.');
+  }
+  return parsed.href;
+}
+
 function productFields(body, existing, id) {
   const name = asString(body.name ?? existing?.name).trim();
   if (!name) throw new HttpError(400, 'El producto necesita un nombre.');
   const price = body.price === undefined ? Number(existing?.price ?? 0) : asNumber(body.price);
   const status = ['borrador', 'listo', 'archivado'].includes(body.status) ? body.status : existing?.status || 'borrador';
+  const paymentLink = validatePaymentLink(body.paymentLink ?? existing?.paymentLink);
   return {
     name,
     code: asString(body.code ?? existing?.code).trim() || existing?.code || `LUM-${id.slice(-4).toUpperCase()}`,
@@ -437,10 +705,13 @@ function productFields(body, existing, id) {
     currency: asString(body.currency ?? existing?.currency, store.settings().brand.currency || 'USD').toUpperCase().slice(0, 6),
     cost: body.cost === undefined ? Number(existing?.cost ?? 0) : Math.max(0, asNumber(body.cost)),
     weightGrams: body.weightGrams === undefined ? Number(existing?.weightGrams ?? 0) : Math.max(0, asNumber(body.weightGrams)),
+    capacityPerWeek: body.capacityPerWeek === undefined ? Number(existing?.capacityPerWeek ?? 0) : Math.max(0, Math.round(asNumber(body.capacityPerWeek))),
+    leadTimeDays: body.leadTimeDays === undefined ? Number(existing?.leadTimeDays ?? 0) : Math.max(0, Math.round(asNumber(body.leadTimeDays))),
     dimensions: asString(body.dimensions ?? existing?.dimensions),
     materials: asString(body.materials ?? existing?.materials),
     description: asString(body.description ?? existing?.description),
     notes: asString(body.notes ?? existing?.notes),
+    paymentLink,
     status,
   };
 }
@@ -499,6 +770,9 @@ const CSV_ALIASES = {
   materials: ['materiales', 'materials', 'material', 'terminacion'],
   weightGrams: ['peso', 'pesogramos', 'weight', 'weightgrams', 'pesogr'],
   dimensions: ['medidas', 'dimensions', 'dimensiones', 'tamano'],
+  capacityPerWeek: ['capacidad', 'capacidadsemanal', 'unidadessemana', 'unidadessemanales', 'capacity', 'capacityperweek', 'produccionsemanal'],
+  leadTimeDays: ['plazo', 'plazodias', 'diasfabricacion', 'diasdeproduccion', 'leadtime', 'leadtimedays', 'tiempodeentrega'],
+  paymentLink: ['pago', 'linkdepago', 'linkpago', 'paymentlink', 'payment', 'checkout'],
 };
 
 function mapCsvRow(headers, cells) {
@@ -548,6 +822,9 @@ async function importProductsCsv(text) {
       materials: asString(values.materials),
       weightGrams: csvNumber(values.weightGrams),
       dimensions: asString(values.dimensions),
+      capacityPerWeek: csvNumber(values.capacityPerWeek),
+      leadTimeDays: csvNumber(values.leadTimeDays),
+      paymentLink: asString(values.paymentLink).trim().slice(0, 500),
     }, null, id);
     const product = { id, ...fields, photos: [], demo: false, createdAt: now, updatedAt: now };
     products.unshift(product);
@@ -610,6 +887,20 @@ async function createMission(body) {
   if (requestedMode === 'real' && !isAIReady(settings)) {
     throw new HttpError(400, 'Para lanzar una misión real primero configurá una IA en Ajustes.');
   }
+  if (!finalMarkets.length) {
+    throw new HttpError(400, 'Elegí al menos un mercado para la misión. Sin mercado no hay a quién venderle.');
+  }
+  // Una misión real gasta búsquedas y tokens: no se lanza con una ficha que
+  // no puede sostener una conversación de venta. Las demos siguen libres para
+  // que el dueño pueda probar antes de cargar todo.
+  if (!demo) {
+    const readiness = productReadiness(product);
+    if (!readiness.readyForProspecting) {
+      const missing = readiness.missing.filter((item) => item.critical).map((item) => item.label).join('; ')
+        || 'completá la foto y el precio';
+      throw new HttpError(400, `El producto no está listo para una misión real: ${missing}.`);
+    }
+  }
 
   const id = uid('mis');
   const now = nowISO();
@@ -670,7 +961,7 @@ async function createMission(body) {
   await store.activity('mission', `Misión creada: ${mission.name}${demo ? ' (demo)' : ''}.`, { missionId: id, demo });
   setTimeout(() => {
     runMission(id, { store, broadcast, notifier, onMissionFinished: (mission) => outbox.scheduleMission(mission) }).catch((error) => {
-      console.error('[Lumbre] Error no controlado en la misión:', error);
+      console.error('[Lucian] Error no controlado en la misión:', error);
     });
   }, 80);
   return mission;
@@ -689,9 +980,17 @@ async function createCampaign(body = {}) {
     .filter((product) => product.status !== 'archivado')
     .sort((a, b) => (a.status === 'listo' ? -1 : 0) - (b.status === 'listo' ? -1 : 0));
   if (!pool.length) throw new HttpError(400, 'No hay productos activos para lanzar una campaña.');
+  const requestedMode = ['auto', 'real', 'demo'].includes(body.mode) ? body.mode : 'auto';
+  const demo = requestedMode === 'demo' || (requestedMode === 'auto' && !isAIReady(settings));
+  if (requestedMode === 'real' && !isAIReady(settings)) {
+    throw new HttpError(400, 'Para lanzar una campaña real primero configurá una IA en Ajustes.');
+  }
   const active = new Set(store.get('missions').filter((mission) => ['running', 'queued'].includes(mission.status)).map((mission) => mission.productId));
   const markets = [...new Set(asArray(body.markets).map((market) => asString(market).trim()).filter(Boolean))].slice(0, 6);
   const finalMarkets = markets.length ? markets : asArray(settings.mission.markets).slice(0, 6);
+  if (!finalMarkets.length) {
+    throw new HttpError(400, 'Elegí al menos un mercado para la campaña. Sin mercado no hay a quién venderle.');
+  }
   const strategy = body.marketStrategy === 'all' ? 'all' : 'rotate';
   const depth = DEPTHS[body.depth] ? body.depth : settings.mission.depth || 'estandar';
   const campaignId = uid('cmp');
@@ -704,6 +1003,17 @@ async function createCampaign(body = {}) {
     if (active.has(product.id)) {
       skipped.push({ productId: product.id, name: product.name, reason: 'ya tiene una misión en curso' });
       continue;
+    }
+    // Con IA real, cada producto debe poder sostener una conversación. Se
+    // saltea la ficha incompleta en vez de gastar una misión y descubrirlo
+    // cuando el comprador pregunta precio o medidas.
+    if (!demo) {
+      const readiness = productReadiness(product);
+      if (!readiness.readyForProspecting) {
+        const missing = readiness.missing.filter((item) => item.critical).map((item) => item.label).join('; ');
+        skipped.push({ productId: product.id, name: product.name, reason: `faltan datos críticos: ${missing}` });
+        continue;
+      }
     }
     const assigned = strategy === 'rotate'
       ? [finalMarkets[index % finalMarkets.length]].filter(Boolean)
@@ -816,6 +1126,165 @@ function threadSuppressions(thread) {
   return (store.get('suppressions') || []).filter((item) => thread.demo || !item.demo);
 }
 
+/* El dominio del Message-ID sale del remitente real: si el dueño usa su
+   propio dominio, los filtros de correo ven coherencia entre From y el hilo. */
+function messageIdDomain(settings) {
+  const raw = String(settings?.email?.from || settings?.brand?.email || '').trim();
+  const email = raw.includes('<') ? (raw.match(/<([^>]+)>/)?.[1] || '') : raw;
+  const domain = String(email).split('@')[1]?.trim().toLowerCase() || '';
+  return /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(domain) ? domain : 'lucian.local';
+}
+
+function newMessageId(settings) {
+  return `<lucian-${crypto.randomUUID()}@${messageIdDomain(settings)}>`;
+}
+
+function lastInboundMessage(thread) {
+  return [...(thread?.messages || [])].reverse().find((message) => message.direction === 'in' && message.messageId) || null;
+}
+
+/* Cerrar una venta reinicia la postventa desde hoy y descarta cualquier
+   seguimiento frío que estuviera por salir. Se usa tanto al mover la etapa a
+   mano como al aceptar una cotización. */
+async function markThreadWon(thread) {
+  const now = nowISO();
+  thread.stage = 'ganado';
+  thread.postSaleAt = now;
+  thread.postSaleCount = 0;
+  thread.nextFollowUp = null;
+  thread.updatedAt = now;
+  thread.drafts = (thread.drafts || []).filter((draft) => !(
+    draft.source === 'postventa' && ['listo', 'revisar'].includes(draft.status)
+  ));
+  for (const draft of thread.drafts || []) {
+    if (draft.source !== 'seguimiento' || !['listo', 'revisar'].includes(draft.status)) continue;
+    draft.status = 'descartado';
+    draft.discardedAt = now;
+    draft.discardReason = 'La conversación pasó a ganado: no corresponde un seguimiento frío.';
+  }
+  let changed = false;
+  for (const item of outbox.items()) {
+    if (item.status !== 'pending' || item.threadId !== thread.id || item.kind === 'postventa') continue;
+    item.status = 'cancelled';
+    item.error = 'La conversación pasó a ganado.';
+    changed = true;
+  }
+  if (changed) await outbox.save();
+  return thread;
+}
+
+async function nextQuoteNumber() {
+  const meta = store.get('meta') || {};
+  const sequence = Math.max(0, Number(meta.quoteSequence) || 0) + 1;
+  await store.setMeta({ quoteSequence: sequence });
+  return quoteNumber(new Date(), sequence);
+}
+
+async function createQuote(threadId, body = {}) {
+  const threads = store.get('threads');
+  const thread = threads.find((t) => t.id === threadId);
+  if (!thread) throw new HttpError(404, 'Conversación no encontrada.');
+  const settings = store.settings();
+  const product = store.find('products', asString(body.productId) || thread.productId);
+  if (!product) throw new HttpError(400, 'Elegí un producto válido para cotizar.');
+  if (product.status === 'archivado') throw new HttpError(400, 'Ese producto está archivado.');
+
+  const unitPrice = body.unitPrice === undefined ? Number(product.price || 0) : asNumber(body.unitPrice);
+  if (!(unitPrice > 0)) throw new HttpError(400, 'El producto necesita un precio mayor a cero para cotizar.');
+  const totals = quoteTotals({
+    quantity: body.quantity,
+    unitPrice,
+    shipping: body.shipping,
+    discount: body.discount,
+    taxRate: body.taxRate,
+  });
+  const validDays = body.validDays === undefined
+    ? Number(settings.sales?.quoteValidityDays || 15)
+    : asNumber(body.validDays, 15);
+  const currency = asString(body.currency, product.currency || settings.brand?.currency || 'USD').toUpperCase().slice(0, 6);
+  const paymentLink = validatePaymentLink(
+    body.paymentLink ?? product.paymentLink ?? settings.sales?.paymentLink ?? '',
+  );
+  const now = nowISO();
+  const quote = {
+    id: uid('qte'),
+    number: await nextQuoteNumber(),
+    productId: product.id,
+    productName: product.name,
+    currency,
+    language: quoteLanguage(thread),
+    ...totals,
+    validUntil: validUntilDate(validDays),
+    paymentLink,
+    notes: asString(body.notes).slice(0, 2000),
+    status: 'borrador',
+    createdAt: now,
+    updatedAt: now,
+  };
+  const built = buildQuote({ thread, product, brand: settings.brand, quote });
+  quote.subject = built.subject;
+  const draft = {
+    id: uid('drf'),
+    channel: 'email',
+    language: built.language,
+    subject: built.subject,
+    body: built.text,
+    status: body.approve === true ? 'listo' : 'revisar',
+    source: 'cotizacion',
+    quoteId: quote.id,
+    guardVersion: 2,
+    createdAt: now,
+    reviewNote: body.approve === true
+      ? undefined
+      : 'Cotización generada automáticamente. Revisá precio, envío y plazo antes de enviarla.',
+  };
+  quote.draftId = draft.id;
+  thread.quotes = [quote, ...(thread.quotes || [])];
+  thread.drafts = [draft, ...(thread.drafts || [])];
+  if (['nuevo', 'contactado', 'respondio', 'interesado'].includes(thread.stage)) thread.stage = 'negociando';
+  thread.nextStep = `Revisar y enviar la cotización ${quote.number}.`;
+  thread.updatedAt = now;
+  await store.set('threads', threads);
+  await store.activity('outreach', `Cotización ${quote.number} preparada para ${thread.contact?.company || thread.contact?.email || 'el contacto'}: ${totals.quantity} × ${product.name}.`, { threadId: thread.id, quoteId: quote.id });
+  return { quote, draft, thread };
+}
+
+async function setQuoteStatus(threadId, quoteId, status) {
+  if (!['borrador', 'enviada', 'aceptada', 'rechazada'].includes(status)) {
+    throw new HttpError(400, 'Estado de cotización inválido.');
+  }
+  const threads = store.get('threads');
+  const thread = threads.find((t) => t.id === threadId);
+  if (!thread) throw new HttpError(404, 'Conversación no encontrada.');
+  const quote = (thread.quotes || []).find((item) => item.id === quoteId);
+  if (!quote) throw new HttpError(404, 'Cotización no encontrada.');
+  const now = nowISO();
+  quote.status = status;
+  quote.updatedAt = now;
+  if (status === 'enviada' && !quote.sentAt) quote.sentAt = now;
+  if (status === 'aceptada') {
+    quote.acceptedAt = now;
+    // Si la venta se cerró antes de enviar la cotización, ese borrador ya no
+    // debe poder salir: el pedido quedó confirmado por otra vía.
+    for (const draft of thread.drafts || []) {
+      if (draft.quoteId !== quote.id || !['listo', 'revisar'].includes(draft.status)) continue;
+      draft.status = 'descartado';
+      draft.discardedAt = now;
+      draft.discardReason = 'La cotización fue aceptada: el borrador ya no hace falta.';
+    }
+    await markThreadWon(thread);
+    thread.nextStep = `Venta cerrada con la cotización ${quote.number}. Preparar producción y postventa.`;
+  } else if (status === 'rechazada') {
+    quote.rejectedAt = now;
+    if (thread.stage === 'negociando') thread.stage = 'respondio';
+    thread.nextStep = `Cotización ${quote.number} rechazada. Entender el motivo y ofrecer alternativa.`;
+  }
+  thread.updatedAt = now;
+  await store.set('threads', threads);
+  await store.activity('outreach', `Cotización ${quote.number}: ${status}.`, { threadId: thread.id, quoteId: quote.id });
+  return { quote, thread };
+}
+
 async function sendThreadMessage(threadId, body) {
   const threads = store.get('threads');
   const thread = threads.find((t) => t.id === threadId);
@@ -838,7 +1307,7 @@ async function sendThreadMessage(threadId, body) {
   if (draft.status !== 'listo') throw new HttpError(400, 'Ese borrador ya fue enviado o descartado.');
 
   const settings = store.settings();
-  const channel = ['resend', 'webhook', 'manual'].includes(body.channel) ? body.channel : 'manual';
+  const channel = ['resend', 'webhook', 'gmail', 'manual'].includes(body.channel) ? body.channel : 'manual';
   const company = thread.contact?.company || '';
   let message;
   try {
@@ -846,6 +1315,17 @@ async function sendThreadMessage(threadId, body) {
   } catch (error) {
     throw new HttpError(400, error.message || 'No se pudo preparar el mensaje.');
   }
+
+  // Hilo de correo: se guarda el Message-ID propio y se responde al último
+  // mensaje entrante. Sin esto, el webhook no puede saber a qué producto
+  // pertenece una respuesta cuando el comprador tiene varios hilos abiertos.
+  const previousInbound = lastInboundMessage(thread);
+  message.messageId = newMessageId(settings);
+  message.inReplyTo = previousInbound?.messageId || '';
+  message.references = [previousInbound?.references, previousInbound?.messageId]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
 
   try {
     assertCanSend(settings, threads, message.to, threadSuppressions(thread), {
@@ -856,14 +1336,18 @@ async function sendThreadMessage(threadId, body) {
     throw new HttpError(400, error.message || 'No se puede enviar este mensaje.');
   }
 
+  let delivery = null;
   if (channel === 'manual') {
     if (body.confirm !== true) throw new HttpError(400, 'Para marcar un mensaje como enviado necesitás confirmarlo.');
   } else {
     if (channel === 'resend') {
-      try { await sendWithResend(settings, message); } catch (error) { throw new HttpError(502, error.message || 'Resend rechazó el envío.'); }
+      try { delivery = await sendWithResend(settings, message); } catch (error) { throw new HttpError(502, error.message || 'Resend rechazó el envío.'); }
+    }
+    if (channel === 'gmail') {
+      try { delivery = await sendWithGmail(settings, message); } catch (error) { throw new HttpError(502, error.message || 'Gmail rechazó el envío.'); }
     }
     if (channel === 'webhook') {
-      try { await sendWithWebhook(settings, message, { threadId: thread.id, contact: thread.contact }); } catch (error) { throw new HttpError(502, error.message || 'El webhook rechazó el envío.'); }
+      try { delivery = await sendWithWebhook(settings, message, { threadId: thread.id, contact: thread.contact }); } catch (error) { throw new HttpError(502, error.message || 'El webhook rechazó el envío.'); }
     }
   }
 
@@ -879,11 +1363,23 @@ async function sendThreadMessage(threadId, body) {
     at: now,
     status: channel === 'manual' ? 'enviado_manual' : 'enviado',
     provider: channel,
+    messageId: message.messageId,
+    ...(message.inReplyTo ? { inReplyTo: message.inReplyTo } : {}),
+    ...(message.references ? { references: message.references } : {}),
+    ...(delivery?.id ? { providerId: delivery.id } : {}),
   };
   thread.messages = [...(thread.messages || []), sent];
   draft.status = 'enviado';
   draft.sentAt = now;
   draft.sentChannel = channel;
+  if (draft.quoteId) {
+    const quote = (thread.quotes || []).find((item) => item.id === draft.quoteId);
+    if (quote && quote.status === 'borrador') {
+      quote.status = 'enviada';
+      quote.sentAt = now;
+      quote.sentMessageId = sent.id;
+    }
+  }
   if (thread.stage === 'nuevo') thread.stage = 'contactado';
   thread.lastActivityAt = now;
   thread.updatedAt = now;
@@ -909,9 +1405,54 @@ async function sendThreadMessage(threadId, body) {
   return { thread, message: sent, draft };
 }
 
-function findThreadForEmail(email) {
-  const target = String(email || '').toLowerCase();
-  return store.get('threads').find((t) => String(t.contact?.email || '').toLowerCase() === target) || null;
+function normalizeSubject(value) {
+  return String(value || '')
+    .replace(/^(?:(?:re|fwd?|rv|aw|tr|enc)\s*:\s*)+/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function threadSortKey(thread) {
+  return Date.parse(thread?.lastActivityAt || thread?.updatedAt || thread?.createdAt || 0) || 0;
+}
+
+/* Enrutamiento de respuestas. Un comprador puede tener un hilo por producto:
+   elegir el primero por email manda la respuesta al producto equivocado y
+   reinicia el seguimiento de una conversación que estaba avanzando.
+   Prioridad: Message-ID citado > asunto del último saliente > actividad. */
+function findThreadForEmail(email, inbound = null) {
+  const target = normalizeEmail(email);
+  if (!target) return null;
+  const threads = store.get('threads');
+
+  if (inbound) {
+    const refs = new Set([
+      ...(Array.isArray(inbound.references) ? inbound.references : []),
+      ...(inbound.inReplyTo ? [inbound.inReplyTo] : []),
+    ].map((item) => String(item || '').trim()).filter(Boolean));
+    if (refs.size) {
+      const exact = threads.find((thread) => (thread.messages || []).some((message) => (
+        message.direction === 'out' && message.messageId && refs.has(message.messageId)
+      )));
+      if (exact) return exact;
+    }
+
+    const subject = normalizeSubject(inbound.subject);
+    if (subject) {
+      const bySubject = threads
+        .filter((thread) => normalizeEmail(thread.contact?.email) === target)
+        .filter((thread) => (thread.messages || []).some((message) => (
+          message.direction === 'out' && normalizeSubject(message.subject) === subject
+        )))
+        .sort((a, b) => threadSortKey(b) - threadSortKey(a));
+      if (bySubject.length) return bySubject[0];
+    }
+  }
+
+  return threads
+    .filter((thread) => normalizeEmail(thread.contact?.email) === target)
+    .sort((a, b) => threadSortKey(b) - threadSortKey(a))[0] || null;
 }
 
 async function createInboundThread(inbound, email) {
@@ -954,6 +1495,101 @@ async function createInboundThread(inbound, email) {
   await store.set('threads', store.get('threads'));
   await store.activity('reply', `Respuesta entrante de ${email} sin hilo previo.`, { threadId: thread.id });
   return thread;
+}
+
+/* Procesa eventos de entrega del proveedor (rebotes, quejas, aperturas).
+   Un rebote duro o una queja de spam suprimen la dirección de inmediato: la
+   reputación del dominio es el activo más frágil de todo el sistema. */
+async function handleEmailEvent(event) {
+  if (!event?.emails?.length) return { touched: 0, suppressed: 0 };
+  const now = nowISO();
+  const threads = store.get('threads');
+  let touched = 0;
+  let suppressed = 0;
+
+  for (const email of event.emails) {
+    const related = threads
+      .filter((thread) => normalizeEmail(thread.contact?.email) === email)
+      .sort((a, b) => threadSortKey(b) - threadSortKey(a));
+    const thread = related[0] || null;
+
+    if (thread) {
+      const outbound = [...(thread.messages || [])].reverse().find((message) => (
+        message.direction === 'out'
+        && (
+          (event.messageId && (message.messageId === event.messageId || message.providerId === event.messageId))
+          || message.status === 'enviado'
+        )
+      ));
+      if (outbound) {
+        if (event.kind === 'delivered') {
+          outbound.status = 'entregado';
+          outbound.deliveredAt = now;
+        } else if (event.kind === 'opened') {
+          outbound.openedAt = now;
+        } else if (event.kind === 'clicked') {
+          outbound.clickedAt = now;
+        } else if (event.kind === 'delayed') {
+          outbound.deliveryDelayedAt = now;
+        } else if (event.kind === 'bounce') {
+          outbound.status = event.hard ? 'rebotado' : 'rebote_temporal';
+          outbound.bouncedAt = now;
+        } else if (event.kind === 'complaint') {
+          outbound.status = 'queja';
+          outbound.complainedAt = now;
+        }
+        if (event.reason) outbound.deliveryReason = event.reason;
+      }
+      thread.lastActivityAt = now;
+      thread.updatedAt = now;
+      touched += 1;
+    }
+
+    const mustSuppress = event.kind === 'complaint' || (event.kind === 'bounce' && event.hard);
+    if (!mustSuppress) continue;
+
+    const reason = event.kind === 'complaint'
+      ? 'Marcó el correo como spam (queja del proveedor).'
+      : `Rebote definitivo: ${event.reason || 'el servidor rechazó la dirección'}.`;
+    await addSuppression({ email, reason }, {
+      source: event.kind === 'complaint' ? 'queja de spam' : 'rebote',
+      demo: thread?.demo,
+    });
+    suppressed += 1;
+
+    if (!thread) continue;
+    thread.stage = 'perdido';
+    thread.nextFollowUp = null;
+    thread.nextStep = event.kind === 'complaint'
+      ? 'Marcó el correo como spam. No volver a contactar.'
+      : 'La dirección rebotó. Corregí el email antes de reintentar.';
+    thread.contact = { ...(thread.contact || {}), emailStatus: event.kind === 'complaint' ? 'queja' : 'rebotado' };
+    if (event.kind === 'bounce') thread.emailBouncedAt = now;
+    if (event.kind === 'complaint') thread.emailComplainedAt = now;
+    for (const draft of thread.drafts || []) {
+      if (!['listo', 'revisar'].includes(draft.status)) continue;
+      draft.status = 'bloqueado';
+      draft.blockedReason = event.kind === 'complaint'
+        ? 'El contacto marcó el correo como spam.'
+        : 'El correo rebotó: la dirección no es entregable.';
+    }
+    for (const item of outbox.items()) {
+      if (item.status !== 'pending' || item.threadId !== thread.id) continue;
+      item.status = 'cancelled';
+      item.error = event.kind === 'complaint' ? 'El contacto marcó el correo como spam.' : 'El correo rebotó.';
+    }
+  }
+
+  if (touched) await store.set('threads', threads);
+  if (suppressed) await outbox.save();
+  if (touched || suppressed) {
+    await store.activity(
+      'system',
+      `Evento de correo ${event.kind}: ${touched} hilo(s) actualizado(s), ${suppressed} dirección(es) suprimida(s).`,
+      {},
+    );
+  }
+  return { touched, suppressed };
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1023,7 +1659,7 @@ async function registerOptOut(thread, text, source = 'respuesta') {
     // El opt-out es de la persona. Solo se bloquea la empresa cuando no hay
     // email (contacto por formulario/LinkedIn).
     company: email ? '' : (thread.contact?.company || ''),
-    reason: `Respondió pidiendo no recibir más mensajes (${signal.rule}: “${String(signal.phrase).slice(0, 90)}”).`,
+    reason: `Respondió pidiendo no recibir más mensajes (${signal.rule}: “${String(signal.phrase).slice(0, 90)}”).`,
   }, { source, demo: thread.demo });
   const at = nowISO();
   thread.stage = 'perdido';
@@ -1123,10 +1759,10 @@ async function makeBackup({ safe = false } = {}) {
     }
   }
   const entries = [
-    { name: 'lumbre-data.json', data: Buffer.from(JSON.stringify(bundle, null, 2), 'utf8') },
+    { name: 'lucian-data.json', data: Buffer.from(JSON.stringify(bundle, null, 2), 'utf8') },
     {
       name: 'LEEME-BACKUP.txt',
-      data: Buffer.from(`Copia de seguridad de Lumbre${safe ? ' (sin claves)' : ''}\nFecha: ${nowISO()}\n\n${safe ? 'No incluye claves de API: cargalas de nuevo al restaurar.' : 'Incluye datos y fotos. Contiene claves de API en texto plano: guardala en un lugar privado.'}\nPara restaurar: Ajustes → Datos → Restaurar copia.\n`, 'utf8'),
+      data: Buffer.from(`Copia de seguridad de Lucian${safe ? ' (sin claves)' : ''}\nFecha: ${nowISO()}\n\n${safe ? 'No incluye claves de API: cargalas de nuevo al restaurar.' : 'Incluye datos y fotos. Contiene claves de API en texto plano: guardala en un lugar privado.'}\nPara restaurar: Ajustes → Datos → Restaurar copia.\n`, 'utf8'),
     },
   ];
   const files = await walkFiles(store.mediaDir);
@@ -1143,8 +1779,8 @@ async function restoreBackup(buffer) {
   let bundle = null;
   if (buffer.slice(0, 2).toString('ascii') === 'PK') {
     const entries = readZip(buffer);
-    const dataEntry = entries.find((e) => e.name === 'lumbre-data.json');
-    if (!dataEntry) throw new HttpError(400, 'La copia no contiene lumbre-data.json.');
+    const dataEntry = entries.find((e) => e.name === 'lucian-data.json');
+    if (!dataEntry) throw new HttpError(400, 'La copia no contiene lucian-data.json.');
     bundle = JSON.parse(dataEntry.data.toString('utf8'));
     for (const entry of entries) {
       if (!entry.name.startsWith('media/')) continue;
@@ -1293,7 +1929,11 @@ async function handle(req, res) {
   const hostHeader = String(req.headers.host || '').trim();
   const hostName = hostHeader.split(':')[0].toLowerCase().replace(/^\[|\]$/g, '');
   const allowedHosts = new Set(['localhost', '127.0.0.1', '::1']);
-  if (!isWebhook && hostName && !allowedHosts.has(hostName)) {
+  // En modo compartir (LUCIAN_HOST=0.0.0.0) se permiten también las IPs
+  // de la red local para que otra PC pueda abrir la interfaz.
+  const lanMode = HOST === '0.0.0.0' || HOST === '::';
+  const isLanHost = lanMode && /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.)/.test(hostName);
+  if (!isWebhook && hostName && !allowedHosts.has(hostName) && !isLanHost) {
     res.writeHead(403, { 'content-type': 'text/plain' });
     res.end('Host no permitido.');
     return;
@@ -1318,7 +1958,7 @@ async function handle(req, res) {
   if (pathname === '/api/health' && method === 'GET') {
     json(res, 200, {
       ok: true,
-      app: 'lumbre',
+      app: 'lucian',
       version: VERSION,
       ai: isAIReady(store.settings()),
       demo: settingsFlags(store.settings()).demo,
@@ -1329,6 +1969,17 @@ async function handle(req, res) {
 
   if (pathname === '/api/state' && method === 'GET') {
     json(res, 200, statePayload());
+    return;
+  }
+
+  if (pathname === '/api/email/check-inbox' && method === 'POST') {
+    const settings = store.settings();
+    const email = settings.email || {};
+    if (email.provider !== 'gmail' || !email.smtpUser || !email.smtpPassword) {
+      throw new HttpError(400, 'Configurá Gmail en Ajustes → Correo para leer la bandeja de entrada.');
+    }
+    await pollGmailInbox();
+    json(res, 200, { ok: true, message: 'Bandeja revisada.' });
     return;
   }
 
@@ -1368,6 +2019,49 @@ async function handle(req, res) {
     const body = await readJson(req);
     await store.clearSecret(asString(body.path));
     json(res, 200, { settings: maskSettings(store.settings()), flags: settingsFlags(store.settings()) });
+    return;
+  }
+
+  if (pathname === '/api/settings/ai-configure' && method === 'POST') {
+    const body = await readJson(req);
+    const settings = store.settings();
+    if (!isAIReady(settings)) throw new HttpError(400, 'Configurá una IA primero en Ajustes → Inteligencia artificial.');
+    const cfg = resolveAIConfig(settings);
+    const goal = String(body?.goal || '').trim().slice(0, 500);
+    const context = {
+      brand: settings.brand,
+      products: store.get('products').length,
+      missions: store.get('missions').length,
+      threads: store.get('threads').length,
+      current: {
+        ai: settings.ai?.provider,
+        search: settings.search?.provider,
+        email: settings.email?.provider,
+        dailyLimit: settings.email?.dailyLimit,
+        warmup: settings.email?.warmup,
+        markets: settings.mission?.markets,
+        depth: settings.mission?.depth,
+        maxProspects: settings.mission?.maxProspects,
+      },
+    };
+    const result = await generateJson(cfg, {
+      system: 'Sos un asistente de configuracion de Lucian. Analiza la situacion actual del usuario (productos, misiones, conversaciones) y genera una configuracion personalizada. Devuelve un JSON con un parche de ajustes y un resumen. El parche solo puede tocar: mission (markets, depth, maxProspects, tone, currency, contactCooldownDays), email (dailyLimit, warmup, autopilotEnabled, autopilotSpacingMin, followUps, postSales), sales (paymentLink, quoteValidityDays), onboarding. No toques claves ni URLs de proveedores. Espanol rioplatense. Varia la respuesta segun el contexto: no repitas siempre la misma configuracion.',
+      prompt: `El dueno quiere que configures Lucian. Pedido: "${goal || 'configuracion optima para empezar a vender lamparas de diseno'}".\nContexto actual: ${JSON.stringify(context)}.\nAnaliza el contexto y genera una configuracion personalizada. Devuelve: { "patch": { ... }, "summary": "que cambiaste y por que (max 4 frases)" }.`,
+      temperature: 0.7,
+      maxTokens: 1200,
+      expects: 'object',
+    });
+    const data = asObject(result.data);
+    const patch = isObject(data.patch) ? data.patch : {};
+    // Sanitizar: solo campos permitidos.
+    const allowed = new Set(['mission', 'email', 'sales', 'onboarding']);
+    const safePatch = {};
+    for (const key of Object.keys(patch)) {
+      if (allowed.has(key) && isObject(patch[key])) safePatch[key] = patch[key];
+    }
+    const updated = await store.saveSettings(safePatch);
+    await store.activity('settings', `Configuración asistida por IA: ${String(data.summary || 'aplicada').slice(0, 200)}`);
+    json(res, 200, { settings: maskSettings(updated), flags: settingsFlags(updated), summary: data.summary || 'Configuración aplicada.', patch: safePatch });
     return;
   }
 
@@ -1462,6 +2156,23 @@ async function handle(req, res) {
     return;
   }
 
+  if (pathname === '/api/missions/all' && method === 'DELETE') {
+    const running = store.get('missions').filter((m) => ['running', 'queued'].includes(m.status));
+    for (const m of running) {
+      if (listeners.has(m.id)) {
+        for (const res of listeners.get(m.id)) {
+          try { res.end(); } catch { /* noop */ }
+        }
+        listeners.delete(m.id);
+      }
+    }
+    const count = store.get('missions').length;
+    await store.set('missions', []);
+    await store.activity('mission', `Se borraron todas las misiones (${count}).`);
+    json(res, 200, { ok: true, deleted: count });
+    return;
+  }
+
   const missionReconcile = pathname.match(/^\/api\/missions\/([^/]+)\/reconcile$/);
   if (missionReconcile && method === 'POST') {
     const id = decodeURIComponent(missionReconcile[1]);
@@ -1534,11 +2245,13 @@ async function handle(req, res) {
       if (!mission) throw new HttpError(404, 'Misión no encontrada.');
       if (['done', 'done_with_warnings', 'error', 'cancelled'].includes(mission.status)) throw new HttpError(400, 'La misión ya terminó.');
       mission.cancelRequested = true;
-      if (mission.status === 'queued') {
-        mission.status = 'cancelled';
-        mission.finishedAt = nowISO();
-        mission.phase = 'cancelled';
-      }
+      // Cancelación inmediata: no esperar a que el paso actual termine.
+      // El worker ve cancelRequested y se detiene; mientras tanto la UI
+      // muestra la misión como cancelada al instante.
+      mission.status = 'cancelled';
+      mission.finishedAt = mission.finishedAt || nowISO();
+      mission.phase = 'cancelled';
+      mission.currentStep = null;
       await store.set('missions', store.get('missions'));
       broadcast(id, { type: 'mission', mission, at: nowISO() });
       json(res, 200, { ok: true, mission: missionSummary(mission) });
@@ -1553,6 +2266,59 @@ async function handle(req, res) {
 
   if (pathname === '/api/threads' && method === 'GET') {
     json(res, 200, { threads: store.get('threads').map((thread) => threadSummary(thread, store.get('suppressions'))) });
+    return;
+  }
+
+  if (pathname === '/api/threads/all' && method === 'DELETE') {
+    const count = store.get('threads').length;
+    for (const item of outbox.items()) {
+      if (['pending', 'failed'].includes(item.status)) {
+        item.status = 'cancelled';
+        item.error = 'Conversación borrada.';
+      }
+    }
+    await outbox.save();
+    await store.set('threads', []);
+    await store.activity('reply', `Se borraron todas las conversaciones (${count}).`);
+    json(res, 200, { ok: true, deleted: count });
+    return;
+  }
+
+  // Reenviar los correos que se marcaron como enviados por el webhook falso.
+  // Crea un borrador listo con el mismo texto para cada mensaje afectado,
+  // sin borrar el registro del intento original.
+  if (pathname === '/api/threads/prepare-resends' && method === 'POST') {
+    const threads = store.get('threads');
+    let prepared = 0;
+    for (const thread of threads) {
+      const affected = (thread.messages || []).filter((m) => m.deliveryNote && m.direction === 'out');
+      if (!affected.length) continue;
+      const yaPreparado = (thread.drafts || []).some((d) => d.reattemptOf && affected.some((m) => m.id === d.reattemptOf));
+      if (yaPreparado) continue;
+      for (const m of affected) {
+        const draft = {
+          id: uid('drf'),
+          channel: 'email',
+          language: 'es',
+          subject: m.subject || '',
+          body: m.body || '',
+          status: 'listo',
+          source: 'manual',
+          guardVersion: 2,
+          reattemptOf: m.id,
+          note: 'Reenvío del mensaje que el webhook falso marcó como enviado. Revisá y enviá por tu correo.',
+          createdAt: nowISO(),
+        };
+        thread.drafts = [draft, ...(thread.drafts || [])];
+        prepared += 1;
+      }
+      thread.updatedAt = nowISO();
+    }
+    if (prepared) {
+      await store.set('threads', threads);
+      await store.activity('outreach', `Preparados ${prepared} reenvíos de correos no entregados.`);
+    }
+    json(res, 200, { ok: true, prepared });
     return;
   }
 
@@ -1580,8 +2346,23 @@ async function handle(req, res) {
         }
         if (target.stage !== body.stage) {
           await store.activity('reply', `${target.contact?.company || 'Contacto'} pasó a etapa ${body.stage}.`, { threadId: id });
-          // Ganada una venta, arranca el reloj de postventa (día 3/30/90).
-          if (body.stage === 'ganado' && !target.postSaleAt) target.postSaleAt = nowISO();
+          if (body.stage === 'ganado') {
+            // El reloj de postventa (día 3/30/90) arranca con la venta actual,
+            // no con la primera vez que el hilo pasó por "ganado". Si el
+            // cliente volvió a comprar, se reinicia la secuencia y se descartan
+            // los toques viejos que todavía no salieron.
+            await markThreadWon(target);
+            if (body.nextStep === undefined) target.nextStep = 'Venta cerrada. Postventa día 3, 30 y 90.';
+          } else if (target.stage === 'ganado') {
+            // Dejó de estar ganada: no corresponde seguir con la postventa.
+            target.nextFollowUp = null;
+            for (const item of outbox.items()) {
+              if (item.status !== 'pending' || item.threadId !== target.id || item.kind !== 'postventa') continue;
+              item.status = 'cancelled';
+              item.error = 'La conversación dejó de estar en etapa ganado.';
+            }
+            await outbox.save();
+          }
         }
         target.stage = body.stage;
       }
@@ -1611,6 +2392,25 @@ async function handle(req, res) {
       json(res, 200, { ok: true });
       return;
     }
+  }
+
+  const threadQuotes = pathname.match(/^\/api\/threads\/([^/]+)\/quotes$/);
+  if (threadQuotes && method === 'POST') {
+    const id = decodeURIComponent(threadQuotes[1]);
+    const body = await readJson(req);
+    const result = await createQuote(id, body);
+    json(res, 201, result);
+    return;
+  }
+
+  const threadQuoteMatch = pathname.match(/^\/api\/threads\/([^/]+)\/quotes\/([^/]+)$/);
+  if (threadQuoteMatch && method === 'PATCH') {
+    const id = decodeURIComponent(threadQuoteMatch[1]);
+    const quoteId = decodeURIComponent(threadQuoteMatch[2]);
+    const body = await readJson(req);
+    const result = await setQuoteStatus(id, quoteId, asString(body.status));
+    json(res, 200, result);
+    return;
   }
 
   const threadMessages = pathname.match(/^\/api\/threads\/([^/]+)\/messages$/);
@@ -1829,6 +2629,14 @@ async function handle(req, res) {
     return;
   }
 
+  if (pathname === '/api/content/all' && method === 'DELETE') {
+    const count = store.get('content').length;
+    await store.set('content', []);
+    await store.activity('content', `Se borró todo el contenido (${count}).`);
+    json(res, 200, { ok: true, deleted: count });
+    return;
+  }
+
   const contentMatch = pathname.match(/^\/api\/content\/([^/]+)$/);
   if (contentMatch) {
     const id = decodeURIComponent(contentMatch[1]);
@@ -1836,12 +2644,23 @@ async function handle(req, res) {
     if (!item) throw new HttpError(404, 'Pieza de contenido no encontrada.');
     if (method === 'PATCH') {
       const body = await readJson(req);
-      const allowed = ['status', 'caption', 'hook', 'script', 'cta', 'platform', 'format', 'day', 'hashtags'];
+      const allowed = ['status', 'caption', 'hook', 'script', 'cta', 'platform', 'format', 'day', 'hashtags', 'publishedUrl', 'publishedAt'];
       for (const key of allowed) {
         if (body[key] === undefined) continue;
-        item[key] = key === 'hashtags' ? asArray(body[key]).map(String) : asString(body[key]);
+        item[key] = key === 'hashtags' ? asArray(body[key]).map(String) : asString(body[key]).slice(0, 500);
       }
       if (body.status && !['idea', 'borrador', 'publicado', 'archivado'].includes(body.status)) throw new HttpError(400, 'Estado de contenido inválido.');
+      if (body.publishedUrl !== undefined) {
+        const raw = String(body.publishedUrl || '').trim();
+        if (raw && !/^https?:\/\//i.test(raw)) throw new HttpError(400, 'El enlace de publicación debe ser una URL válida (http/https).');
+        if (!raw) { delete item.publishedUrl; }
+      }
+      if (body.publishedAt !== undefined && !String(body.publishedAt || '').trim()) delete item.publishedAt;
+      // Marcar como publicada sin fecha: se anota el momento. Es lo que permite
+      // responder "¿dónde y cuándo la IA la publicó?" sin adivinar.
+      if (body.status === 'publicado' && item.status !== 'publicado' && !item.publishedAt && body.publishedAt === undefined) {
+        item.publishedAt = nowISO();
+      }
       item.updatedAt = nowISO();
       await store.set('content', store.get('content'));
       json(res, 200, { item });
@@ -1966,7 +2785,7 @@ async function handle(req, res) {
     const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     res.writeHead(200, {
       'content-type': 'application/zip',
-      'content-disposition': `attachment; filename="lumbre-backup-${stamp}.zip"`,
+      'content-disposition': `attachment; filename="lucian-backup-${stamp}.zip"`,
       'cache-control': 'no-store',
       'content-length': zip.length,
     });
@@ -1985,13 +2804,16 @@ async function handle(req, res) {
     const rows = store.get('products').map((p) => ({
       codigo: p.code, nombre: p.name, categoria: p.category, precio: p.price, moneda: p.currency,
       costo: p.cost, estado: p.status, descripcion: p.description,
+      capacidad: p.capacityPerWeek, plazo: p.leadTimeDays, medidas: p.dimensions, peso: p.weightGrams,
     }));
     const csv = toCsv(rows, [
       { key: 'codigo', label: 'Código' }, { key: 'nombre', label: 'Nombre' }, { key: 'categoria', label: 'Categoría' },
       { key: 'precio', label: 'Precio' }, { key: 'moneda', label: 'Moneda' }, { key: 'costo', label: 'Costo' },
       { key: 'estado', label: 'Estado' }, { key: 'descripcion', label: 'Descripción' },
+      { key: 'capacidad', label: 'Capacidad semanal' }, { key: 'plazo', label: 'Plazo de fabricación (días)' },
+      { key: 'medidas', label: 'Medidas' }, { key: 'peso', label: 'Peso (gramos)' },
     ]);
-    res.writeHead(200, { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="lumbre-productos.csv"' });
+    res.writeHead(200, { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="lucian-productos.csv"' });
     res.end(csv);
     return;
   }
@@ -2006,63 +2828,29 @@ async function handle(req, res) {
       { key: 'pais', label: 'País' }, { key: 'etapa', label: 'Etapa' }, { key: 'score', label: 'Score' },
       { key: 'siguiente', label: 'Siguiente paso' },
     ]);
-    res.writeHead(200, { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="lumbre-conversaciones.csv"' });
+    res.writeHead(200, { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="lucian-conversaciones.csv"' });
     res.end(csv);
     return;
   }
 
   if (pathname === '/api/webhooks/email' && method === 'POST') {
-    const expected = process.env.LUMBRE_WEBHOOK_TOKEN || store.settings().email?.webhookToken || '';
+    const expected = process.env.LUCIAN_WEBHOOK_TOKEN || store.settings().email?.webhookToken || '';
     if (expected) {
-      const provided = req.headers['x-lumbre-token'] || url.searchParams.get('token');
+      const provided = req.headers['x-lucian-token'] || url.searchParams.get('token');
       if (!webhookTokenMatches(provided, expected)) throw new HttpError(401, 'Token de webhook inválido.');
     } else if (!isLocalWebhookRequest(req)) {
-      throw new HttpError(403, 'Para recibir correos desde internet configurá un token de webhook en Ajustes → Correo o la variable LUMBRE_WEBHOOK_TOKEN.');
+      throw new HttpError(403, 'Para recibir correos desde internet configurá un token de webhook en Ajustes → Correo o la variable LUCIAN_WEBHOOK_TOKEN.');
     }
     const payload = await readJson(req, 10 * 1024 * 1024);
+    const emailEvent = parseEmailEvent(payload);
+    if (emailEvent) {
+      const result = await handleEmailEvent(emailEvent);
+      json(res, 200, { ok: true, event: emailEvent.kind, ...result });
+      return;
+    }
     const inbound = parseInbound(payload);
     if (!inbound) throw new HttpError(400, 'No se pudo leer el correo entrante.');
-    const match = inbound.from.match(/<([^>]+)>/);
-    const email = (match ? match[1] : inbound.from).trim().toLowerCase();
-    if (!isValidEmail(email)) throw new HttpError(400, 'El remitente no es un email válido.');
-    let thread = findThreadForEmail(email);
-    if (!thread) thread = await createInboundThread(inbound, email);
-    const now = nowISO();
-    const message = {
-      id: uid('msg'),
-      direction: 'in',
-      channel: 'email',
-      subject: inbound.subject || '(sin asunto)',
-      body: truncate(inbound.text || inbound.html, 30000),
-      at: now,
-      status: 'recibido',
-    };
-    thread.messages = [...(thread.messages || []), message];
-    thread.lastActivityAt = now;
-    thread.updatedAt = now;
-    const optOut = await registerOptOut(thread, `${inbound.subject || ''}\n${message.body || ''}`, 'webhook');
-    if (!optOut && thread.stage === 'contactado') thread.stage = 'respondio';
-    await store.set('threads', store.get('threads'));
-    await store.activity('reply', `Respuesta de ${email}: ${truncate(inbound.subject || message.body, 140)}`, { threadId: thread.id });
-
-    if (optOut) {
-      await notifier.notify(
-        `${thread.contact?.company || email} pidió no recibir más mensajes.\n\nLo agregué a la lista de no contactar. No se le va a escribir de nuevo.`,
-        { kind: 'opt_out' },
-      ).catch(() => {});
-    }
-
-    if (!optOut && isAIReady(store.settings())) {
-      try {
-        const result = await analyzeThread({ thread, store, apply: true });
-        if (result.analysis.score >= 75) {
-          await notifier.notify(
-            `Respuesta caliente de ${thread.contact?.company || email}.\n\n${truncate(message.body, 500)}\n\nSiguiente paso: ${result.analysis.siguiente_paso || 'revisar la conversación'}.`,
-            { kind: 'hot_reply' },
-          ).catch(() => {});
-        }
-      } catch { /* la respuesta ya quedó guardada */ }
-    }
+    const thread = await processInboundEmail(inbound);
     json(res, 200, { ok: true, threadId: thread.id });
     return;
   }
@@ -2071,7 +2859,7 @@ async function handle(req, res) {
     const mode = url.searchParams.get('hub.mode');
     const token = url.searchParams.get('hub.verify_token');
     const challenge = url.searchParams.get('hub.challenge');
-    const expected = store.settings().notify?.whatsapp?.verifyToken || 'lumbre';
+    const expected = store.settings().notify?.whatsapp?.verifyToken || 'lucian';
     if (mode === 'subscribe' && token === expected) {
       res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' });
       res.end(challenge || 'ok');
@@ -2107,7 +2895,7 @@ async function handle(req, res) {
 const server = http.createServer((req, res) => {
   handle(req, res).catch((error) => {
     const status = error instanceof HttpError ? error.status : 500;
-    if (status >= 500) console.error('[Lumbre]', error);
+    if (status >= 500) console.error('[Lucian]', error);
     if (!res.headersSent) {
       fail(res, status, error.message || 'Error interno.');
     } else {
@@ -2149,6 +2937,9 @@ for (let attempt = 0; attempt < 8; attempt += 1) {
 }
 
 const url = `http://localhost:${port}`;
+const lanUrl = HOST === '0.0.0.0' || HOST === '::'
+  ? `http://<IP-de-esta-PC>:${port}`
+  : '';
 const settings = store.settings();
 const aiLabel = isAIReady(settings) ? `${settings.ai.provider} · ${resolveAIConfig(settings).model}` : 'modo demo (sin clave de IA)';
 
@@ -2190,14 +2981,15 @@ function readinessLines() {
   return lines;
 }
 console.log('');
-console.log('  LUMBRE · sistema de ventas para lámparas de diseño');
+console.log('  LUCIAN · sistema de ventas para lámparas de diseño');
 console.log(`  ${url}`);
+if (lanUrl) console.log(`  Desde otra PC de la red: ${lanUrl}`);
 console.log('  Ctrl+C para cerrar.');
 console.log('');
 for (const line of readinessLines()) console.log(line);
 console.log('');
 
-if (!process.env.LUMBRE_NO_OPEN) {
+if (!process.env.LUCIAN_NO_OPEN) {
   setTimeout(() => {
     const command = process.platform === 'win32'
       ? `cmd /c start "" "${url}"`
@@ -2207,7 +2999,7 @@ if (!process.env.LUMBRE_NO_OPEN) {
 }
 
 async function shutdown() {
-  console.log('\nCerrando Lumbre…');
+  console.log('\nCerrando Lucian”¦');
   notifier.stop();
   outbox.stop();
   try { await store.flush(); } catch { /* noop */ }
@@ -2217,4 +3009,4 @@ async function shutdown() {
 
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
-process.on('unhandledRejection', (error) => console.error('[Lumbre] Promesa rechazada:', error));
+process.on('unhandledRejection', (error) => console.error('[Lucian] Promesa rechazada:', error));

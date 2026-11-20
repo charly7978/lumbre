@@ -1,10 +1,10 @@
-import fs from 'node:fs';
+﻿import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 // La caché de búsqueda se persiste en disco junto a los datos; los tests
 // nunca deben tocar el directorio real del dueño.
-process.env.LUMBRE_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'lumbre-cache-test-'));
+process.env.LUCIAN_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'lucian-cache-test-'));
 import {
   clearSearchCache, filterRelevantResults, isDuckDuckGoChallenge, parseSearxngResults,
   searchProviderInfo, searchWeb, searchWebDetailed,
@@ -17,7 +17,7 @@ const searxFixture = fs.readFileSync(path.join(here, 'fixtures', 'searxng-result
 const ddgChallenge = fs.readFileSync(path.join(here, 'fixtures', 'ddg-challenge.html'), 'utf8');
 
 let passed = 0;
-process.on('exit', () => { try { fs.rmSync(process.env.LUMBRE_DATA_DIR, { recursive: true, force: true }); } catch { /* noop */ } });
+process.on('exit', () => { try { fs.rmSync(process.env.LUCIAN_DATA_DIR, { recursive: true, force: true }); } catch { /* noop */ } });
 function ok(condition, label) {
   if (!condition) {
     console.error(`FALLO: ${label}`);
@@ -47,7 +47,7 @@ ok(!isDuckDuckGoChallenge(searxFixture), 'no confunde una página normal con un 
 const relevance = filterRelevantResults('tiendas de lámparas de diseño Madrid', [
   { title: 'Ideas Luz · Tienda de lámparas de diseño en Madrid', url: 'https://www.ideasluz.com/', snippet: '' },
   { title: 'EGLO Colombia: Tienda de iluminación y lámparas', url: 'https://www.eglo.com/co/', snippet: '' },
-  { title: '马来西亚的ZON香烟 - 百度知道', url: 'https://zhidao.baidu.com/question/1.html', snippet: '' },
+  { title: '马æ¥西亚的ZON香烟 - 百度知é“', url: 'https://zhidao.baidu.com/question/1.html', snippet: '' },
   { title: 'Tienda de productos para animales', url: 'https://tiendas.tiendanimal.es/', snippet: '' },
 ], { strict: true });
 ok(relevance.length === 1 && /ideasluz/i.test(relevance[0].url), 'descarta resultados que no comparten la ciudad ni la consulta');
@@ -82,7 +82,7 @@ ok(tavilyDetail.errors.some((e) => /Falta la clave/.test(e)), 'proveedor sin cla
 
 let result = null;
 try {
-  result = await searchWeb({ search: { provider: 'tavily', apiKey: '' } }, 'tiendas de diseÃ±o Madrid');
+  result = await searchWeb({ search: { provider: 'tavily', apiKey: '' } }, 'tiendas de diseño Madrid');
 } catch { result = null; }
 ok(Array.isArray(result) || result === null, 'searchWeb con fallback devuelve lista o lanza');
 

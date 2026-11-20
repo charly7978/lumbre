@@ -1,4 +1,4 @@
-# Investigación y decisiones — correcciones del flujo de Lumbre
+﻿# Investigación y decisiones ”” correcciones del flujo de Lucian
 
 Fecha: 2026-11-18. Objetivo: que el flujo cumpla lo que promete en los puntos
 donde la revisión encontró fallas: opt-out, borradores, reintento, contactos
@@ -8,15 +8,15 @@ sin email y estados honestos.
 
 ### 1. Detección de bajas (opt-out)
 
-- **Tema**: detectar “BAJA / no me escribas más” sin falsos positivos.
+- **Tema**: detectar “BAJA / no me escribas más” sin falsos positivos.
 - **Fuente**: detector de opt-out de `nexo-rs-extension-marketing` (documentación de la crate, consultada 2026-11-18), https://docs.rs/nexo-rs-extension-marketing/0.28.0/nexo_marketing/unsubscribe/
 - **Hallazgo**: usa un conjunto de palabras conservador a propósito porque el costo de un falso positivo es descartar un lead real; al detectar, pierde el lead y rechaza borradores pendientes.
-- **Implicación**: no alcanza con buscar “baja” en cualquier parte. Hay que exigir intención y no destruir el borrador: la supresión se aplica al enviar y se puede revertir.
+- **Implicación**: no alcanza con buscar “baja” en cualquier parte. Hay que exigir intención y no destruir el borrador: la supresión se aplica al enviar y se puede revertir.
 - **Confianza**: Alta.
 
-- **Fuente**: Suped, “What keywords can I use to filter reply messages for unsubscribe requests?” (actualizado 2026-11-05), https://www.suped.com/knowledge/email-deliverability/compliance/what-keywords-can-i-use-to-filter-reply-messages-for-unsubscribe-requests
+- **Fuente**: Suped, “What keywords can I use to filter reply messages for unsubscribe requests?” (actualizado 2026-11-05), https://www.suped.com/knowledge/email-deliverability/compliance/what-keywords-can-i-use-to-filter-reply-messages-for-unsubscribe-requests
 - **Hallazgo**: responder para darse de baja es solo un mecanismo humano de respaldo; el estándar para volumen es `List-Unsubscribe` (RFC 8058). La supresión debe ser central y respetarse en todos los sistemas; objetivo operativo 48 h.
-- **Implicación**: Lumbre es 1:1 y de bajo volumen, así que conserva el pie “respondé BAJA” como respaldo humano, pero debe procesarlo con cuidado y mantener una lista de supresión central.
+- **Implicación**: Lucian es 1:1 y de bajo volumen, así que conserva el pie “respondé BAJA” como respaldo humano, pero debe procesarlo con cuidado y mantener una lista de supresión central.
 - **Confianza**: Alta.
 
 ### 2. Texto citado en respuestas
@@ -27,8 +27,8 @@ sin email y estados honestos.
 - **Confianza**: Alta.
 
 - **Fuente**: `crisp-oss/email-reply-parser` (Node, v2.3.9), https://github.com/crisp-oss/email-reply-parser ; `email_reply_parser` (Rust), https://docs.rs/email_reply_parser/latest/email_reply_parser/ ; `trimail` (npm), https://www.npmjs.com/package/trimail
-- **Hallazgo**: los parsers de respuestas separan cuerpo nuevo, firmas y cadena citada; reconocen “On … wrote:”, “El … escribió:”, “-----Original Message-----” y bloques `>`.
-- **Implicación**: se implementó un limpiador sin dependencias con esos separadores. El pie propio (“Si preferís no recibir más mensajes, respondé BAJA…”) se elimina antes de analizar.
+- **Hallazgo**: los parsers de respuestas separan cuerpo nuevo, firmas y cadena citada; reconocen “On ”¦ wrote:”, “El ”¦ escribió:”, “-----Original Message-----” y bloques `>`.
+- **Implicación**: se implementó un limpiador sin dependencias con esos separadores. El pie propio (“Si preferís no recibir más mensajes, respondé BAJA”¦”) se elimina antes de analizar.
 - **Confianza**: Alta.
 
 ### 3. Conservar la supresión y su alcance
@@ -47,32 +47,32 @@ sin email y estados honestos.
 
 - **Fuente**: `memql` digest.go (normalización de direcciones), https://github.com/znasllc-io/memql/blob/main/component/campaigns/digest.go
 - **Hallazgo**: normaliza solo espacios y mayúsculas; advierte que bajar el local part es sobre-normalización, pero es la dirección segura en la práctica.
-- **Implicación**: Lumbre usa `trim + lowercase`, sin quitar `+tags` ni puntos.
+- **Implicación**: Lucian usa `trim + lowercase`, sin quitar `+tags` ni puntos.
 - **Confianza**: Media-Alta.
 
 - **Decisión propia**: un email bloquea esa dirección, no todo el dominio. Bloquear el dominio requiere una acción explícita. Los dominios compartidos (Gmail, Outlook) nunca se usan para bloquear por dominio. Evita bloquear empresas enteras por error.
 
 ### 5. Reintentos idempotentes y reconciliación
 
-- **Fuente**: Stripe, “Idempotent requests”, https://docs.stripe.com/api/idempotent_requests
+- **Fuente**: Stripe, “Idempotent requests”, https://docs.stripe.com/api/idempotent_requests
 - **Hallazgo**: un reintento debe poder repetirse sin duplicar el efecto; se usa una clave estable y se devuelve el mismo resultado.
-- **Implicación**: la sincronización de hilos se keyed por `missionId` + email/empresa. `reconcileThreads` es idempotente: actualiza los borradores existentes, no crea duplicados y puede llamarse desde reintento o desde “Revalidar borradores”.
+- **Implicación**: la sincronización de hilos se keyed por `missionId` + email/empresa. `reconcileThreads` es idempotente: actualiza los borradores existentes, no crea duplicados y puede llamarse desde reintento o desde “Revalidar borradores”.
 - **Confianza**: Alta.
 
-- **Decisión propia**: si un borrador ya aprobado cambia de contenido, vuelve a “Por aprobar”. Es la única forma de que la aprobación siga significando algo.
+- **Decisión propia**: si un borrador ya aprobado cambia de contenido, vuelve a “Por aprobar”. Es la única forma de que la aprobación siga significando algo.
 
 ### 6. RFC 8058 (una-click unsubscribe)
 
 - **Fuente**: RFC 8058, https://datatracker.ietf.org/doc/html/rfc8058
 - **Hallazgo**: define `List-Unsubscribe` + `List-Unsubscribe-Post` con POST HTTPS y DKIM que cubra ambos encabezados; aplica a listas y requisitos de remitentes masivos (Gmail/Yahoo).
-- **Decisión**: Lumbre hace contacto 1:1 de bajo volumen y no implementa los encabezados de una-click ahora. Mantiene el pie de baja, la detección de respuestas y la supresión central. Si el volumen crece, el siguiente paso es agregar los encabezados al envío por Resend/webhook y un endpoint de baja con token.
+- **Decisión**: Lucian hace contacto 1:1 de bajo volumen y no implementa los encabezados de una-click ahora. Mantiene el pie de baja, la detección de respuestas y la supresión central. Si el volumen crece, el siguiente paso es agregar los encabezados al envío por Resend/webhook y un endpoint de baja con token.
 
 ## Diseño aplicado
 
 1. **Opt-out seguro**: limpiar citas y pie propio; exigir frases de intención; nunca borrar el borrador, solo marcar la conversación y suprimir; reversión desde Ajustes que devuelve borradores a revisión.
 2. **Mensajes 1:1**: sin fallback al mensaje de otra tienda; si no hay mensaje, el hilo queda para escribirlo a mano.
 3. **Revisión real**: se fusiona revisión post red team, se aplican correcciones literales de cumplimiento y se distingue `revisionApplied` por provenance del cuerpo.
-4. **Reconciliación**: reintentar o “Revalidar borradores” actualiza los borradores existentes; una aprobación vieja se invalida si el contenido cambió.
+4. **Reconciliación**: reintentar o “Revalidar borradores” actualiza los borradores existentes; una aprobación vieja se invalida si el contenido cambió.
 5. **Migración v2**: los borradores históricos sin guardas se marcan para revisión si falta la revisión de la misión o si comparten cuerpo con otro hilo de la misma misión. Es idempotente.
 6. **Contactos sin email**: el envío manual se permite sin dirección (formulario/LinkedIn); Resend/webhook y `.eml` siguen exigiendo email.
 7. **Aislamiento demo/real**: hilos y supresiones demo no bloquean misiones reales; aprendizajes demo no entran en misiones reales.
@@ -86,7 +86,7 @@ sin email y estados honestos.
 
 ---
 
-# Ronda 2 — ventas reales y cero mentiras (2026-11-19)
+# Ronda 2 ”” ventas reales y cero mentiras (2026-11-19)
 
 Objetivo: que una misión real produzca compradores comprobables y mensajes
 enviables, y que la app nunca presente datos inventados como resultados.
@@ -97,13 +97,13 @@ enviables, y que la app nunca presente datos inventados como resultados.
 
 - **Medición**: las misiones reales `mis_6db79905b862`, `mis_683b205a3a45`,
   `mis_9a29d34e94c8` y `mis_31c5b02ed803` registraron **0 resultados en todas
-  las consultas**. El log decía “Fuente: … → 0 resultados” y la misión seguía
+  las consultas**. El log decía “Fuente: ”¦ → 0 resultados” y la misión seguía
   como si hubiera investigado.
 - **Causa**: `html.duckduckgo.com` y `lite.duckduckgo.com` responden **HTTP 202**
   con una verificación anti-bots (`anomaly.js`, “Unfortunately, bots use
-  DuckDuckGo too”); el parser no encontraba resultados y devolvía `[]`, sin
+  DuckDuckGo too”); el parser no encontraba resultados y devolvía `[]`, sin
   error. Bing devolvía resultados degradados/no relacionados desde esta red;
-  Google devolvía una página de “problemas para acceder” sin resultados.
+  Google devolvía una página de “problemas para acceder” sin resultados.
 - **Fuente de la solución**: SearXNG documenta su API HTML y sus instancias
   públicas (https://docs.searxng.org/, https://searx.space/). Se verificó que
   las instancias públicas devuelven resultados reales (p. ej. Ideas Luz,
@@ -118,8 +118,8 @@ enviables, y que la app nunca presente datos inventados como resultados.
 
 - **Medición**: con `maxTokens: 3200`, una llamada real a DeepSeek para el
   paso red team devolvió **exactamente 3200 tokens de salida** y un objeto
-  cortado a mitad de string (“…lo report…”). El paso fallaba con “El modelo no
-  devolvió JSON válido después de varios intentos”. En las misiones reales
+  cortado a mitad de string (“”¦lo report”¦”). El paso fallaba con “El modelo no
+  devolvió JSON válido después de varios intentos”. En las misiones reales
   fallaron `redteam` y `compliance`.
 - **Fuente**: la API de chat de DeepSeek acepta `max_tokens` y devuelve
   `finish_reason: length` cuando corta (https://api-docs.deepseek.com/api/create-chat-completion);
@@ -132,22 +132,22 @@ enviables, y que la app nunca presente datos inventados como resultados.
 ### 3. La app creaba conversaciones con compradores inventados
 
 - **Medición**: la misión real `mis_0e02b63a3658` creó **6 hilos** con nombres
-  “Tienda de diseño independiente (ejemplo genérico, sin nombre verificable)”,
-  “Hotel boutique (ejemplo genérico…)”, etc., sin web ni email. La misión
+  “Tienda de diseño independiente (ejemplo genérico, sin nombre verificable)”,
+  “Hotel boutique (ejemplo genérico”¦)”, etc., sin web ni email. La misión
   `mis_fd976e97ac32` creó un hilo para `idealo.es`, un comparador de precios.
 - **Causa**: el prompt pedía nombres reales, pero nada en el código impedía
   que un nombre genérico terminara en la bandeja. El modelo rellenó la lista y
   el flujo lo aceptó.
 - **Fuente**: la literatura sobre alucinaciones en LLM recomienda verificación
   externa para afirmaciones verificables (Ji et al., “Survey of Hallucination
-  in Natural Language Generation”, https://arxiv.org/abs/2202.03629).
+  in Natural Language Generation”, https://arxiv.org/abs/2202.03629).
 - **Decisión**: verificación obligatoria antes de crear hilos: el sitio debe
   existir y mencionar la tienda, o la fuente citada debe mencionarla. Se
   descartan genéricos, agregadores, fabricantes/cadenas (lista explícita) y
   sitios cerrados. Los emails solo se aceptan si están publicados en el sitio.
   Las misiones sin compradores verificados terminan con aviso y lo dicen.
 
-### 4. Los hilos históricos seguían “vendibles”
+### 4. Los hilos históricos seguían “vendibles”
 
 - **Decisión**: migración `sanitizeLegacyThreads`: marca **Sin verificar** los
   hilos reales sin email ni sitio; los que eran nombres genéricos pasan a
@@ -156,7 +156,7 @@ enviables, y que la app nunca presente datos inventados como resultados.
 ### 5. La prospección llegaba al final de la cuota de búsqueda
 
 - **Causa**: investigación + aduanas consumían las instancias antes de
-  “Compradores concretos”, el paso que decide si hay ventas.
+  “Compradores concretos”, el paso que decide si hay ventas.
 - **Decisión**: la prospección pasa a ser el paso 3 del pipeline (después de
   investigación), con más intentos de búsqueda; aduanas y precios usan menos
   consultas. Además, si la búsqueda falla, entra un **directorio semilla** de
@@ -178,11 +178,11 @@ enviables, y que la app nunca presente datos inventados como resultados.
    se descartan si no están publicados.
 4. **Cierre honesto**: aviso `no-prospects`/`no-threads`, `stats.prospects`
    solo verificados, actividad y notificación dicen “0 compradores: no hay a
-   quién venderle todavía”.
+   quién venderle todavía”.
 5. **IA robusta**: `maxTokens` 8192 por defecto, escalado hasta 16000 al
    detectar corte, 4 intentos en pasos largos.
-6. **UI honesta**: badge “Sin compradores”, aviso de descartes con motivos,
-   badges “Sin verificar” en la bandeja y estado de verificación del sitio.
+6. **UI honesta**: badge “Sin compradores”, aviso de descartes con motivos,
+   badges “Sin verificar” en la bandeja y estado de verificación del sitio.
 
 ## Verificación (ronda 2)
 
@@ -203,7 +203,7 @@ La primera misión real con la búsqueda y el directorio arreglados verificó
 Lámparas Barcelona, La Maison Barcelona, Barcelona LED, Button Lighting Store,
 Ideas Luz, Años Luz, Avanluce, Insolit BCN, Mar de Cava, MINIM, Scultura
 Luminosa), creó 12 hilos y escribió 12 mensajes 1:1. Pero el red team leyó el
-contexto truncado y afirmó “cero compradores verificados con nombre”; su
+contexto truncado y afirmó “cero compradores verificados con nombre”; su
 veredicto `detener` bloqueó los 12 borradores aunque la misión decía `done`.
 
 Decisiones:
@@ -239,10 +239,10 @@ Decisiones:
 
 ---
 
-# Ronda 3 — desbloqueo real (2026-11-19, tarde)
+# Ronda 3 ”” desbloqueo real (2026-11-19, tarde)
 
 La auditoría del 2026-11-19 describía el estado de las 04:00. Para cuando se
-revisó el código, casi todo lo que figuraba como “pendiente” ya estaba hecho:
+revisó el código, casi todo lo que figuraba como “pendiente” ya estaba hecho:
 marca completa, onboarding terminado, Groq como proveedor, Tavily con clave y
 Telegram activo. Se verificó en vivo, con las claves reales:
 
@@ -254,15 +254,15 @@ Lo que sí estaba roto, y se corrigió:
 
 ### 1. El 413 de Groq tumbaba la misión entera
 
-- **Medición**: `mis_4d7e8c243231` (“Mercado y competencia”) y
-  `mis_f33d39e773b0` (“Plan final para el dueño”) murieron con
-  `413 Request too large for model qwen/qwen3.8-27b … on input tokens per
+- **Medición**: `mis_4d7e8c243231` (“Mercado y competencia”) y
+  `mis_f33d39e773b0` (“Plan final para el dueño”) murieron con
+  `413 Request too large for model qwen/qwen3.8-27b ”¦ on input tokens per
   minute`. Es el límite de tokens por minuto de la organización, una cuota
   temporal, no una petición imposible.
 - **Causa**: `chat()` solo reintentaba con 429. Un 413 era fatal, y el paso
   siguiente (`critical: true`) arrastraba la misión.
 - **Decisión**: `isRateLimitError()` (exportado) reconoce 429, “tokens per
-  minute”/“rate limit”/“quota” y 413 “Request too large”. `generateJson`
+  minute”/“rate limit”/“quota” y 413 “Request too large”. `generateJson`
   espera (`RATE_LIMIT_WAIT_MS`, 20 s), achica el presupuesto de salida
   (`shrinkBudget`, nunca por debajo de 1024) y pide un JSON más corto, en vez
   de abortar. Un 413 de cuerpo grande que no es de cuota no se reintenta.
@@ -295,11 +295,11 @@ Lo que sí estaba roto, y se corrigió:
   interiorismo), no los USD 35 que asume la auditoría.
 - **Instancia única**: tres servidores a la vez siguen siendo posibles porque
   el puerto se autoincrementa. Hoy la limpieza de misiones huérfanas evita el
-  daño grave, pero conviene cerrar los demás procesos al abrir Lumbre.
+  daño grave, pero conviene cerrar los demás procesos al abrir Lucian.
 
 ---
 
-# Ronda 4 — catálogo completo (2026-11-19, noche)
+# Ronda 4 ”” catálogo completo (2026-11-19, noche)
 
 Objetivo: que «cargar todos los artículos» no rompa la bandeja ni la reputación,
 y que el envío automático (opt-in) respete respuestas, bajas y espaciado.
@@ -310,7 +310,7 @@ y que el envío automático (opt-in) respete respuestas, bajas y espaciado.
    defecto) en vez de bloqueo permanente: un catálogo no puede agotar la
    bandeja en tres misiones. Siempre quedan fuera: hilos activos, `perdido`,
    bajas y borradores pendientes.
-2. **Cola FIFO de misiones** con 2 concurrentes (`LUMBRE_MAX_MISSIONS`) y
+2. **Cola FIFO de misiones** con 2 concurrentes (`LUCIAN_MAX_MISSIONS`) y
    reanudación automática de las `queued` al arrancar
    (`resumeQueuedMissions`). `releaseInterruptedMissions` solo toca
    `running`: una misión en cola nunca empezó y no se marca error.
@@ -328,7 +328,7 @@ y que el envío automático (opt-in) respete respuestas, bajas y espaciado.
 6. **Seguimientos día 4/día 10** sin precio, máximo 2, idioma del hilo, en
    piloto solo con `canAutopilot()`; sin piloto quedan `revisar`.
 7. **Caché de proveedores pagos** (`search.cacheHours`, 24 h; desactivable
-   con `LUMBRE_DISABLE_SEARCH_CACHE=1`) para no cobrar dos veces la misma
+   con `LUCIAN_DISABLE_SEARCH_CACHE=1`) para no cobrar dos veces la misma
    consulta por producto. En memoria: se pierde al reiniciar.
 8. **Footer de cumplimiento** en cada correo: baja + dirección física + sitio.
 
@@ -345,14 +345,14 @@ y que el envío automático (opt-in) respete respuestas, bajas y espaciado.
   65 emails públicos, 18 hilos creados, 88 descartes por dedupe, 34 borradores
   `listo` + 20 `revisar` esperando decisión humana, 9 mensajes salientes,
   0 ventas cerradas.
-- Cuota Tavily observada: ~301/1000 créditos usados (~16–23 créditos/misión):
+- Cuota Tavily observada: ~301/1000 créditos usados (~16”“23 créditos/misión):
   un catálogo de 20 productos cabe justo; conviene vigilar la cuota.
 - Cuello de botella real: la aprobación humana y el warmup/límite diario
-  (10→30/día), no el pipeline (~1–3 min de pasos por misión).
+  (10→30/día), no el pipeline (~1”“3 min de pasos por misión).
 
 ---
 
-# Ronda 5 — postventa conectada y listo para funcionar (2026-11-19, noche)
+# Ronda 5 ”” postventa conectada y listo para funcionar (2026-11-19, noche)
 
 Objetivo declarado por el dueño: los agentes deben hacer TODO lo que signifique
 venta, promoción, contactos, fidelización, persuasión, advertencias y responder
@@ -387,8 +387,8 @@ de artículos posible.
 5. **Caché de búsqueda persistente en disco** (`<datos>/search-cache.json`,
    500 entradas, TTL ≤ 168 h): sobrevive reinicios y ahorra créditos Tavily
    entre sesiones; los tests nunca tocan el directorio real
-   (`LUMBRE_DATA_DIR` temporal). Verificado en dos procesos consecutivos:
-   segunda sesión = 0 llamadas de red. Escape `LUMBRE_DISABLE_SEARCH_CACHE=1`.
+   (`LUCIAN_DATA_DIR` temporal). Verificado en dos procesos consecutivos:
+   segunda sesión = 0 llamadas de red. Escape `LUCIAN_DISABLE_SEARCH_CACHE=1`.
 6. **"Listo para funcionar" al arrancar**: la consola imprime IA, datos,
    búsqueda, correo/piloto, warmup/límite, Telegram, postventa, seguimientos,
    borradores esperando decisión, conversaciones abiertas y misiones
@@ -401,7 +401,7 @@ de artículos posible.
 - `npm run test:scale`: 51 comprobaciones (§10 postventa: ancla, elegibilidad,
   suprimidos, día 3/30/90, no duplica, contador al enviar, cierre en 3).
 - `npm test` completo: EXIT=0.
-- Arranque aislado (`LUMBRE_DATA_DIR` temporal, demo): imprime el panel
+- Arranque aislado (`LUCIAN_DATA_DIR` temporal, demo): imprime el panel
   «Listo para funcionar» y `/api/health` responde `{"ok":true}`.
 - Pregunta real al equipo (Groq, datos reales en copia temporal, borrada
   después): el Director Comercial respondió con el contexto real del negocio
@@ -410,6 +410,6 @@ de artículos posible.
 ## Verificado en vivo, no asumido
 
 - Telegram: `enabled && token && chatId` (digest 9:00) → los avisos y el chat
-  con el equipo llegan al celular. WhatsApp: apagado (sin claves) — correcto.
+  con el equipo llegan al celular. WhatsApp: apagado (sin claves) ”” correcto.
 - IA Groq `qwen/qwen3.8-27b`: responde con datos del negocio.
 - 0 ventas cerradas: el sistema prepara y empuja; el cierre es humano.

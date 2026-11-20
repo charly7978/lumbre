@@ -1,6 +1,6 @@
 import { extractJson } from './util.mjs';
 
-export const ACTION_TYPES = ['buscar', 'crear_borrador', 'actualizar_hilo', 'guardar_aprendizaje', 'agendar_seguimiento', 'enviar_borrador', 'lanzar_mision', 'actualizar_producto'];
+export const ACTION_TYPES = ['buscar', 'crear_borrador', 'actualizar_hilo', 'guardar_aprendizaje', 'agendar_seguimiento', 'enviar_borrador', 'lanzar_mision', 'actualizar_producto', 'cotizar', 'analizar_hilo', 'generar_contenido', 'investigar'];
 
 export const ACTION_SPECS = {
   buscar: {
@@ -86,28 +86,52 @@ export const ACTION_SPECS = {
       return { ok: true, args: { productId, markets, depth, name } };
     },
   },
-  actualizar_producto: {
+  cotizar: {
     auto: false,
     validate(args) {
-      const productId = String(args?.productId || '').trim();
-      if (!productId) return { ok: false, error: 'Falta productId' };
-      const out = { productId };
-      if (args?.price !== undefined) {
-        const price = Number(args.price);
-        if (!Number.isFinite(price) || price < 0) return { ok: false, error: 'price inválido' };
-        out.price = price;
+      const threadId = String(args?.threadId || '').trim();
+      if (!threadId) return { ok: false, error: 'Falta threadId' };
+      const out = { threadId };
+      if (args?.quantity !== undefined) out.quantity = Math.max(1, Math.min(100000, Math.floor(Number(args.quantity) || 1)));
+      if (args?.unitPrice !== undefined) {
+        const price = Number(args.unitPrice);
+        if (!Number.isFinite(price) || price < 0) return { ok: false, error: 'unitPrice inválido' };
+        out.unitPrice = price;
       }
-      if (args?.cost !== undefined) {
-        const cost = Number(args.cost);
-        if (!Number.isFinite(cost) || cost < 0) return { ok: false, error: 'cost inválido' };
-        out.cost = cost;
-      }
-      if (args?.status !== undefined) {
-        const status = String(args.status).trim();
-        if (!['idea', 'listo', 'archivado'].includes(status)) return { ok: false, error: 'status inválido' };
-        out.status = status;
-      }
+      if (args?.shipping !== undefined) out.shipping = Math.max(0, Number(args.shipping) || 0);
+      if (args?.discount !== undefined) out.discount = Math.max(0, Number(args.discount) || 0);
+      if (args?.taxRate !== undefined) out.taxRate = Math.max(0, Math.min(100, Number(args.taxRate) || 0));
+      if (args?.notes) out.notes = String(args.notes).slice(0, 2000);
+      if (args?.paymentLink) out.paymentLink = String(args.paymentLink).trim();
+      if (args?.productId) out.productId = String(args.productId).trim();
+      if (args?.approve === true) out.approve = true;
       return { ok: true, args: out };
+    },
+  },
+  analizar_hilo: {
+    auto: true,
+    validate(args) {
+      const threadId = String(args?.threadId || '').trim();
+      if (!threadId) return { ok: false, error: 'Falta threadId' };
+      return { ok: true, args: { threadId } };
+    },
+  },
+  generar_contenido: {
+    auto: true,
+    validate(args) {
+      const productId = String(args?.productId || '').trim();
+      const type = String(args?.type || 'post').trim();
+      if (!productId) return { ok: false, error: 'Falta productId' };
+      return { ok: true, args: { productId, type, platform: String(args?.platform || '').trim() } };
+    },
+  },
+  investigar: {
+    auto: true,
+    validate(args) {
+      const query = String(args?.query || '').trim();
+      if (!query) return { ok: false, error: 'Falta query' };
+      const limit = Math.max(1, Math.min(8, Number(args?.limit || 5)));
+      return { ok: true, args: { query, limit } };
     },
   },
 };
@@ -164,7 +188,7 @@ export function describeAction(action) {
 
 export async function executeAction({ action, store, actions = {}, chatId, search }) {
   if (!action || !ACTION_SPECS[action.tipo]) {
-    return { ok: false, message: 'No reconozco esa acción; puedo buscar, crear_borrador, actualizar_hilo, guardar_aprendizaje, agendar_seguimiento, enviar_borrador, lanzar_mision, actualizar_producto.' };
+    return { ok: false, message: 'No reconozco esa acción; puedo investigar, buscar, crear_borrador, actualizar_hilo, guardar_aprendizaje, agendar_seguimiento, enviar_borrador, lanzar_mision, actualizar_producto, cotizar, analizar_hilo, generar_contenido.' };
   }
   const spec = ACTION_SPECS[action.tipo];
   const v = spec.validate(action.args || {});
@@ -253,6 +277,55 @@ export async function executeAction({ action, store, actions = {}, chatId, searc
       if (args.status !== undefined) patch.status = args.status;
       await store.patch('products', product.id, patch);
       return { ok: true, message: `Producto ${product.name} actualizado.` };
+    }
+    if (action.tipo === 'cotizar') {
+      if (!actions.createQuote) return { ok: false, message: 'No puedo cotizar desde aquí.' };
+      const res = await actions.createQuote(args.threadId, {
+        quantity: args.quantity,
+        unitPrice: args.unitPrice,
+        shipping: args.shipping,
+        discount: args.discount,
+        taxRate: args.taxRate,
+        notes: args.notes,
+        paymentLink: args.paymentLink,
+        productId: args.productId,
+        approve: args.approve === true,
+      });
+      return { ok: true, message: `Cotización ${res?.quote?.number || ''} preparada para ${res?.thread?.contact?.company || args.threadId}. Total: ${res?.quote?.total}.` };
+    }
+    if (action.tipo === 'analizar_hilo') {
+      if (!actions.analyzeThread) return { ok: false, message: 'No puedo analizar hilos desde aquí.' };
+      const thread = store.find('threads', args.threadId);
+      if (!thread) return { ok: false, message: 'No encontré el hilo.' };
+      const res = await actions.analyzeThread({ thread, store, apply: true });
+      return { ok: true, message: `Análisis: score ${res?.analysis?.score ?? res?.score ?? '-'}, etapa ${res?.analysis?.etapa || '-'}. ${res?.analysis?.siguiente_paso || ''}`.trim() };
+    }
+    if (action.tipo === 'investigar') {
+      const searchFn = search || (async (s, q, o) => {
+        const { searchWebDetailed } = await import('./search.mjs');
+        return searchWebDetailed(s, q, o);
+      });
+      const settings = store.settings();
+      const detail = await searchFn(settings, args.query, { count: args.limit, strict: false });
+      const results = (detail.results || []).slice(0, args.limit);
+      if (!results.length) return { ok: false, message: `No encontré resultados para "${args.query}". ${detail.errors?.[0] || ''}`.trim() };
+      const lines = results.map((r, i) => `${i + 1}. ${r.title} - ${r.url}`).join('\n');
+      return { ok: true, message: `Investigación sobre "${args.query}" (${detail.engine || 'web'}):\n${lines}` };
+    }
+    if (action.tipo === 'generar_contenido') {
+      const product = store.find('products', args.productId);
+      if (!product) return { ok: false, message: 'No encontré el producto.' };
+      const item = {
+        id: `cnt_${Date.now()}`,
+        productId: product.id,
+        type: args.type || 'post',
+        platform: args.platform || '',
+        title: `${product.name} · ${args.type || 'post'}`,
+        status: 'idea',
+        createdAt: new Date().toISOString(),
+      };
+      await store.insert('content', item);
+      return { ok: true, message: `Idea de contenido creada para ${product.name} (${item.type}).` };
     }
     return { ok: false, message: 'Acción no implementada.' };
   } catch (error) {

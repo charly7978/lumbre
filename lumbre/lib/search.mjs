@@ -1,4 +1,4 @@
-import fs from 'node:fs';
+﻿import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,7 +23,7 @@ const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
       funcionado.
    ───────────────────────────────────────────────────────────── */
 
-const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36 Lumbre/1.0';
+const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36 Lucian/1.0';
 const PAGE_LIMIT_BYTES = 1_500_000;
 
 /* Instancias públicas de SearXNG verificadas desde este equipo.
@@ -64,7 +64,7 @@ function searchCacheKey(provider, query, custom = '') {
    evita pagar dos veces por el mismo dato. La caché vive en memoria y además
    se persiste en disco (<datos>/search-cache.json): correr 20 misiones en
    varias sesiones no repite ni un solo crédito. Nunca guarda errores ni
-   respuestas vacías, se desactiva con LUMBRE_DISABLE_SEARCH_CACHE=1 y se
+   respuestas vacías, se desactiva con LUCIAN_DISABLE_SEARCH_CACHE=1 y se
    borra con clearSearchCache(). Si el archivo está corrupto, se ignora. */
 const DISK_CACHE_MAX_ENTRIES = 500;
 const DISK_CACHE_MAX_AGE_MS = 168 * 60 * 60 * 1000; // nunca más que el tope de cacheHours (168 h)
@@ -72,7 +72,7 @@ let diskCacheLoaded = false;
 let diskSaveTimer = null;
 
 function searchCacheFile() {
-  const dir = process.env.LUMBRE_DATA_DIR ? path.resolve(process.env.LUMBRE_DATA_DIR) : path.join(MODULE_DIR, '..', 'data');
+  const dir = process.env.LUCIAN_DATA_DIR ? path.resolve(process.env.LUCIAN_DATA_DIR) : path.join(MODULE_DIR, '..', 'data');
   return path.join(dir, 'search-cache.json');
 }
 
@@ -95,7 +95,7 @@ function loadSearchCacheFromDisk() {
 }
 
 function scheduleSearchCacheSave() {
-  if (process.env.LUMBRE_DISABLE_SEARCH_CACHE === '1') return;
+  if (process.env.LUCIAN_DISABLE_SEARCH_CACHE === '1') return;
   if (diskSaveTimer) clearTimeout(diskSaveTimer);
   diskSaveTimer = setTimeout(() => {
     diskSaveTimer = null;
@@ -109,7 +109,7 @@ function scheduleSearchCacheSave() {
         JSON.stringify({ version: 1, savedAt: new Date().toISOString(), entries: entries.slice(0, DISK_CACHE_MAX_ENTRIES) }),
         'utf8',
       );
-    })().catch((error) => console.error('[Lumbre] No se pudo guardar la caché de búsqueda:', error?.message || error));
+    })().catch((error) => console.error('[Lucian] No se pudo guardar la caché de búsqueda:', error?.message || error));
   }, 1500);
   diskSaveTimer.unref?.();
 }
@@ -120,7 +120,7 @@ function providerCacheMs(settings) {
 }
 
 function readProviderCache(settings, provider, query, limit, depth) {
-  if (process.env.LUMBRE_DISABLE_SEARCH_CACHE === '1') return null;
+  if (process.env.LUCIAN_DISABLE_SEARCH_CACHE === '1') return null;
   loadSearchCacheFromDisk();
   const key = searchCacheKey(provider, `${limit}|${depth || 'basic'}|${query}`, 'paid');
   const hit = queryCache.get(key);
@@ -130,7 +130,7 @@ function readProviderCache(settings, provider, query, limit, depth) {
 }
 
 function writeProviderCache(provider, query, limit, depth, value) {
-  if (process.env.LUMBRE_DISABLE_SEARCH_CACHE === '1') return value;
+  if (process.env.LUCIAN_DISABLE_SEARCH_CACHE === '1') return value;
   if (!value?.results?.length) return value;
   loadSearchCacheFromDisk();
   const key = searchCacheKey(provider, `${limit}|${depth || 'basic'}|${query}`, 'paid');
@@ -148,7 +148,7 @@ export function clearSearchCache() {
 
 export function resolveSearchApiKey(settings) {
   const search = settings?.search || {};
-  return String(search.apiKey || process.env.LUMBRE_SEARCH_KEY || '').trim();
+  return String(search.apiKey || process.env.LUCIAN_SEARCH_KEY || '').trim();
 }
 
 export function searchProviderInfo(settings) {
@@ -345,7 +345,7 @@ export function isDuckDuckGoChallenge(html) {
    ───────────────────────────────────────────────────────────── */
 
 function searxBaseFromSettings(settings) {
-  const raw = String(process.env.LUMBRE_SEARX_URL || settings?.search?.searxUrl || '').trim();
+  const raw = String(process.env.LUCIAN_SEARX_URL || settings?.search?.searxUrl || '').trim();
   if (!raw) return '';
   try {
     const url = new URL(raw);
