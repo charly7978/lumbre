@@ -75,7 +75,7 @@ async function request(route, { method = 'GET', headers = {}, body = null } = {}
         resolve({
           status,
           ok: status >= 200 && status < 300,
-          headers: { get: (key) => res.headers[String(key).toLowerCase()] || null },
+          headers: { get: (key) => { const value = res.headers[String(key).toLowerCase()]; return Array.isArray(value) ? value.join('; ') : (value || null); } },
           text: async () => Buffer.concat(chunks).toString('utf8'),
         });
       });
