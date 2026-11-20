@@ -65,7 +65,43 @@ echo Copia TODA esa direccion y mandala por WhatsApp.>> "DIRECCION-LUCIAN.txt"
 echo Al abrirla entra directo, sin escribir clave.>> "DIRECCION-LUCIAN.txt"
 echo NO cierres la ventana negra ni apagues la PC.>> "DIRECCION-LUCIAN.txt"
 start notepad "DIRECCION-LUCIAN.txt"
-pause
+echo.
+echo  Manteniendo la conexion viva. Si se corta, se reconecta sola.
+echo  NO cierres esta ventana.
+
+:VIGILAR
+ping -n 20 127.0.0.1 >nul
+tasklist /FI "IMAGENAME eq cloudflared.exe" 2>nul | find /i "cloudflared.exe" >nul
+if errorlevel 1 (
+  echo  [%time%] Reconectando el tunel...
+  if exist "tunnel.log" del "tunnel.log" /f /q
+  start "LUCIAN-TUNEL" /MIN cmd /c "cloudflared.exe tunnel --url http://localhost:4321 > tunnel.log 2>&1"
+  rem esperar a que aparezca la nueva direccion
+  set INTENTOS=0
+  :REESPERAR
+  set /a INTENTOS+=1
+  if %INTENTOS% GTR 20 goto VIGILAR
+  set "NUEVAURL="
+  if exist "url.txt" del "url.txt" /f /q
+  powershell -NoProfile -Command "$t=Get-Content tunnel.log -Raw -ErrorAction SilentlyContinue; if($t -match 'https://[a-z0-9-]+\.trycloudflare\.com'){Write-Output $matches[0]}" > "url.txt" 2>nul
+  set /p NUEVAURL=<"url.txt"
+  if defined NUEVAURL (
+    set "URL=%NUEVAURL%"
+    set "URLFINAL=%NUEVAURL%?access=%CLAVE%"
+    echo DIRECCION PARA ABRIR LUCIAN EN EL CELULAR> "DIRECCION-LUCIAN.txt"
+    echo.>> "DIRECCION-LUCIAN.txt"
+    echo %URLFINAL%>> "DIRECCION-LUCIAN.txt"
+    echo.>> "DIRECCION-LUCIAN.txt"
+    echo Copia TODA esa direccion y mandala por WhatsApp.>> "DIRECCION-LUCIAN.txt"
+    echo Al abrirla entra directo, sin escribir clave.>> "DIRECCION-LUCIAN.txt"
+    echo NO cierres la ventana negra ni apagues la PC.>> "DIRECCION-LUCIAN.txt"
+    echo  [%time%] Tunel reconectado. Nueva direccion guardada.
+  ) else (
+    ping -n 3 127.0.0.1 >nul
+    goto REESPERAR
+  )
+)
+goto VIGILAR
 exit /b 0
 
 :SINNODE
