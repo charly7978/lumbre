@@ -1244,6 +1244,12 @@ function draftPlanForBuyer({ mission, product, buyer, state, reviewDirectory = f
     reviewNote = 'Comprador del directorio semilla: confirmá que sea una tienda multimarca y que compre a un maker antes de enviarlo.';
   }
 
+  if (mission.manualReviewOnly && status === 'listo') {
+    status = 'revisar';
+    reviewKind = 'operacion-supervisada';
+    reviewNote = 'Esta misión exige revisar al comprador y aprobar expresamente el borrador antes de enviar.';
+  }
+
   return {
     subject: subject || `${product.name}: una serie corta`,
     body,
