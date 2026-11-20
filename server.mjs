@@ -295,7 +295,7 @@ const notifier = new Notifier({
     const result = await askTeam({ question, agentId: 'director', store, history, channel, images });
     return result.demo ? `(Modo demo) ${result.answer}` : result.answer;
   },
-  actions: { createMission, sendThreadMessage },
+  actions: { createMission, sendThreadMessage, createQuote, analyzeThread },
 });
 notifier.start();
 
