@@ -1006,6 +1006,7 @@ function renderVentas() {
   const byProduct = arr(sales.byProduct);
   const agenda = S.state.salesAgenda || { tasks: [], total: 0, counts: {} };
   const agendaTasks = arr(agenda.tasks);
+  const health = S.state.catalogHealth || { total: 0, ready: 0, blocked: 0, toImprove: [] };
   return `<div class="page-head">
     <div class="page-head-main">
       <p class="eyebrow">Ventas</p>
@@ -1044,6 +1045,29 @@ function renderVentas() {
       </a>`).join('')}
     </div>
     ${agenda.total > agendaTasks.length ? `<p class="tiny muted mt-2">Mostrando las ${agendaTasks.length} prioridades principales de ${num(agenda.total)}. Revisá el resto desde Conversaciones.</p>` : ''}` : `<div class="card card-pad"><p class="small muted">No hay tareas urgentes detectadas con los datos actuales. Revisá los contactos verificados y las propuestas antes de iniciar nuevos seguimientos.</p></div>`}
+  </section>
+
+  <section class="section" id="estado-catalogo">
+    <div class="section-head">
+      <div><h2 class="section-title">Preparación del catálogo para vender</h2><p class="section-sub">Las misiones reales requieren una imagen cargada y un precio mayor a cero. Los otros datos mejoran las propuestas y la logística.</p></div>
+      <a class="section-link" href="#/productos">Ver las lámparas ${icon('arrowRight')}</a>
+    </div>
+    <div class="card card-pad">
+      <p class="small"><b>${num(health.ready)} de ${num(health.total)}</b> lámparas activas cumplen los requisitos mínimos para iniciar misiones. <b>${num(health.blocked)}</b> requieren completar foto o precio.</p>
+      <p class="tiny muted mt-2">Sin foto cargada: ${num(health.missingPhotos)} · Sin precio: ${num(health.missingPrices)}. Esta comprobación no valida la calidad de la imagen, la capacidad de fabricación ni certificaciones eléctricas.</p>
+      ${arr(health.toImprove).length ? `<div style="margin-top:10px">
+        ${arr(health.toImprove).map((item) => `<a class="thread-row" href="#/productos/${encodeURIComponent(item.id)}" style="text-decoration:none">
+          <div class="thread-row-top">
+            <span class="avatar sm">${esc(initials(item.name || '?'))}</span>
+            <div style="min-width:0;flex:1">
+              <div class="thread-company">${esc(item.name)} <span class="badge badge-${item.readyForProspecting ? 'info' : 'warn'}">${item.readyForProspecting ? 'Mejorable' : 'Requiere completar'}</span></div>
+              <div class="thread-person">${esc((item.criticalMissing.length ? item.criticalMissing : item.recommendedMissing).slice(0, 2).join(' · '))}</div>
+            </div>
+            <span class="tiny muted">${num(item.score)}%</span>
+          </div>
+        </a>`).join('')}
+      </div>` : '<p class="tiny muted mt-2">Todas las fichas activas cumplen los requisitos revisados.</p>'}
+    </div>
   </section>
 
   <div class="section" style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,1fr);gap:22px">
