@@ -3,14 +3,16 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import {
   Store,
+  settingsFlags,
 } from '../lib/store.mjs';
 import {
   createThreads, migrateLegacyDrafts, missionStatusForSteps, missionWarnings, reconcileThreads,
   selectRelevantLearnings,
 } from '../lib/agents.mjs';
 import {
-  assertCanSend, detectOptOut, isOptOutText, isSuppressed, sentToday, stripQuotedText,
+  assertCanSend, buildEml, detectOptOut, isOptOutText, isSuppressed, parseEmailEvent, parseInbound, sentToday, stripQuotedText,
 } from '../lib/email.mjs';
+import { buildQuote, quoteNumber, quoteTotals, validUntilDate } from '../lib/quotes.mjs';
 
 let passed = 0;
 const dirs = [];
@@ -505,6 +507,111 @@ const baseArtifacts = (messages) => ({
   const draft = store.get('threads')[0].drafts[0];
   ok(draft.status === 'revisar', 'revalidar no levanta una revisión de migración');
   ok(/Migración/i.test(draft.reviewNote || ''), 'conserva la nota de migración');
+}
+
+/* 11. Hilos de correo: identificadores estables y eventos de entrega. */
+{
+  const eml = buildEml({
+    from: 'Lumbre <hola@lumbre.test>',
+    to: 'compras@luz.test',
+    subject: 'Una pieza para tu tienda',
+    text: 'Cuerpo del mensaje.',
+    messageId: '<lumbre-test@lumbre.test>',
+    inReplyTo: '<anterior@luz.test>',
+    references: '<raiz@luz.test> <anterior@luz.test>',
+  });
+  ok(eml.includes('Message-ID: <lumbre-test@lumbre.test>'), 'el .eml conserva el Message-ID propio');
+  ok(eml.includes('In-Reply-To: <anterior@luz.test>'), 'el .eml responde al mensaje entrante');
+  ok(eml.includes('References: <raiz@luz.test> <anterior@luz.test>'), 'el .eml conserva la cadena de referencias');
+
+  const inbound = parseInbound({
+    data: {
+      from: 'Compras <compras@luz.test>', to: 'hola@lumbre.test', subject: 'Re: Una pieza', text: 'Me interesa.',
+      headers: {
+        'Message-ID': '<respuesta@luz.test>',
+        'In-Reply-To': '<lumbre-test@lumbre.test>',
+        'References': '<raiz@luz.test> <lumbre-test@lumbre.test>',
+      },
+    },
+  });
+  ok(inbound.messageId === '<respuesta@luz.test>', 'parseInbound lee el Message-ID de los headers');
+  ok(inbound.inReplyTo === '<lumbre-test@lumbre.test>', 'parseInbound lee In-Reply-To');
+  ok(inbound.references.length === 2, 'parseInbound normaliza la cadena de referencias');
+
+  const hard = parseEmailEvent({
+    type: 'email.bounced',
+    data: { to: ['Compras <compras@luz.test>'], bounce: { type: 'Permanent', subType: 'General', message: 'mailbox not found' } },
+  });
+  ok(hard.kind === 'bounce' && hard.hard, 'un rebote permanente se marca como duro');
+  ok(hard.emails[0] === 'compras@luz.test', 'el rebote extrae el email del destinatario');
+
+  const soft = parseEmailEvent({ type: 'email.bounced', data: { to: 'compras@luz.test', bounce: { type: 'Transient', message: 'try later' } } });
+  ok(soft.kind === 'bounce' && !soft.hard, 'un rebote transitorio no suprime la dirección');
+
+  const complaint = parseEmailEvent({ type: 'email.complained', data: { to: ['compras@luz.test'] } });
+  ok(complaint.kind === 'complaint' && complaint.hard, 'una queja de spam siempre suprime');
+
+  const delivered = parseEmailEvent({ type: 'email.delivered', data: { to: ['compras@luz.test'] } });
+  ok(delivered.kind === 'delivered', 'el evento de entrega se reconoce');
+  ok(parseEmailEvent({ type: 'email.sent', data: {} }) === null, 'un evento sin acción no se confunde con una respuesta');
+}
+
+/* 12. Disponibilidad de IA: los proveedores sin clave no son "modo demo". */
+{
+  const pollinations = settingsFlags({ ai: { provider: 'pollinations', baseUrl: 'https://text.pollinations.ai/openai', model: 'openai', apiKey: '' } });
+  ok(pollinations.ai && !pollinations.demo, 'Pollinations sin clave cuenta como IA lista');
+  const local = settingsFlags({ ai: { provider: 'custom', baseUrl: 'http://127.0.0.1:1234/v1', model: 'local', apiKey: '' } });
+  ok(local.ai && !local.demo, 'un servidor local cuenta como IA lista');
+  const missing = settingsFlags({ ai: { provider: 'openai', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4.1-mini', apiKey: '' } });
+  ok(!missing.ai && missing.demo, 'OpenAI sin clave sigue en modo demo');
+  const withKey = settingsFlags({ ai: { provider: 'openai', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4.1-mini', apiKey: 'sk-test' } });
+  ok(withKey.ai && !withKey.demo, 'OpenAI con clave está listo');
+}
+
+/* 13. Cotizaciones: aritmética exacta y texto con los datos reales. */
+{
+  const totals = quoteTotals({ quantity: 3, unitPrice: 100, shipping: 50, discount: 25, taxRate: 21 });
+  ok(totals.subtotal === 300, 'la cotización calcula el subtotal');
+  ok(totals.taxAmount === 68.25, 'calcula impuestos sobre subtotal menos descuento más envío', String(totals.taxAmount));
+  ok(totals.total === 393.25, 'el total cierra al centavo', String(totals.total));
+
+  const capped = quoteTotals({ quantity: 1, unitPrice: 100, discount: 500 });
+  ok(capped.discount === 100 && capped.total === 0, 'el descuento nunca supera el subtotal');
+
+  const rounded = quoteTotals({ quantity: 2, unitPrice: 33.335 });
+  ok(rounded.subtotal === 66.67, 'el dinero se redondea a dos decimales', String(rounded.subtotal));
+
+  const number = quoteNumber(new Date('2026-11-19T12:00:00Z'), 7);
+  ok(number === 'COT-20261119-007', 'el número de cotización es legible y ordenado', number);
+  const valid = validUntilDate(15, new Date('2026-11-19T12:00:00Z'));
+  ok(valid.slice(0, 10) === '2026-12-04', 'la validez se calcula en días corridos', valid.slice(0, 10));
+
+  const quote = {
+    number, language: 'es', currency: 'USD', quantity: 3, unitPrice: 100, shipping: 50,
+    discount: 25, taxRate: 21, taxAmount: 68.25, subtotal: 300, total: 393.25,
+    validUntil: valid, paymentLink: 'https://pagos.test/link', notes: '',
+  };
+  const built = buildQuote({
+    thread: { contact: { name: 'Ana Pérez', country: 'España' } },
+    product: { name: 'Aurora 01', code: 'AUR-01', leadTimeDays: 14, capacityPerWeek: 2, currency: 'USD' },
+    brand: { name: 'Lumbre', maker: 'Ana' },
+    quote,
+  });
+  ok(built.subject.includes('COT-20261119-007'), 'el asunto lleva el número de cotización');
+  ok(built.text.includes('Aurora 01 (AUR-01)') && built.text.includes('3 ×'), 'el cuerpo detalla producto y cantidad');
+  ok(built.text.includes('393,25') || built.text.includes('393.25'), 'el cuerpo muestra el total exacto');
+  ok(built.text.includes('14 días hábiles'), 'el cuerpo incluye el plazo real de fabricación');
+  ok(built.text.includes('https://pagos.test/link'), 'el cuerpo incluye el link de pago');
+  ok(built.text.includes('Capacidad de producción: 2'), 'avisa la capacidad semanal');
+  ok(built.text.includes('tandas semanales'), 'advierte cuando el pedido supera la capacidad semanal');
+
+  const english = buildQuote({
+    thread: { contact: { name: 'John Smith', country: 'United States' } },
+    product: { name: 'Aurora 01', currency: 'USD' },
+    brand: { name: 'Lumbre' },
+    quote: { ...quote, language: 'en' },
+  });
+  ok(english.text.startsWith('Hi John.') && english.text.includes('Quote valid until'), 'la cotización respeta el idioma del comprador');
 }
 
 for (const dir of dirs) {

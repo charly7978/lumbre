@@ -64,7 +64,20 @@ Configurá en **Ajustes**:
 - **Estándar** (12 pasos): equipo completo.
 - **Profunda** (13 pasos): todo lo anterior + revisión y corrección obligatoria tras el red team.
 
-## Modos de envío
+## Cotizaciones y cierre de ventas
+
+- Cada conversación puede tener una o varias cotizaciones formales con precio, cantidad, envío, descuento, impuestos, validez y link de pago.
+- La cotización se arma sin IA: los números salen de la ficha y de lo que cargás. El texto se genera en el idioma del comprador.
+- Una cotización aceptada cierra la venta, reinicia la postventa (día 3/30/90) y descarta seguimientos fríos pendientes.
+- El link de pago puede venir del producto, de la cotización o del ajuste global en Ajustes → Correo → Cobros y cotizaciones.
+
+## Claves por variables de entorno (opcional)
+
+Si preferís no dejar claves en `settings.json`, podés definirlas al arrancar:
+`LUMBRE_AI_API_KEY`, `LUMBRE_AI_BASE_URL`, `LUMBRE_AI_MODEL`, `LUMBRE_AI_PROVIDER`,
+`LUMBRE_SEARCH_API_KEY`, `LUMBRE_SEARX_URL`, `LUMBRE_RESEND_KEY`, `LUMBRE_EMAIL_FROM`,
+`LUMBRE_EMAIL_REPLY_TO`, `LUMBRE_WEBHOOK_TOKEN`, `LUMBRE_HUNTER_API_KEY`, `LUMBRE_BRAND_NAME`.
+Las variables tienen prioridad sobre lo guardado en disco.
 
 - `manual`: marcás "ya lo envié" y Lumbre registra el mensaje.
 - `resend`: envío real, bloqueado para emails `example.com` y si no hay clave.

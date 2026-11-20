@@ -17,7 +17,7 @@ import { hunterAccount } from './lib/hunter.mjs';
 import {
   assertCanSend, buildEml, composeEmail, dailyLimitInfo, detectOptOut, emailDomain, emlFilename,
   isSharedEmailDomain, isSuppressed, isValidEmail, normalizeCompany, normalizeEmail,
-  parseInbound, sendWithResend, sendWithWebhook, testResend,
+  parseEmailEvent, parseInbound, sendWithResend, sendWithWebhook, testResend,
 } from './lib/email.mjs';
 import { Notifier, parseWhatsAppWebhook, sendWhatsApp, telegramChats, testTelegram, testWhatsApp } from './lib/notify.mjs';
 import {
@@ -26,6 +26,8 @@ import {
 import { DEPTHS, STEPS } from './lib/prompts.mjs';
 import { clearDemo, seedDemo } from './lib/demo.mjs';
 import { Outbox } from './lib/outbox.mjs';
+import { productReadiness } from './lib/readiness.mjs';
+import { buildQuote, quoteLanguage, quoteNumber, quoteTotals, validUntilDate } from './lib/quotes.mjs';
 import { createZip, readZip } from './lib/zip.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -388,6 +390,18 @@ function statePayload() {
       suppressions: suppressions.length,
       replies: threads.reduce((acc, t) => acc + (t.messages || []).filter((m) => m.direction === 'in').length, 0),
     },
+    funnel: {
+      stages: ['nuevo', 'contactado', 'respondio', 'interesado', 'negociando', 'ganado', 'perdido']
+        .reduce((acc, stage) => ({ ...acc, [stage]: threads.filter((t) => t.stage === stage).length }), {}),
+      quotes: (threads.flatMap((t) => t.quotes || [])).reduce((acc, q) => {
+        acc[q.status] = (acc[q.status] || 0) + 1;
+        return acc;
+      }, {}),
+      missions: ['queued', 'running', 'done', 'done_with_warnings', 'error', 'cancelled']
+        .reduce((acc, status) => ({ ...acc, [status]: missions.filter((m) => m.status === status).length }), {}),
+      sold: threads.filter((t) => t.stage === 'ganado').length,
+      suppressed: suppressions.length,
+    },
     limits: dailyLimitInfo(settings, threads),
     outbox: outbox.status(),
     usage: meta.agentUsage || {},
@@ -424,11 +438,23 @@ async function processPhotos(input, existing, product) {
   return { photos, removed };
 }
 
+function validatePaymentLink(value) {
+  const raw = asString(value).trim().slice(0, 500);
+  if (!raw) return '';
+  let parsed;
+  try { parsed = new URL(raw); } catch { parsed = null; }
+  if (!parsed || !['http:', 'https:'].includes(parsed.protocol)) {
+    throw new HttpError(400, 'El link de pago debe ser una dirección http(s) válida.');
+  }
+  return parsed.href;
+}
+
 function productFields(body, existing, id) {
   const name = asString(body.name ?? existing?.name).trim();
   if (!name) throw new HttpError(400, 'El producto necesita un nombre.');
   const price = body.price === undefined ? Number(existing?.price ?? 0) : asNumber(body.price);
   const status = ['borrador', 'listo', 'archivado'].includes(body.status) ? body.status : existing?.status || 'borrador';
+  const paymentLink = validatePaymentLink(body.paymentLink ?? existing?.paymentLink);
   return {
     name,
     code: asString(body.code ?? existing?.code).trim() || existing?.code || `LUM-${id.slice(-4).toUpperCase()}`,
@@ -437,10 +463,13 @@ function productFields(body, existing, id) {
     currency: asString(body.currency ?? existing?.currency, store.settings().brand.currency || 'USD').toUpperCase().slice(0, 6),
     cost: body.cost === undefined ? Number(existing?.cost ?? 0) : Math.max(0, asNumber(body.cost)),
     weightGrams: body.weightGrams === undefined ? Number(existing?.weightGrams ?? 0) : Math.max(0, asNumber(body.weightGrams)),
+    capacityPerWeek: body.capacityPerWeek === undefined ? Number(existing?.capacityPerWeek ?? 0) : Math.max(0, Math.round(asNumber(body.capacityPerWeek))),
+    leadTimeDays: body.leadTimeDays === undefined ? Number(existing?.leadTimeDays ?? 0) : Math.max(0, Math.round(asNumber(body.leadTimeDays))),
     dimensions: asString(body.dimensions ?? existing?.dimensions),
     materials: asString(body.materials ?? existing?.materials),
     description: asString(body.description ?? existing?.description),
     notes: asString(body.notes ?? existing?.notes),
+    paymentLink,
     status,
   };
 }
@@ -499,6 +528,9 @@ const CSV_ALIASES = {
   materials: ['materiales', 'materials', 'material', 'terminacion'],
   weightGrams: ['peso', 'pesogramos', 'weight', 'weightgrams', 'pesogr'],
   dimensions: ['medidas', 'dimensions', 'dimensiones', 'tamano'],
+  capacityPerWeek: ['capacidad', 'capacidadsemanal', 'unidadessemana', 'unidadessemanales', 'capacity', 'capacityperweek', 'produccionsemanal'],
+  leadTimeDays: ['plazo', 'plazodias', 'diasfabricacion', 'diasdeproduccion', 'leadtime', 'leadtimedays', 'tiempodeentrega'],
+  paymentLink: ['pago', 'linkdepago', 'linkpago', 'paymentlink', 'payment', 'checkout'],
 };
 
 function mapCsvRow(headers, cells) {
@@ -548,6 +580,9 @@ async function importProductsCsv(text) {
       materials: asString(values.materials),
       weightGrams: csvNumber(values.weightGrams),
       dimensions: asString(values.dimensions),
+      capacityPerWeek: csvNumber(values.capacityPerWeek),
+      leadTimeDays: csvNumber(values.leadTimeDays),
+      paymentLink: asString(values.paymentLink).trim().slice(0, 500),
     }, null, id);
     const product = { id, ...fields, photos: [], demo: false, createdAt: now, updatedAt: now };
     products.unshift(product);
@@ -609,6 +644,20 @@ async function createMission(body) {
   const demo = requestedMode === 'demo' || (requestedMode === 'auto' && !isAIReady(settings));
   if (requestedMode === 'real' && !isAIReady(settings)) {
     throw new HttpError(400, 'Para lanzar una misión real primero configurá una IA en Ajustes.');
+  }
+  if (!finalMarkets.length) {
+    throw new HttpError(400, 'Elegí al menos un mercado para la misión. Sin mercado no hay a quién venderle.');
+  }
+  // Una misión real gasta búsquedas y tokens: no se lanza con una ficha que
+  // no puede sostener una conversación de venta. Las demos siguen libres para
+  // que el dueño pueda probar antes de cargar todo.
+  if (!demo) {
+    const readiness = productReadiness(product);
+    if (!readiness.readyForProspecting) {
+      const missing = readiness.missing.filter((item) => item.critical).map((item) => item.label).join('; ')
+        || 'completá la foto y el precio';
+      throw new HttpError(400, `El producto no está listo para una misión real: ${missing}.`);
+    }
   }
 
   const id = uid('mis');
@@ -689,9 +738,17 @@ async function createCampaign(body = {}) {
     .filter((product) => product.status !== 'archivado')
     .sort((a, b) => (a.status === 'listo' ? -1 : 0) - (b.status === 'listo' ? -1 : 0));
   if (!pool.length) throw new HttpError(400, 'No hay productos activos para lanzar una campaña.');
+  const requestedMode = ['auto', 'real', 'demo'].includes(body.mode) ? body.mode : 'auto';
+  const demo = requestedMode === 'demo' || (requestedMode === 'auto' && !isAIReady(settings));
+  if (requestedMode === 'real' && !isAIReady(settings)) {
+    throw new HttpError(400, 'Para lanzar una campaña real primero configurá una IA en Ajustes.');
+  }
   const active = new Set(store.get('missions').filter((mission) => ['running', 'queued'].includes(mission.status)).map((mission) => mission.productId));
   const markets = [...new Set(asArray(body.markets).map((market) => asString(market).trim()).filter(Boolean))].slice(0, 6);
   const finalMarkets = markets.length ? markets : asArray(settings.mission.markets).slice(0, 6);
+  if (!finalMarkets.length) {
+    throw new HttpError(400, 'Elegí al menos un mercado para la campaña. Sin mercado no hay a quién venderle.');
+  }
   const strategy = body.marketStrategy === 'all' ? 'all' : 'rotate';
   const depth = DEPTHS[body.depth] ? body.depth : settings.mission.depth || 'estandar';
   const campaignId = uid('cmp');
@@ -704,6 +761,17 @@ async function createCampaign(body = {}) {
     if (active.has(product.id)) {
       skipped.push({ productId: product.id, name: product.name, reason: 'ya tiene una misión en curso' });
       continue;
+    }
+    // Con IA real, cada producto debe poder sostener una conversación. Se
+    // saltea la ficha incompleta en vez de gastar una misión y descubrirlo
+    // cuando el comprador pregunta precio o medidas.
+    if (!demo) {
+      const readiness = productReadiness(product);
+      if (!readiness.readyForProspecting) {
+        const missing = readiness.missing.filter((item) => item.critical).map((item) => item.label).join('; ');
+        skipped.push({ productId: product.id, name: product.name, reason: `faltan datos críticos: ${missing}` });
+        continue;
+      }
     }
     const assigned = strategy === 'rotate'
       ? [finalMarkets[index % finalMarkets.length]].filter(Boolean)
@@ -816,6 +884,165 @@ function threadSuppressions(thread) {
   return (store.get('suppressions') || []).filter((item) => thread.demo || !item.demo);
 }
 
+/* El dominio del Message-ID sale del remitente real: si el dueño usa su
+   propio dominio, los filtros de correo ven coherencia entre From y el hilo. */
+function messageIdDomain(settings) {
+  const raw = String(settings?.email?.from || settings?.brand?.email || '').trim();
+  const email = raw.includes('<') ? (raw.match(/<([^>]+)>/)?.[1] || '') : raw;
+  const domain = String(email).split('@')[1]?.trim().toLowerCase() || '';
+  return /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(domain) ? domain : 'lumbre.local';
+}
+
+function newMessageId(settings) {
+  return `<lumbre-${crypto.randomUUID()}@${messageIdDomain(settings)}>`;
+}
+
+function lastInboundMessage(thread) {
+  return [...(thread?.messages || [])].reverse().find((message) => message.direction === 'in' && message.messageId) || null;
+}
+
+/* Cerrar una venta reinicia la postventa desde hoy y descarta cualquier
+   seguimiento frío que estuviera por salir. Se usa tanto al mover la etapa a
+   mano como al aceptar una cotización. */
+async function markThreadWon(thread) {
+  const now = nowISO();
+  thread.stage = 'ganado';
+  thread.postSaleAt = now;
+  thread.postSaleCount = 0;
+  thread.nextFollowUp = null;
+  thread.updatedAt = now;
+  thread.drafts = (thread.drafts || []).filter((draft) => !(
+    draft.source === 'postventa' && ['listo', 'revisar'].includes(draft.status)
+  ));
+  for (const draft of thread.drafts || []) {
+    if (draft.source !== 'seguimiento' || !['listo', 'revisar'].includes(draft.status)) continue;
+    draft.status = 'descartado';
+    draft.discardedAt = now;
+    draft.discardReason = 'La conversación pasó a ganado: no corresponde un seguimiento frío.';
+  }
+  let changed = false;
+  for (const item of outbox.items()) {
+    if (item.status !== 'pending' || item.threadId !== thread.id || item.kind === 'postventa') continue;
+    item.status = 'cancelled';
+    item.error = 'La conversación pasó a ganado.';
+    changed = true;
+  }
+  if (changed) await outbox.save();
+  return thread;
+}
+
+async function nextQuoteNumber() {
+  const meta = store.get('meta') || {};
+  const sequence = Math.max(0, Number(meta.quoteSequence) || 0) + 1;
+  await store.setMeta({ quoteSequence: sequence });
+  return quoteNumber(new Date(), sequence);
+}
+
+async function createQuote(threadId, body = {}) {
+  const threads = store.get('threads');
+  const thread = threads.find((t) => t.id === threadId);
+  if (!thread) throw new HttpError(404, 'Conversación no encontrada.');
+  const settings = store.settings();
+  const product = store.find('products', asString(body.productId) || thread.productId);
+  if (!product) throw new HttpError(400, 'Elegí un producto válido para cotizar.');
+  if (product.status === 'archivado') throw new HttpError(400, 'Ese producto está archivado.');
+
+  const unitPrice = body.unitPrice === undefined ? Number(product.price || 0) : asNumber(body.unitPrice);
+  if (!(unitPrice > 0)) throw new HttpError(400, 'El producto necesita un precio mayor a cero para cotizar.');
+  const totals = quoteTotals({
+    quantity: body.quantity,
+    unitPrice,
+    shipping: body.shipping,
+    discount: body.discount,
+    taxRate: body.taxRate,
+  });
+  const validDays = body.validDays === undefined
+    ? Number(settings.sales?.quoteValidityDays || 15)
+    : asNumber(body.validDays, 15);
+  const currency = asString(body.currency, product.currency || settings.brand?.currency || 'USD').toUpperCase().slice(0, 6);
+  const paymentLink = validatePaymentLink(
+    body.paymentLink ?? product.paymentLink ?? settings.sales?.paymentLink ?? '',
+  );
+  const now = nowISO();
+  const quote = {
+    id: uid('qte'),
+    number: await nextQuoteNumber(),
+    productId: product.id,
+    productName: product.name,
+    currency,
+    language: quoteLanguage(thread),
+    ...totals,
+    validUntil: validUntilDate(validDays),
+    paymentLink,
+    notes: asString(body.notes).slice(0, 2000),
+    status: 'borrador',
+    createdAt: now,
+    updatedAt: now,
+  };
+  const built = buildQuote({ thread, product, brand: settings.brand, quote });
+  quote.subject = built.subject;
+  const draft = {
+    id: uid('drf'),
+    channel: 'email',
+    language: built.language,
+    subject: built.subject,
+    body: built.text,
+    status: body.approve === true ? 'listo' : 'revisar',
+    source: 'cotizacion',
+    quoteId: quote.id,
+    guardVersion: 2,
+    createdAt: now,
+    reviewNote: body.approve === true
+      ? undefined
+      : 'Cotización generada automáticamente. Revisá precio, envío y plazo antes de enviarla.',
+  };
+  quote.draftId = draft.id;
+  thread.quotes = [quote, ...(thread.quotes || [])];
+  thread.drafts = [draft, ...(thread.drafts || [])];
+  if (['nuevo', 'contactado', 'respondio', 'interesado'].includes(thread.stage)) thread.stage = 'negociando';
+  thread.nextStep = `Revisar y enviar la cotización ${quote.number}.`;
+  thread.updatedAt = now;
+  await store.set('threads', threads);
+  await store.activity('outreach', `Cotización ${quote.number} preparada para ${thread.contact?.company || thread.contact?.email || 'el contacto'}: ${totals.quantity} × ${product.name}.`, { threadId: thread.id, quoteId: quote.id });
+  return { quote, draft, thread };
+}
+
+async function setQuoteStatus(threadId, quoteId, status) {
+  if (!['borrador', 'enviada', 'aceptada', 'rechazada'].includes(status)) {
+    throw new HttpError(400, 'Estado de cotización inválido.');
+  }
+  const threads = store.get('threads');
+  const thread = threads.find((t) => t.id === threadId);
+  if (!thread) throw new HttpError(404, 'Conversación no encontrada.');
+  const quote = (thread.quotes || []).find((item) => item.id === quoteId);
+  if (!quote) throw new HttpError(404, 'Cotización no encontrada.');
+  const now = nowISO();
+  quote.status = status;
+  quote.updatedAt = now;
+  if (status === 'enviada' && !quote.sentAt) quote.sentAt = now;
+  if (status === 'aceptada') {
+    quote.acceptedAt = now;
+    // Si la venta se cerró antes de enviar la cotización, ese borrador ya no
+    // debe poder salir: el pedido quedó confirmado por otra vía.
+    for (const draft of thread.drafts || []) {
+      if (draft.quoteId !== quote.id || !['listo', 'revisar'].includes(draft.status)) continue;
+      draft.status = 'descartado';
+      draft.discardedAt = now;
+      draft.discardReason = 'La cotización fue aceptada: el borrador ya no hace falta.';
+    }
+    await markThreadWon(thread);
+    thread.nextStep = `Venta cerrada con la cotización ${quote.number}. Preparar producción y postventa.`;
+  } else if (status === 'rechazada') {
+    quote.rejectedAt = now;
+    if (thread.stage === 'negociando') thread.stage = 'respondio';
+    thread.nextStep = `Cotización ${quote.number} rechazada. Entender el motivo y ofrecer alternativa.`;
+  }
+  thread.updatedAt = now;
+  await store.set('threads', threads);
+  await store.activity('outreach', `Cotización ${quote.number}: ${status}.`, { threadId: thread.id, quoteId: quote.id });
+  return { quote, thread };
+}
+
 async function sendThreadMessage(threadId, body) {
   const threads = store.get('threads');
   const thread = threads.find((t) => t.id === threadId);
@@ -847,6 +1074,17 @@ async function sendThreadMessage(threadId, body) {
     throw new HttpError(400, error.message || 'No se pudo preparar el mensaje.');
   }
 
+  // Hilo de correo: se guarda el Message-ID propio y se responde al último
+  // mensaje entrante. Sin esto, el webhook no puede saber a qué producto
+  // pertenece una respuesta cuando el comprador tiene varios hilos abiertos.
+  const previousInbound = lastInboundMessage(thread);
+  message.messageId = newMessageId(settings);
+  message.inReplyTo = previousInbound?.messageId || '';
+  message.references = [previousInbound?.references, previousInbound?.messageId]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+
   try {
     assertCanSend(settings, threads, message.to, threadSuppressions(thread), {
       manual: channel === 'manual',
@@ -856,14 +1094,15 @@ async function sendThreadMessage(threadId, body) {
     throw new HttpError(400, error.message || 'No se puede enviar este mensaje.');
   }
 
+  let delivery = null;
   if (channel === 'manual') {
     if (body.confirm !== true) throw new HttpError(400, 'Para marcar un mensaje como enviado necesitás confirmarlo.');
   } else {
     if (channel === 'resend') {
-      try { await sendWithResend(settings, message); } catch (error) { throw new HttpError(502, error.message || 'Resend rechazó el envío.'); }
+      try { delivery = await sendWithResend(settings, message); } catch (error) { throw new HttpError(502, error.message || 'Resend rechazó el envío.'); }
     }
     if (channel === 'webhook') {
-      try { await sendWithWebhook(settings, message, { threadId: thread.id, contact: thread.contact }); } catch (error) { throw new HttpError(502, error.message || 'El webhook rechazó el envío.'); }
+      try { delivery = await sendWithWebhook(settings, message, { threadId: thread.id, contact: thread.contact }); } catch (error) { throw new HttpError(502, error.message || 'El webhook rechazó el envío.'); }
     }
   }
 
@@ -879,11 +1118,23 @@ async function sendThreadMessage(threadId, body) {
     at: now,
     status: channel === 'manual' ? 'enviado_manual' : 'enviado',
     provider: channel,
+    messageId: message.messageId,
+    ...(message.inReplyTo ? { inReplyTo: message.inReplyTo } : {}),
+    ...(message.references ? { references: message.references } : {}),
+    ...(delivery?.id ? { providerId: delivery.id } : {}),
   };
   thread.messages = [...(thread.messages || []), sent];
   draft.status = 'enviado';
   draft.sentAt = now;
   draft.sentChannel = channel;
+  if (draft.quoteId) {
+    const quote = (thread.quotes || []).find((item) => item.id === draft.quoteId);
+    if (quote && quote.status === 'borrador') {
+      quote.status = 'enviada';
+      quote.sentAt = now;
+      quote.sentMessageId = sent.id;
+    }
+  }
   if (thread.stage === 'nuevo') thread.stage = 'contactado';
   thread.lastActivityAt = now;
   thread.updatedAt = now;
@@ -909,9 +1160,54 @@ async function sendThreadMessage(threadId, body) {
   return { thread, message: sent, draft };
 }
 
-function findThreadForEmail(email) {
-  const target = String(email || '').toLowerCase();
-  return store.get('threads').find((t) => String(t.contact?.email || '').toLowerCase() === target) || null;
+function normalizeSubject(value) {
+  return String(value || '')
+    .replace(/^(?:(?:re|fwd?|rv|aw|tr|enc)\s*:\s*)+/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function threadSortKey(thread) {
+  return Date.parse(thread?.lastActivityAt || thread?.updatedAt || thread?.createdAt || 0) || 0;
+}
+
+/* Enrutamiento de respuestas. Un comprador puede tener un hilo por producto:
+   elegir el primero por email manda la respuesta al producto equivocado y
+   reinicia el seguimiento de una conversación que estaba avanzando.
+   Prioridad: Message-ID citado > asunto del último saliente > actividad. */
+function findThreadForEmail(email, inbound = null) {
+  const target = normalizeEmail(email);
+  if (!target) return null;
+  const threads = store.get('threads');
+
+  if (inbound) {
+    const refs = new Set([
+      ...(Array.isArray(inbound.references) ? inbound.references : []),
+      ...(inbound.inReplyTo ? [inbound.inReplyTo] : []),
+    ].map((item) => String(item || '').trim()).filter(Boolean));
+    if (refs.size) {
+      const exact = threads.find((thread) => (thread.messages || []).some((message) => (
+        message.direction === 'out' && message.messageId && refs.has(message.messageId)
+      )));
+      if (exact) return exact;
+    }
+
+    const subject = normalizeSubject(inbound.subject);
+    if (subject) {
+      const bySubject = threads
+        .filter((thread) => normalizeEmail(thread.contact?.email) === target)
+        .filter((thread) => (thread.messages || []).some((message) => (
+          message.direction === 'out' && normalizeSubject(message.subject) === subject
+        )))
+        .sort((a, b) => threadSortKey(b) - threadSortKey(a));
+      if (bySubject.length) return bySubject[0];
+    }
+  }
+
+  return threads
+    .filter((thread) => normalizeEmail(thread.contact?.email) === target)
+    .sort((a, b) => threadSortKey(b) - threadSortKey(a))[0] || null;
 }
 
 async function createInboundThread(inbound, email) {
@@ -954,6 +1250,101 @@ async function createInboundThread(inbound, email) {
   await store.set('threads', store.get('threads'));
   await store.activity('reply', `Respuesta entrante de ${email} sin hilo previo.`, { threadId: thread.id });
   return thread;
+}
+
+/* Procesa eventos de entrega del proveedor (rebotes, quejas, aperturas).
+   Un rebote duro o una queja de spam suprimen la dirección de inmediato: la
+   reputación del dominio es el activo más frágil de todo el sistema. */
+async function handleEmailEvent(event) {
+  if (!event?.emails?.length) return { touched: 0, suppressed: 0 };
+  const now = nowISO();
+  const threads = store.get('threads');
+  let touched = 0;
+  let suppressed = 0;
+
+  for (const email of event.emails) {
+    const related = threads
+      .filter((thread) => normalizeEmail(thread.contact?.email) === email)
+      .sort((a, b) => threadSortKey(b) - threadSortKey(a));
+    const thread = related[0] || null;
+
+    if (thread) {
+      const outbound = [...(thread.messages || [])].reverse().find((message) => (
+        message.direction === 'out'
+        && (
+          (event.messageId && (message.messageId === event.messageId || message.providerId === event.messageId))
+          || message.status === 'enviado'
+        )
+      ));
+      if (outbound) {
+        if (event.kind === 'delivered') {
+          outbound.status = 'entregado';
+          outbound.deliveredAt = now;
+        } else if (event.kind === 'opened') {
+          outbound.openedAt = now;
+        } else if (event.kind === 'clicked') {
+          outbound.clickedAt = now;
+        } else if (event.kind === 'delayed') {
+          outbound.deliveryDelayedAt = now;
+        } else if (event.kind === 'bounce') {
+          outbound.status = event.hard ? 'rebotado' : 'rebote_temporal';
+          outbound.bouncedAt = now;
+        } else if (event.kind === 'complaint') {
+          outbound.status = 'queja';
+          outbound.complainedAt = now;
+        }
+        if (event.reason) outbound.deliveryReason = event.reason;
+      }
+      thread.lastActivityAt = now;
+      thread.updatedAt = now;
+      touched += 1;
+    }
+
+    const mustSuppress = event.kind === 'complaint' || (event.kind === 'bounce' && event.hard);
+    if (!mustSuppress) continue;
+
+    const reason = event.kind === 'complaint'
+      ? 'Marcó el correo como spam (queja del proveedor).'
+      : `Rebote definitivo: ${event.reason || 'el servidor rechazó la dirección'}.`;
+    await addSuppression({ email, reason }, {
+      source: event.kind === 'complaint' ? 'queja de spam' : 'rebote',
+      demo: thread?.demo,
+    });
+    suppressed += 1;
+
+    if (!thread) continue;
+    thread.stage = 'perdido';
+    thread.nextFollowUp = null;
+    thread.nextStep = event.kind === 'complaint'
+      ? 'Marcó el correo como spam. No volver a contactar.'
+      : 'La dirección rebotó. Corregí el email antes de reintentar.';
+    thread.contact = { ...(thread.contact || {}), emailStatus: event.kind === 'complaint' ? 'queja' : 'rebotado' };
+    if (event.kind === 'bounce') thread.emailBouncedAt = now;
+    if (event.kind === 'complaint') thread.emailComplainedAt = now;
+    for (const draft of thread.drafts || []) {
+      if (!['listo', 'revisar'].includes(draft.status)) continue;
+      draft.status = 'bloqueado';
+      draft.blockedReason = event.kind === 'complaint'
+        ? 'El contacto marcó el correo como spam.'
+        : 'El correo rebotó: la dirección no es entregable.';
+    }
+    for (const item of outbox.items()) {
+      if (item.status !== 'pending' || item.threadId !== thread.id) continue;
+      item.status = 'cancelled';
+      item.error = event.kind === 'complaint' ? 'El contacto marcó el correo como spam.' : 'El correo rebotó.';
+    }
+  }
+
+  if (touched) await store.set('threads', threads);
+  if (suppressed) await outbox.save();
+  if (touched || suppressed) {
+    await store.activity(
+      'system',
+      `Evento de correo ${event.kind}: ${touched} hilo(s) actualizado(s), ${suppressed} dirección(es) suprimida(s).`,
+      {},
+    );
+  }
+  return { touched, suppressed };
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1580,8 +1971,23 @@ async function handle(req, res) {
         }
         if (target.stage !== body.stage) {
           await store.activity('reply', `${target.contact?.company || 'Contacto'} pasó a etapa ${body.stage}.`, { threadId: id });
-          // Ganada una venta, arranca el reloj de postventa (día 3/30/90).
-          if (body.stage === 'ganado' && !target.postSaleAt) target.postSaleAt = nowISO();
+          if (body.stage === 'ganado') {
+            // El reloj de postventa (día 3/30/90) arranca con la venta actual,
+            // no con la primera vez que el hilo pasó por "ganado". Si el
+            // cliente volvió a comprar, se reinicia la secuencia y se descartan
+            // los toques viejos que todavía no salieron.
+            await markThreadWon(target);
+            if (body.nextStep === undefined) target.nextStep = 'Venta cerrada. Postventa día 3, 30 y 90.';
+          } else if (target.stage === 'ganado') {
+            // Dejó de estar ganada: no corresponde seguir con la postventa.
+            target.nextFollowUp = null;
+            for (const item of outbox.items()) {
+              if (item.status !== 'pending' || item.threadId !== target.id || item.kind !== 'postventa') continue;
+              item.status = 'cancelled';
+              item.error = 'La conversación dejó de estar en etapa ganado.';
+            }
+            await outbox.save();
+          }
         }
         target.stage = body.stage;
       }
@@ -1611,6 +2017,25 @@ async function handle(req, res) {
       json(res, 200, { ok: true });
       return;
     }
+  }
+
+  const threadQuotes = pathname.match(/^\/api\/threads\/([^/]+)\/quotes$/);
+  if (threadQuotes && method === 'POST') {
+    const id = decodeURIComponent(threadQuotes[1]);
+    const body = await readJson(req);
+    const result = await createQuote(id, body);
+    json(res, 201, result);
+    return;
+  }
+
+  const threadQuoteMatch = pathname.match(/^\/api\/threads\/([^/]+)\/quotes\/([^/]+)$/);
+  if (threadQuoteMatch && method === 'PATCH') {
+    const id = decodeURIComponent(threadQuoteMatch[1]);
+    const quoteId = decodeURIComponent(threadQuoteMatch[2]);
+    const body = await readJson(req);
+    const result = await setQuoteStatus(id, quoteId, asString(body.status));
+    json(res, 200, result);
+    return;
   }
 
   const threadMessages = pathname.match(/^\/api\/threads\/([^/]+)\/messages$/);
@@ -1985,11 +2410,14 @@ async function handle(req, res) {
     const rows = store.get('products').map((p) => ({
       codigo: p.code, nombre: p.name, categoria: p.category, precio: p.price, moneda: p.currency,
       costo: p.cost, estado: p.status, descripcion: p.description,
+      capacidad: p.capacityPerWeek, plazo: p.leadTimeDays, medidas: p.dimensions, peso: p.weightGrams,
     }));
     const csv = toCsv(rows, [
       { key: 'codigo', label: 'Código' }, { key: 'nombre', label: 'Nombre' }, { key: 'categoria', label: 'Categoría' },
       { key: 'precio', label: 'Precio' }, { key: 'moneda', label: 'Moneda' }, { key: 'costo', label: 'Costo' },
       { key: 'estado', label: 'Estado' }, { key: 'descripcion', label: 'Descripción' },
+      { key: 'capacidad', label: 'Capacidad semanal' }, { key: 'plazo', label: 'Plazo de fabricación (días)' },
+      { key: 'medidas', label: 'Medidas' }, { key: 'peso', label: 'Peso (gramos)' },
     ]);
     res.writeHead(200, { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="lumbre-productos.csv"' });
     res.end(csv);
@@ -2020,12 +2448,18 @@ async function handle(req, res) {
       throw new HttpError(403, 'Para recibir correos desde internet configurá un token de webhook en Ajustes → Correo o la variable LUMBRE_WEBHOOK_TOKEN.');
     }
     const payload = await readJson(req, 10 * 1024 * 1024);
+    const emailEvent = parseEmailEvent(payload);
+    if (emailEvent) {
+      const result = await handleEmailEvent(emailEvent);
+      json(res, 200, { ok: true, event: emailEvent.kind, ...result });
+      return;
+    }
     const inbound = parseInbound(payload);
     if (!inbound) throw new HttpError(400, 'No se pudo leer el correo entrante.');
     const match = inbound.from.match(/<([^>]+)>/);
     const email = (match ? match[1] : inbound.from).trim().toLowerCase();
     if (!isValidEmail(email)) throw new HttpError(400, 'El remitente no es un email válido.');
-    let thread = findThreadForEmail(email);
+    let thread = findThreadForEmail(email, inbound);
     if (!thread) thread = await createInboundThread(inbound, email);
     const now = nowISO();
     const message = {
@@ -2036,6 +2470,9 @@ async function handle(req, res) {
       body: truncate(inbound.text || inbound.html, 30000),
       at: now,
       status: 'recibido',
+      ...(inbound.messageId ? { messageId: inbound.messageId } : {}),
+      ...(inbound.inReplyTo ? { inReplyTo: inbound.inReplyTo } : {}),
+      ...(inbound.references?.length ? { references: inbound.references.join(' ') } : {}),
     };
     thread.messages = [...(thread.messages || []), message];
     thread.lastActivityAt = now;

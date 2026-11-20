@@ -163,9 +163,15 @@ const truncate = (value, max = 160) => {
 function money(value, currency = 'USD') {
   const n = num(value, 0);
   try {
-    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: currency || 'USD', maximumFractionDigits: 0 }).format(n);
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: currency || 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: Number.isInteger(n) ? 0 : 2,
+    }).format(n);
   } catch {
-    return `${currency || 'USD'} ${Math.round(n).toLocaleString('es-AR')}`;
+    const digits = Number.isInteger(n) ? 0 : 2;
+    return `${currency || 'USD'} ${n.toLocaleString('es-AR', { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
   }
 }
 function numFmt(value) {
@@ -1086,6 +1092,9 @@ function openProductModal(id = null) {
         <div class="field"><label for="pf-cost">Costo de producción</label><input class="input" id="pf-cost" name="cost" type="number" min="0" step="0.01" value="${attr(product?.cost ?? '')}" placeholder="80"><p class="field-hint">Materiales, impresión, terminación y packaging.</p></div>
         <div class="field"><label for="pf-weight">Peso (gramos)</label><input class="input" id="pf-weight" name="weightGrams" type="number" min="0" step="1" value="${attr(product?.weightGrams ?? '')}" placeholder="1200"></div>
         <div class="field"><label for="pf-dimensions">Medidas</label><input class="input" id="pf-dimensions" name="dimensions" value="${attr(product?.dimensions || '')}" placeholder="Ø 32 cm · alto 24 cm · cable 180 cm"></div>
+        <div class="field"><label for="pf-capacity">Capacidad semanal</label><input class="input" id="pf-capacity" name="capacityPerWeek" type="number" min="0" step="1" value="${attr(product?.capacityPerWeek ?? '')}" placeholder="8"><p class="field-hint">Unidades que podés fabricar por semana sin romper plazos.</p></div>
+        <div class="field"><label for="pf-leadtime">Plazo de fabricación (días)</label><input class="input" id="pf-leadtime" name="leadTimeDays" type="number" min="0" step="1" value="${attr(product?.leadTimeDays ?? '')}" placeholder="14"><p class="field-hint">Desde la confirmación del pago hasta el despacho.</p></div>
+        <div class="field full"><label for="pf-payment">Link de pago o seña</label><input class="input" id="pf-payment" name="paymentLink" type="url" value="${attr(product?.paymentLink || '')}" placeholder="https://link.mercadopago.com.ar/… o https://buy.stripe.com/…"><p class="field-hint">Se incluye en las cotizaciones para cerrar sin idas y vueltas.</p></div>
         <div class="field"><label for="pf-status">Estado</label><select class="select" id="pf-status" name="status">${[['borrador', 'Borrador'], ['listo', 'Listo para vender'], ['archivado', 'Archivado']].map(([v, l]) => `<option value="${v}" ${(product?.status || 'borrador') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
         <div class="field full"><label for="pf-materials">Materiales y terminación</label><input class="input" id="pf-materials" name="materials" value="${attr(product?.materials || '')}" placeholder="PLA / PETG, difusor opal, cable textil, casquillo E27"></div>
         <div class="field full"><label for="pf-description">Descripción corta</label><textarea class="textarea" id="pf-description" name="description" rows="3" placeholder="Qué la hace distinta, en dos o tres líneas.">${esc(product?.description || '')}</textarea></div>
@@ -1191,6 +1200,9 @@ async function saveProduct() {
     cost: num(data.cost, 0),
     weightGrams: num(data.weightGrams, 0),
     dimensions: data.dimensions,
+    capacityPerWeek: num(data.capacityPerWeek, 0),
+    leadTimeDays: num(data.leadTimeDays, 0),
+    paymentLink: data.paymentLink,
     materials: data.materials,
     description: data.description,
     notes: data.notes,
@@ -2123,6 +2135,7 @@ function threadDetailHTML(data) {
           ${Object.entries(STAGES).map(([value, label]) => `<option value="${value}" ${thread.stage === value ? 'selected' : ''}>${label}</option>`).join('')}
         </select>
         <button class="btn btn-ghost btn-sm" type="button" data-action="edit-contact" data-id="${attr(thread.id)}">${icon('edit')} Contacto</button>
+        ${!suppressed ? `<button class="btn btn-ghost btn-sm" type="button" data-action="new-quote" data-id="${attr(thread.id)}">${icon('dollar')} Cotizar</button>` : ''}
         <button class="btn btn-primary btn-sm" type="button" data-action="analyze-thread" data-id="${attr(thread.id)}">${icon('wand')} Analizar</button>
         <button class="icon-btn danger" type="button" data-action="delete-thread" data-id="${attr(thread.id)}" aria-label="Eliminar conversación" title="Eliminar conversación">${icon('trash')}</button>
       </div>
@@ -2153,6 +2166,11 @@ function threadDetailHTML(data) {
           <div class="thread-section-head"><h3>Conversación</h3><span class="tiny muted">${messages.length} mensaje${messages.length === 1 ? '' : 's'}</span></div>
           ${messages.length ? `<div class="conversation">${messages.map((message) => messageBubbleHTML(message, thread)).join('')}</div>` : `<div class="soft"><p class="small muted">Todavía no hay mensajes. Abajo podés registrar lo que respondió el comprador o crear un borrador nuevo.</p></div>`}
         </section>
+
+        ${arr(thread.quotes).length ? `<section class="thread-section">
+          <div class="thread-section-head"><h3>Cotizaciones</h3><span class="tiny muted">${arr(thread.quotes).length} preparada${arr(thread.quotes).length === 1 ? '' : 's'}</span></div>
+          ${quotesHTML(thread)}
+        </section>` : ''}
 
         <section class="thread-section">
           <div class="thread-section-head">
@@ -2445,6 +2463,163 @@ async function analyzeCurrentThread(button) {
   } catch (error) {
     toast(error.message, 'error');
     repaintThread();
+  }
+}
+
+function quoteStatusBadge(status) {
+  const map = {
+    borrador: ['neutral', 'Borrador'],
+    enviada: ['info', 'Enviada'],
+    aceptada: ['ok', 'Aceptada'],
+    rechazada: ['danger', 'Rechazada'],
+  };
+  const [tone, label] = map[status] || ['neutral', 'Cotización'];
+  return `<span class="badge badge-${tone}">${esc(label)}</span>`;
+}
+
+function quotesHTML(thread) {
+  const quotes = arr(thread.quotes);
+  if (!quotes.length) return '';
+  return quotes.map((quote) => {
+    const quantity = num(quote.quantity, 1);
+    const total = num(quote.total, 0);
+    const accepted = quote.status === 'aceptada';
+    const rejected = quote.status === 'rechazada';
+    return `<div class="draft-card ${accepted ? 'sent' : ''}">
+      <div class="draft-head">
+        <div style="min-width:0;flex:1">
+          <div class="draft-subject">${esc(quote.number || 'Cotización')} · ${esc(quote.productName || 'Producto')}</div>
+          <div class="thread-badges" style="margin-top:5px">
+            ${quoteStatusBadge(quote.status)}
+            <span class="badge badge-neutral">${quantity} × ${esc(money(quote.unitPrice, quote.currency))}</span>
+            <span class="badge badge-neutral">Total ${esc(money(total, quote.currency))}</span>
+            ${quote.validUntil ? `<span class="badge badge-neutral">Válida hasta ${esc(dateShort(quote.validUntil))}</span>` : ''}
+          </div>
+        </div>
+        <span class="tiny muted nowrap">${esc(dateShort(quote.createdAt))}</span>
+      </div>
+      <div class="draft-body">
+        ${quote.shipping > 0 ? `<div>Envío: ${esc(money(quote.shipping, quote.currency))}</div>` : ''}
+        ${quote.discount > 0 ? `<div>Descuento: −${esc(money(quote.discount, quote.currency))}</div>` : ''}
+        ${quote.taxAmount > 0 ? `<div>Impuestos (${num(quote.taxRate)}%): ${esc(money(quote.taxAmount, quote.currency))}</div>` : ''}
+        ${quote.notes ? `<div class="mt-2">${esc(quote.notes)}</div>` : ''}
+        ${quote.paymentLink ? `<div class="mt-2"><a href="${attr(safeUrl(quote.paymentLink) || '#')}" target="_blank" rel="noopener noreferrer">${esc(truncate(quote.paymentLink, 60))}</a></div>` : '<div class="tiny muted mt-2">Sin link de pago: la confirmación se pide por correo.</div>'}
+      </div>
+      <div class="draft-actions">
+        ${!accepted ? `<button class="btn btn-primary btn-xs" type="button" data-action="quote-status" data-id="${attr(thread.id)}" data-quote-id="${attr(quote.id)}" data-status="aceptada">${icon('check')} Aceptada</button>` : ''}
+        ${!rejected && !accepted ? `<button class="btn btn-ghost btn-xs" type="button" data-action="quote-status" data-id="${attr(thread.id)}" data-quote-id="${attr(quote.id)}" data-status="rechazada">Rechazada</button>` : ''}
+        ${accepted ? `<span class="tiny muted">Cierra la venta y reinicia la postventa desde hoy.</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function quotePreviewHTML(data, currency) {
+  const quantity = Math.max(1, Math.floor(num(data.quantity, 1)));
+  const unit = Math.max(0, num(data.unitPrice, 0));
+  const shipping = Math.max(0, num(data.shipping, 0));
+  const subtotal = quantity * unit;
+  const discount = Math.min(subtotal, Math.max(0, num(data.discount, 0)));
+  const taxRate = Math.max(0, Math.min(100, num(data.taxRate, 0)));
+  const taxable = subtotal - discount + shipping;
+  const tax = taxable * taxRate / 100;
+  const total = taxable + tax;
+  return `<div class="between"><span>${quantity} × ${esc(money(unit, currency))}</span><b>${esc(money(subtotal, currency))}</b></div>
+    ${shipping > 0 ? `<div class="between"><span>Envío</span><b>${esc(money(shipping, currency))}</b></div>` : ''}
+    ${discount > 0 ? `<div class="between"><span>Descuento</span><b>−${esc(money(discount, currency))}</b></div>` : ''}
+    ${tax > 0 ? `<div class="between"><span>Impuestos (${taxRate}%)</span><b>${esc(money(tax, currency))}</b></div>` : ''}
+    <div class="between" style="border-top:1px solid var(--line);margin-top:6px;padding-top:8px"><b>Total</b><b>${esc(money(total, currency))}</b></div>`;
+}
+
+function openQuoteModal(thread) {
+  const product = arr(S.state.products).find((item) => item.id === thread.productId) || {};
+  const settings = S.state.settings || {};
+  const brand = S.state.brand || {};
+  const currency = product.currency || brand.currency || 'USD';
+  const paymentLink = product.paymentLink || settings.sales?.paymentLink || '';
+  const validDays = num(settings.sales?.quoteValidityDays, 15) || 15;
+  const body = `<form id="quote-form" data-thread-id="${attr(thread.id)}">
+    <div class="form-section">
+      <p class="form-section-title">${esc(product.name || 'Producto del hilo')}</p>
+      <p class="form-section-sub">La cotización se arma con estos datos, sin IA: precio, cantidad, plazo y link de pago salen de tu ficha.${num(product.capacityPerWeek) > 0 ? ` Capacidad: ${num(product.capacityPerWeek)} por semana.` : ''}${num(product.leadTimeDays) > 0 ? ` Plazo: ${num(product.leadTimeDays)} días.` : ''}</p>
+      <div class="form-grid">
+        <div class="field"><label for="q-quantity">Cantidad</label><input class="input" id="q-quantity" name="quantity" type="number" min="1" step="1" value="1" required></div>
+        <div class="field"><label for="q-price">Precio unitario (${esc(currency)})</label><input class="input" id="q-price" name="unitPrice" type="number" min="0" step="0.01" value="${attr(num(product.price, 0))}" required></div>
+        <div class="field"><label for="q-shipping">Envío</label><input class="input" id="q-shipping" name="shipping" type="number" min="0" step="0.01" value="0"><p class="field-hint">Dejalo en 0 si el envío se cotiza aparte.</p></div>
+        <div class="field"><label for="q-discount">Descuento</label><input class="input" id="q-discount" name="discount" type="number" min="0" step="0.01" value="0"></div>
+        <div class="field"><label for="q-tax">Impuestos (%)</label><input class="input" id="q-tax" name="taxRate" type="number" min="0" max="100" step="0.1" value="0"></div>
+        <div class="field"><label for="q-valid">Validez (días)</label><input class="input" id="q-valid" name="validDays" type="number" min="1" max="120" step="1" value="${attr(validDays)}"></div>
+        <div class="field full"><label for="q-payment">Link de pago</label><input class="input" id="q-payment" name="paymentLink" type="url" value="${attr(paymentLink)}" placeholder="https://…"><p class="field-hint">Si lo dejás vacío, el correo pide confirmación y el link se envía después.</p></div>
+        <div class="field full"><label for="q-notes">Nota para el comprador</label><textarea class="textarea" id="q-notes" name="notes" rows="3" placeholder="Condiciones especiales, color, embalaje, fecha de entrega…"></textarea></div>
+      </div>
+    </div>
+    <div class="soft" id="quote-preview" style="margin-top:12px">${quotePreviewHTML({ quantity: 1, unitPrice: num(product.price, 0) }, currency)}</div>
+    <label class="checkbox mt-3"><input type="checkbox" name="approve" value="1"><span>Dejar el borrador listo para enviar (revisé precio, envío y plazo).</span></label>
+  </form>`;
+  openModal({
+    title: 'Preparar cotización',
+    subtitle: 'Un precio claro y un link de pago convierten el interés en pedido.',
+    size: 'modal-lg',
+    body,
+    footer: `<button class="btn btn-ghost" type="button" data-action="close-modal">Cancelar</button>
+      <button class="btn btn-primary" type="button" data-action="save-quote" data-id="${attr(thread.id)}">${icon('dollar')} Preparar cotización</button>`,
+    onMount: (root) => {
+      const form = $('#quote-form', root);
+      const preview = $('#quote-preview', root);
+      if (!form || !preview) return;
+      const update = () => {
+        const data = Object.fromEntries(new FormData(form).entries());
+        preview.innerHTML = quotePreviewHTML(data, currency);
+      };
+      ['quantity', 'unitPrice', 'shipping', 'discount', 'taxRate'].forEach((name) => {
+        form.querySelector(`[name="${name}"]`)?.addEventListener('input', update);
+      });
+    },
+  });
+}
+
+async function saveQuote(threadId) {
+  const form = $('#quote-form');
+  if (!form) return;
+  const data = Object.fromEntries(new FormData(form).entries());
+  const button = $('[data-action="save-quote"]');
+  if (button) { button.disabled = true; button.innerHTML = `${icon('refresh', 'spin')} Preparando…`; }
+  try {
+    const result = await api(`/api/threads/${encodeURIComponent(threadId)}/quotes`, {
+      method: 'POST',
+      body: {
+        quantity: num(data.quantity, 1),
+        unitPrice: num(data.unitPrice, 0),
+        shipping: num(data.shipping, 0),
+        discount: num(data.discount, 0),
+        taxRate: num(data.taxRate, 0),
+        validDays: num(data.validDays, 15),
+        paymentLink: String(data.paymentLink || '').trim(),
+        notes: String(data.notes || ''),
+        approve: data.approve === '1',
+      },
+    });
+    closeModal();
+    await loadState({ silent: true, render: false });
+    await refreshThread();
+    toast(`Cotización ${result.quote.number} preparada. Revisá el borrador y enviá cuando esté listo.`);
+  } catch (error) {
+    toast(error.message, 'error');
+    if (button) { button.disabled = false; button.innerHTML = `${icon('dollar')} Preparar cotización`; }
+  }
+}
+
+async function setQuoteStatusUI(threadId, quoteId, status) {
+  try {
+    await api(`/api/threads/${encodeURIComponent(threadId)}/quotes/${encodeURIComponent(quoteId)}`, {
+      method: 'PATCH',
+      body: { status },
+    });
+    await loadState({ silent: true, render: false });
+    await refreshThread();
+    toast(status === 'aceptada' ? 'Venta cerrada. La postventa arranca hoy.' : 'Estado de la cotización actualizado.');
+  } catch (error) {
+    toast(error.message, 'error');
   }
 }
 
@@ -3526,6 +3701,15 @@ function settingsEmailHTML() {
       </div>
       ${S.state.outbox?.enabled ? `<div class="artifact-callout mt-2"><b>Cola de salida</b>${num(S.state.outbox.pending)} pendiente${num(S.state.outbox.pending) === 1 ? '' : 's'} · ${num(S.state.outbox.sent)} enviado${num(S.state.outbox.sent) === 1 ? '' : 's'}${S.state.outbox.nextAt ? ` · próximo ${new Date(S.state.outbox.nextAt).toLocaleString()}` : ''}.</div>` : ''}
     </div>
+
+    <div class="form-section">
+      <p class="form-section-title">Cobros y cotizaciones</p>
+      <p class="form-section-sub">Una cotización clara y un link de pago convierten el interés en un pedido. Cada producto puede tener su propio link; este es el que se usa cuando no lo tiene.</p>
+      <div class="form-grid">
+        <div class="field full"><label for="sales-payment">Link de pago global</label><input class="input" id="sales-payment" name="salesPaymentLink" type="url" value="${attr(settings.sales?.paymentLink || '')}" placeholder="https://link.mercadopago.com.ar/… o https://buy.stripe.com/…"><p class="field-hint">Se incluye en la cotización. Si está vacío, el correo pide confirmación y el link se envía después.</p></div>
+        <div class="field"><label for="sales-validity">Validez de la cotización (días)</label><input class="input" id="sales-validity" name="salesQuoteValidityDays" type="number" min="1" max="120" value="${attr(settings.sales?.quoteValidityDays || 15)}"></div>
+      </div>
+    </div>
     ${testResultBox('resend')}
     ${testResultBox('email')}
     <div class="artifact-callout ${email.autopilot ? 'warn' : ''} mt-3"><b>${email.autopilot ? 'El piloto automático está activo' : 'Nada se envía solo'}</b>${email.autopilot ? 'Solo salen borradores aprobados por las guardas, con cupo y pausas. Podés apagarlo en cualquier momento.' : 'Cada mensaje pasa por tu revisión. Los contactos de ejemplo terminan en example.com y están bloqueados para envíos reales.'}</div>`;
@@ -3881,6 +4065,10 @@ async function saveSettings(form) {
         autopilotSpacingMin: Math.max(1, Math.min(120, Math.round(num(val('autopilotSpacingMin'), 5)))),
         followUps: check('emailFollowUps'),
         postSales: check('emailPostSales'),
+      },
+      sales: {
+        paymentLink: val('salesPaymentLink'),
+        quoteValidityDays: Math.max(1, Math.min(120, Math.round(num(val('salesQuoteValidityDays'), 15)))),
       },
     };
   } else if (tab === 'notificaciones') {
@@ -4442,6 +4630,13 @@ async function handleAction(action, el) {
       return;
     }
     case 'save-contact': await saveContact(el.dataset.id); return;
+    case 'new-quote': {
+      if (!S.thread?.thread) return;
+      openQuoteModal(S.thread.thread);
+      return;
+    }
+    case 'save-quote': await saveQuote(el.dataset.id); return;
+    case 'quote-status': await setQuoteStatusUI(el.dataset.id, el.dataset.quoteId, el.dataset.status); return;
     case 'new-draft': {
       if (!S.thread?.thread) return;
       openDraftModal(S.thread.thread);
