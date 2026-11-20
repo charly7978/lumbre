@@ -1,5 +1,6 @@
 ﻿import { isDemoEmail, isSuppressed, isValidEmail, normalizeEmail } from './email.mjs';
 import { nowISO, uid } from './util.mjs';
+import { hasDocumentedOptIn } from './security.mjs';
 
 /* ─────────────────────────────────────────────────────────────
    Piloto automático de salida.
@@ -238,6 +239,8 @@ export class Outbox {
     if (draft.status !== 'listo' || draft.channel !== 'email') return null;
     if (stageBlocksOutreach(thread, kind)) return null;
     if (!isValidEmail(thread.contact?.email) || isDemoEmail(thread.contact?.email)) return null;
+    // Piloto automático: no programar contactos sin permiso documentado.
+    if (!hasDocumentedOptIn(thread.contact)) return null;
     if (this.pendingFor(thread.id, draft.id)) return null;
     const item = {
       id: uid('out'),
