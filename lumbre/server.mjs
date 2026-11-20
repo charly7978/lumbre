@@ -440,7 +440,7 @@ const outbox = new Outbox({
     if (settings.email?.provider === 'resend' && settings.email?.resendKey) channel = 'resend';
     else if (settings.email?.provider === 'gmail' && settings.email?.smtpUser && settings.email?.smtpPassword) channel = 'gmail';
     else if (settings.email?.webhookUrl) channel = 'webhook';
-    return sendThreadMessage(threadId, { draftId, channel });
+    return sendThreadMessage(threadId, { draftId, channel, automated: true });
   },
   notify: notifier,
 });
@@ -1337,6 +1337,9 @@ async function sendThreadMessage(threadId, body) {
 
   const settings = store.settings();
   const channel = ['resend', 'webhook', 'gmail', 'manual'].includes(body.channel) ? body.channel : 'manual';
+  if (body.automated === true && !hasDocumentedOptIn(thread.contact)) {
+    throw new HttpError(400, 'El piloto automático exige consentimiento documentado del destinatario.');
+  }
   const company = thread.contact?.company || '';
   let message;
   try {
