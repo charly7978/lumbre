@@ -31,6 +31,15 @@ set "LUCIAN_HOST=127.0.0.1"
 set "LUCIAN_PORT=4321"
 set "LUCIAN_NO_OPEN=1"
 set "LUCIAN_REQUIRE_AUTH=1"
+rem Evitar que el tunel apunte por accidente a otro servicio en el puerto 4321.
+powershell -NoProfile -Command "if (Get-NetTCPConnection -State Listen -LocalPort 4321 -ErrorAction SilentlyContinue) { exit 1 }" >nul 2>nul
+if errorlevel 1 (
+  echo El puerto 4321 ya esta ocupado. Cerra la instancia anterior de Lucian.
+  echo No se abrira el tunel para evitar exponer otra aplicacion.
+  pause
+  popd
+  exit /b 1
+)
 echo.
 echo Iniciando Lucian y un tunel HTTPS.
 echo La URL publica NO concede acceso sin la clave de esta PC.
