@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "skills": {
+    "sales-account-intelligence": {
+      "source": "tavily-ai/Use-Case-Skills",
+      "commit": "1bf5ffcc4d69425a747b7918b1883231324cada3",
+      "sourceType": "github",
+      "skillPath": "sales-account-intelligence/SKILL.md",
+      "computedHash": "325ae9c248ed3427df98c2493e9077657b9757c11b9d5df3a774c4f0ed03dbeb"
+    }
+  }
+}
