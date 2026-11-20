@@ -1,4 +1,5 @@
 ﻿import { truncate } from './util.mjs';
+import { marketBlock, COPYWRITING_RULES } from './market-intel.mjs';
 
 /* ─────────────────────────────────────────────────────────────
    El equipo. Cada agente tiene una responsabilidad distinta y
@@ -122,6 +123,7 @@ REGLAS DEL EQUIPO:
 - El dueño es un maker solo: el plan tiene que caber en su tiempo y presupuesto reales.
 - Sé breve: cada campo de texto, máximo 2 frases; cada lista, máximo 5 elementos, salvo que la tarea pida otro número. Un JSON cortado no sirve.
 - Devolvé SOLO el JSON pedido. Sin markdown, sin explicaciones afuera del JSON.
+${COPYWRITING_RULES}
 `;
 
 export function systemFor(agentId) {
@@ -236,6 +238,15 @@ function verifiedBuyersBlock(ctx) {
     if (buyer.por_que) lines.push(`    Encaje: ${truncate(buyer.por_que, 200)}`);
   });
   return `${lines.join('\n')}\n`;
+}
+
+function marketRulesBlock(ctx) {
+  const buyers = (ctx.artifacts?.prospecting?.compradores || []).filter((b) => b && b.verificado !== false);
+  const countries = [...new Set(buyers.map((b) => String(b.pais || '').trim()).filter(Boolean))];
+  const missionMarkets = (ctx.mission?.markets || []).map((m) => String(m).trim()).filter(Boolean);
+  const all = [...new Set([...countries, ...missionMarkets])];
+  if (!all.length) return '\nREGLAS POR PAÍS: no hay países en la lista. Usá inglés profesional y directo.\n';
+  return `\nREGLAS DE COPYWRITING POR PAÍS (OBLIGATORIO: cada mensaje debe respetar las reglas del país de su comprador):\n${all.map((c) => marketBlock(c)).join('\n')}\n`;
 }
 
 function contextBlock(ctx, { prior = [], search = false } = {}) {
@@ -471,6 +482,7 @@ ${STEPS.prospecting.schemaHint}`,
 }`,
     prompt: (ctx) => `Tarea: escribir la secuencia de contacto y los mensajes personalizados.
 ${contextBlock(ctx, { prior: [['brief', 3000], ['research', 3000], ['pricing', 3000], ['prospecting', 12000]] })}
+${marketRulesBlock(ctx)}
 ${verifiedBuyersBlock(ctx)}
 - Escribí UN mensaje por cada comprador de PROSPECTING, con el campo "comprador" copiado exactamente como aparece en la lista. No omitas ninguno y no reutilices el mismo cuerpo para dos compradores.
 - Si PROSPECTING no trae compradores, devolvé "mensajes": [] y explicá en "estrategia" qué falta para tener la lista. No escribas mensajes para compradores que no existen.
@@ -479,7 +491,7 @@ ${verifiedBuyersBlock(ctx)}
 - Cuerpo de 90 a 140 palabras. Un solo pedido concreto al final.
 - Nada de "espero que estés bien", "soy un apasionado", "revolucionario" ni listas de features.
 - Cada mensaje tiene que demostrar que vimos la tienda: mencioná una marca, una colección o un detalle real de la fuente.
-- Escribá en el idioma del comprador. Si es un país hispanohablante, español neutro; si no, inglés natural.
+- IDIOMA OBLIGATORIO POR COMPRADOR: escribí cada mensaje EXACTAMENTE en el idioma indicado en el bloque de su país (ESPAÑOL / INGLÉS / PORTUGUÉS). España, Argentina, Chile, Uruguay, México y Colombia van en ESPAÑOL —aunque el comprador tenga un nombre o web en inglés, NO traduzcas el correo al inglés. Brasil va en PORTUGUÉS. Estados Unidos, Reino Unido y Alemania van en INGLÉS. Respetá también la variante local (vos/tú/usted) y el registro de cortesía de cada bloque.
 - La secuencia base tiene 3 pasos: apertura (día 0), seguimiento con valor (día 4) y cierre amable (día 10).
 - Para WhatsApp, un mensaje de 35 palabras como máximo, sin archivos.
 - Incluá 3 objeciones probables con respuestas honestas.
@@ -678,6 +690,7 @@ export function replyPrompt(thread, product, brand) {
 ${jsonBlock('MARCA', { nombre: brand?.name, propuesta: brand?.tagline, web: brand?.website }, 800)}
 ${jsonBlock('PRODUCTO', { nombre: product?.name, precio: product?.price, moneda: product?.currency, descripcion: truncate(product?.description, 900) }, 1200)}
 ${jsonBlock('CONTACTO', thread.contact, 1200)}
+${marketBlock(thread.contact?.country || '')}
 ${jsonBlock('CONVERSACIÓN', messages, 5000)}
 ${jsonBlock('NOTAS INTERNAS', thread.notes, 1000)}
 - Detectá la intención real, no solo la cortesía.

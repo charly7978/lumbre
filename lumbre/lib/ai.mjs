@@ -340,6 +340,12 @@ export async function chat(cfg, options = {}) {
       usage.output += Number(u.completion_tokens ?? u.output_tokens ?? 0) || 0;
       usage.total = usage.input + usage.output;
       if (!text) {
+        // Claude con "thinking" puede agotar max_tokens sin devolver texto.
+        // Duplicamos el presupuesto y reintentamos antes de rendirnos.
+        if (truncated && attempt < 4 && maxTokens < 16000) {
+          body.max_tokens = Math.min(16000, Math.round(maxTokens * 2));
+          continue;
+        }
         const error = new Error(`El modelo no devolvió texto (${finishReason || 'vacío'})`);
         error.truncated = truncated;
         error.finishReason = finishReason;

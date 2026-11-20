@@ -2117,7 +2117,7 @@ async function handle(req, res) {
       system: 'Sos un asistente de configuracion de Lucian. Analiza la situacion actual del usuario (productos, misiones, conversaciones) y genera una configuracion personalizada. Devuelve un JSON con un parche de ajustes y un resumen. El parche solo puede tocar: mission (markets, depth, maxProspects, tone, currency, contactCooldownDays), email (dailyLimit, warmup, autopilotEnabled, autopilotSpacingMin, followUps, postSales), sales (paymentLink, quoteValidityDays), onboarding. No toques claves ni URLs de proveedores. Espanol rioplatense. Varia la respuesta segun el contexto: no repitas siempre la misma configuracion.',
       prompt: `El dueno quiere que configures Lucian. Pedido: "${goal || 'configuracion optima para empezar a vender lamparas de diseno'}".\nContexto actual: ${JSON.stringify(context)}.\nAnaliza el contexto y genera una configuracion personalizada. Devuelve: { "patch": { ... }, "summary": "que cambiaste y por que (max 4 frases)" }.`,
       temperature: 0.7,
-      maxTokens: 1200,
+      maxTokens: 4000,
       expects: 'object',
     });
     const data = asObject(result.data);
