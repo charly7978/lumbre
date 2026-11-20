@@ -33,6 +33,7 @@ import { createZip, readZip } from './lib/zip.mjs';
 import { fetchNewEmails } from './lib/imap.mjs';
 import { diagnoseConnections, testConnection, getAiFailoverState, resetAiFailover } from './lib/connections.mjs';
 import { startAutopilot, runAutopilot, getAutopilotState } from './lib/autopilot.mjs';
+import { verifyMetaSignature, hasDocumentedOptIn, resendIdempotencyKey } from './lib/security.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.LUCIAN_DATA_DIR ? path.resolve(process.env.LUCIAN_DATA_DIR) : path.join(__dirname, 'data');
@@ -1348,7 +1349,16 @@ async function sendThreadMessage(threadId, body) {
   // mensaje entrante. Sin esto, el webhook no puede saber a qué producto
   // pertenece una respuesta cuando el comprador tiene varios hilos abiertos.
   const previousInbound = lastInboundMessage(thread);
-  message.messageId = newMessageId(settings);
+  if (channel === 'resend' && !hasDocumentedOptIn(thread.contact)) {
+    throw new HttpError(400, 'Resend exige consentimiento explícito documentado. Editá el contacto y registrá la evidencia antes de enviar.');
+  }
+  if (channel === 'resend') {
+    message.idempotencyKey = resendIdempotencyKey(thread.id, draft.id);
+    message.consentVerified = true;
+    message.messageId = `<lucian-${message.idempotencyKey.slice(7, 39)}@${messageIdDomain(settings)}>`;
+  } else {
+    message.messageId = newMessageId(settings);
+  }
   message.inReplyTo = previousInbound?.messageId || '';
   message.references = [previousInbound?.references, previousInbound?.messageId]
     .filter(Boolean)
@@ -1961,10 +1971,11 @@ async function handle(req, res) {
   // de la red local para que otra PC pueda abrir la interfaz.
   const lanMode = HOST === '0.0.0.0' || HOST === '::';
   const isLanHost = lanMode && /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.)/.test(hostName);
-  // Túneles (Cloudflare/ngrok) llegan con su propio dominio. Se permiten
-  // porque el tráfico ya viene autenticado por el túnel, no directo a internet.
+  // Un túnel aporta HTTPS, pero NO autentica al visitante.
   const isTunnelHost = /\.trycloudflare\.com$/.test(hostName) || /\.ngrok(-free)?\.app$/.test(hostName);
-  if (!isWebhook && hostName && !allowedHosts.has(hostName) && !isLanHost && !isTunnelHost) {
+  const publicHost = String(process.env.LUCIAN_PUBLIC_HOST || '').trim().toLowerCase().split(':')[0];
+  const isNamedPublicHost = Boolean(publicHost && hostName === publicHost);
+  if (!isWebhook && (!hostName || (!allowedHosts.has(hostName) && !isLanHost && !isTunnelHost && !isNamedPublicHost))) {
     res.writeHead(403, { 'content-type': 'text/plain' });
     res.end('Host no permitido.');
     return;
@@ -1979,13 +1990,17 @@ async function handle(req, res) {
   // o túnel, todas las rutas /api/* (excepto webhooks y /login)
   // exigen la clave que se muestra al arrancar. Sin esto, cualquiera
   // con la URL podría leer secretos o borrar datos.
-  const isLocalHost = allowedHosts.has(hostName) || !hostName;
-  // Modo simple (como al mediodia): sin clave, entra directo.
-  const needsAuth = false && !isLocalHost && !isWebhook && pathname.startsWith('/api/') && pathname !== '/api/login';
+  // Host es controlado por el cliente: nunca basta para determinar localhost.
+  // Cloudflare y otros proxies pueden usar un socket loopback; sus cabeceras
+  // forwarded y su dominio público deben obligar a autenticarse.
+  const peer = String(req.socket.remoteAddress || '').replace(/^::ffff:/, '');
+  const isLoopbackPeer = peer === '127.0.0.1' || peer === '::1';
+  const isLocalHost = allowedHosts.has(hostName) && isLoopbackPeer
+    && !req.headers['x-forwarded-for'] && !req.headers['x-forwarded-host'];
+  const needsAuth = !isLocalHost && !isWebhook && pathname.startsWith('/api/') && pathname !== '/api/login';
   if (needsAuth) {
     const provided = req.headers['x-lucian-access']
-      || url.searchParams.get('access')
-      || (String(req.headers.cookie || '').match(/lucian_access=([^;]+)/) || [])[1]
+      || (String(req.headers.cookie || '').match(/(?:^|;\s*)lucian_access=([^;]+)/) || [])[1]
       || '';
     if (!webhookTokenMatches(provided, ACCESS_TOKEN)) {
       fail(res, 401, 'Se requiere clave de acceso. Pegala en la pantalla de Lucian.');
@@ -1994,12 +2009,13 @@ async function handle(req, res) {
   }
 
   if (pathname === '/api/login' && method === 'POST') {
+    if (!originAllowed(req)) { fail(res, 403, 'Origen no permitido.'); return; }
     const body = await readJson(req).catch(() => ({}));
     const provided = String(body.token || '');
     if (webhookTokenMatches(provided, ACCESS_TOKEN)) {
       res.writeHead(200, {
         'content-type': 'application/json; charset=utf-8',
-        'set-cookie': `lucian_access=${ACCESS_TOKEN}; HttpOnly; SameSite=Lax; Path=/`,
+        'set-cookie': `lucian_access=${ACCESS_TOKEN}; HttpOnly; SameSite=Strict; Path=/${isTunnelHost || isNamedPublicHost || String(req.headers['x-forwarded-proto'] || '').toLowerCase() === 'https' ? '; Secure' : ''}`,
       });
       res.end(JSON.stringify({ ok: true }));
     } else {
@@ -2511,6 +2527,24 @@ async function handle(req, res) {
           if (body.contact[key] !== undefined) contact[key] = asString(body.contact[key]).slice(0, 300);
         }
         if (contact.email && !isValidEmail(contact.email)) throw new HttpError(400, 'El email del contacto no es válido.');
+        if (normalizeEmail(contact.email) !== normalizeEmail(target.contact?.email)) {
+          contact.permission = { status: 'unknown' }; // Un permiso nunca se transfiere a otra dirección.
+        }
+        if (body.contact.permission !== undefined) {
+          const requested = body.contact.permission;
+          if (!isObject(requested) || !['unknown', 'opted_in'].includes(requested.status)) {
+            throw new HttpError(400, 'Estado de consentimiento inválido.');
+          }
+          if (requested.status === 'opted_in') {
+            const evidence = asString(requested.evidence).trim().slice(0, 600);
+            if (evidence.length < 10) throw new HttpError(400, 'Describí dónde y cuándo se obtuvo el consentimiento (mínimo 10 caracteres).');
+            const sameEvidence = contact.permission?.status === 'opted_in' && contact.permission.evidence === evidence;
+            contact.permission = { status: 'opted_in', source: 'manual', evidence,
+              capturedAt: sameEvidence ? contact.permission.capturedAt : nowISO() };
+          } else {
+            contact.permission = { status: 'unknown' };
+          }
+        }
         target.contact = contact;
       }
       target.updatedAt = nowISO();
@@ -2995,7 +3029,8 @@ async function handle(req, res) {
     const mode = url.searchParams.get('hub.mode');
     const token = url.searchParams.get('hub.verify_token');
     const challenge = url.searchParams.get('hub.challenge');
-    const expected = store.settings().notify?.whatsapp?.verifyToken || 'lucian';
+    const expected = process.env.META_VERIFY_TOKEN || store.settings().notify?.whatsapp?.verifyToken || '';
+    if (!expected) { fail(res, 503, 'Configurá META_VERIFY_TOKEN para activar WhatsApp.'); return; }
     if (mode === 'subscribe' && token === expected) {
       res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' });
       res.end(challenge || 'ok');
@@ -3006,7 +3041,16 @@ async function handle(req, res) {
   }
 
   if (pathname === '/api/webhooks/whatsapp' && method === 'POST') {
-    const payload = await readJson(req, 5 * 1024 * 1024);
+    const appSecret = String(process.env.META_APP_SECRET || '');
+    if (!appSecret) { fail(res, 503, 'Configurá META_APP_SECRET para recibir webhooks de WhatsApp.'); return; }
+    const rawBody = await readBody(req, 5 * 1024 * 1024);
+    if (!verifyMetaSignature(rawBody, req.headers['x-hub-signature-256'], appSecret)) {
+      fail(res, 401, 'Firma de Meta inválida.');
+      return;
+    }
+    let payload;
+    try { payload = JSON.parse(rawBody.toString('utf8')); }
+    catch { throw new HttpError(400, 'El cuerpo del webhook no es JSON válido.'); }
     res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' });
     res.end('ok');
     const settings = store.settings();
@@ -3079,10 +3123,11 @@ const lanUrl = lanMode
   : '';
 // Clave de acceso obligatoria cuando la app se expone fuera de la PC.
 // Se genera al arrancar y se muestra en consola. En local no se pide.
-const ACCESS_TOKEN = crypto.randomBytes(12).toString('base64url');
+const ACCESS_TOKEN = process.env.LUCIAN_ACCESS_TOKEN || crypto.randomBytes(24).toString('base64url');
+if (ACCESS_TOKEN.length < 20) throw new Error('LUCIAN_ACCESS_TOKEN debe tener al menos 20 caracteres.');
 // Escribir la clave en un archivo para que el script de túnel la muestre
 if (lanMode) {
-  try { await import('node:fs/promises').then((m) => m.writeFile(path.join(__dirname, 'access-key.txt'), ACCESS_TOKEN, 'utf8')); } catch { /* noop */ }
+  try { await import('node:fs/promises').then((m) => m.writeFile(path.join(__dirname, 'access-key.txt'), ACCESS_TOKEN, { encoding: 'utf8', mode: 0o600 })); } catch { /* noop */ }
 }
 const settings = store.settings();
 const aiLabel = isAIReady(settings) ? `${settings.ai.provider} · ${resolveAIConfig(settings).model}` : 'modo demo (sin clave de IA)';
