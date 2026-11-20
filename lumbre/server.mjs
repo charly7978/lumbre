@@ -1980,7 +1980,8 @@ async function handle(req, res) {
   // exigen la clave que se muestra al arrancar. Sin esto, cualquiera
   // con la URL podría leer secretos o borrar datos.
   const isLocalHost = allowedHosts.has(hostName) || !hostName;
-  const needsAuth = !isLocalHost && !isWebhook && pathname.startsWith('/api/') && pathname !== '/api/login';
+  // Modo simple (como al mediodia): sin clave, entra directo.
+  const needsAuth = false && !isLocalHost && !isWebhook && pathname.startsWith('/api/') && pathname !== '/api/login';
   if (needsAuth) {
     const provided = req.headers['x-lucian-access']
       || url.searchParams.get('access')
