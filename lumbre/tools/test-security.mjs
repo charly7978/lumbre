@@ -63,10 +63,10 @@ const server = spawn(process.execPath, ['server.mjs'], {
   stdio: 'ignore',
 });
 // undici/fetch overrides the Host header. Use raw HTTP so Host spoofing tests are real.
-async function request(route, { method = 'GET', headers = {}, body = null } = {}) {
+async function request(route, { method = 'GET', headers = {}, body = null, targetPort = port } = {}) {
   return await new Promise((resolve, reject) => {
     const client = http.request({
-      hostname: '127.0.0.1', port, path: route, method, headers,
+      hostname: '127.0.0.1', port: targetPort, path: route, method, headers,
     }, (res) => {
       const chunks = [];
       res.on('data', (chunk) => chunks.push(chunk));
@@ -86,11 +86,11 @@ async function request(route, { method = 'GET', headers = {}, body = null } = {}
     client.end();
   });
 }
-async function waitForServer() {
+async function waitForServer(child = server, targetPort = port) {
   for (let attempt = 0; attempt < 60; attempt += 1) {
-    if (server.exitCode !== null) throw new Error('El servidor de prueba se cerró.');
+    if (child.exitCode !== null) throw new Error('El servidor de prueba se cerró.');
     try {
-      const res = await request('/api/health');
+      const res = await request('/api/health', { targetPort });
       if (res.ok) return;
     } catch { /* booting */ }
     await new Promise((resolve) => setTimeout(resolve, 150));
@@ -105,6 +105,11 @@ try {
   assert.equal((await request('/api/state', {
     headers: { host: 'localhost', 'x-forwarded-for': '203.0.113.5' },
   })).status, 401, 'Host localhost falsificado con proxy debe requerir clave');
+  for (const proxyHeader of ['forwarded', 'x-real-ip', 'cf-connecting-ip']) {
+    assert.equal((await request('/api/state', {
+      headers: { host: 'localhost', [proxyHeader]: 'for=203.0.113.5' },
+    })).status, 401, `${proxyHeader} obliga a autenticarse`);
+  }
   assert.equal((await request('/api/state', { headers: { host: 'attacker.example.com' } })).status, 403);
   assert.equal((await request('/api/login', {
     method: 'POST', headers: { host, 'content-type': 'application/json' },
@@ -147,4 +152,33 @@ try {
     if (server.exitCode === null) server.kill('SIGKILL');
   }
   await fs.rm(dataDir, { recursive: true, force: true });
+}
+
+const forcedDataDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lucian-forced-auth-'));
+const forcedServer = spawn(process.execPath, ['server.mjs'], {
+  cwd: root,
+  env: { ...process.env, PORT: String(port + 1), LUCIAN_HOST: '127.0.0.1',
+    LUCIAN_DATA_DIR: forcedDataDir, LUCIAN_NO_OPEN: '1',
+    LUCIAN_ACCESS_TOKEN: accessToken, LUCIAN_REQUIRE_AUTH: '1' },
+  stdio: 'ignore',
+});
+try {
+  await waitForServer(forcedServer, port + 1);
+  assert.equal((await request('/api/state', { targetPort: port + 1 })).status, 401,
+    'LUCIAN_REQUIRE_AUTH protege también Host localhost sin cabeceras de proxy');
+  assert.equal((await request('/api/state', {
+    targetPort: port + 1, headers: { 'x-lucian-access': accessToken },
+  })).status, 200, 'la clave habilita el panel en modo túnel protegido');
+  console.log('OK: modo de túnel forzado protege incluso Host localhost.');
+} finally {
+  if (forcedServer.exitCode === null) {
+    const closed = new Promise((resolve) => {
+      forcedServer.once('exit', resolve);
+      setTimeout(resolve, 2500).unref();
+    });
+    forcedServer.kill();
+    await closed;
+    if (forcedServer.exitCode === null) forcedServer.kill('SIGKILL');
+  }
+  await fs.rm(forcedDataDir, { recursive: true, force: true });
 }
