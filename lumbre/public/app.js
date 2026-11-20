@@ -281,6 +281,7 @@ function rangeDays(days) {
 const S = {
   state: null,
   connections: null,
+  autopilot: null,
   route: { view: 'panel', id: null, query: new URLSearchParams() },
   mission: null,
   missionES: null,
@@ -4389,6 +4390,7 @@ function renderConnections() {
   </div>
 
   ${fo.fallbackActive || fo.primaryFailures >= 2 ? `<div class="artifact-callout warn"><b>IA de respaldo activa</b>El proveedor principal tuvo ${fo.primaryFailures} fallo(s): ${esc(fo.lastError || 'cuota agotada')}. Lucian está usando Ollama local (gratis e ilimitado). ${fo.lastFailureAt ? `Último fallo: ${relTime(new Date(fo.lastFailureAt).toISOString())}.` : ''}</div>` : ''}
+  ${S.autopilot ? `<div class="artifact-callout ok"><b>🤖 Piloto de conexiones activo</b>Revisa tus integraciones cada ${S.autopilot.intervalMinutes || 10} min, cambia de IA si hay fallos, reintenta y te avisa por Telegram. ${S.autopilot.actions?.length ? `Última acción: ${esc(S.autopilot.actions[0])}.` : 'Sin incidencias.'} <button class="btn btn-ghost btn-xs mt-2" type="button" data-action="autopilot-run">${icon('play')} Ejecutar ahora</button></div>` : ''}
 
   <section class="stat-grid">
     ${statCard('Conexiones listas', `${okCount}/${conns.length}`, 'check', 'funcionando', '', '')}
@@ -4454,6 +4456,7 @@ async function fetchConnections() {
   const firstLoad = !S.connections;
   try {
     S.connections = await api('/api/connections', { silent: true });
+    S.autopilot = await api('/api/autopilot', { silent: true }).catch(() => null);
     if (firstLoad && S.route.view === 'conexiones') render();
   } catch { /* silencio */ }
 }
@@ -5396,6 +5399,12 @@ async function handleAction(action, el) {
     case 'save-publish': await savePublish(el.dataset.id); return;
     case 'social-open': await socialOpen(el.dataset.network, el.dataset.url); return;
     case 'connections-refresh': await loadConnections(); toast('Diagnóstico actualizado.'); return;
+    case 'autopilot-run': {
+      const r = await api('/api/autopilot/run', { method: 'POST' });
+      await loadConnections();
+      toast(r.actions?.length ? `Piloto: ${r.actions.join(' | ')}` : 'Piloto: todo en orden, sin acciones necesarias.');
+      return;
+    }
     case 'connection-test': await testConnectionUI(el.dataset.id, el); return;
     case 'conn-configure': await connConfigure(); return;
     case 'content-quick-publish': {

@@ -48,6 +48,11 @@ export const DEFAULT_SETTINGS = {
     apiKey: '',
     enabled: false,
   },
+  // Piloto de conexiones: los agentes revisan y reparan conexiones solos.
+  autopilot: {
+    enabled: true,
+    intervalMinutes: 10,
+  },
   // IA de respaldo: cuando el proveedor principal se queda sin cuota,
   // Lucian cambia automáticamente a Ollama local (gratis e ilimitado).
   fallback: {

@@ -296,13 +296,18 @@ export async function chat(cfg, options = {}) {
   const usage = { input: 0, output: 0, total: 0 };
   let lastError = null;
 
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  // Los modelos Claude recientes (Sonnet 4.5/5, Opus 4.1...) rechazan
+  // `temperature` con 400 "deprecated". Es un parámetro opcional: nunca
+  // lo enviamos a Anthropic y nos ahorramos reintentos innecesarios.
+  const skipTemperature = cfg.provider === 'anthropic';
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
     let body;
     if (cfg.provider === 'anthropic') {
       body = {
         model,
         max_tokens: maxTokens,
-        temperature,
+        ...(skipTemperature ? {} : { temperature }),
         messages: [{ role: 'user', content: buildAnthropicContent({ prompt, images }) }],
       };
       if (system) body.system = system;
@@ -362,13 +367,13 @@ export async function chat(cfg, options = {}) {
       }
 
       if (status === 429 || (status === 413 && /tokens per minute/i.test(message))) {
-        if (attempt < 2) {
+        if (attempt < 4) {
           await sleep(46000);
           continue;
         }
       }
       if (status === 500 || status === 502 || status === 503 || status === 529 || !status) {
-        if (attempt < 2) {
+        if (attempt < 4) {
           await sleep(1800 * (attempt + 1));
           continue;
         }

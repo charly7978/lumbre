@@ -32,6 +32,7 @@ import { buildQuote, quoteLanguage, quoteNumber, quoteTotals, roundMoney, validU
 import { createZip, readZip } from './lib/zip.mjs';
 import { fetchNewEmails } from './lib/imap.mjs';
 import { diagnoseConnections, testConnection, getAiFailoverState, resetAiFailover } from './lib/connections.mjs';
+import { startAutopilot, runAutopilot, getAutopilotState } from './lib/autopilot.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.LUCIAN_DATA_DIR ? path.resolve(process.env.LUCIAN_DATA_DIR) : path.join(__dirname, 'data');
@@ -506,6 +507,7 @@ function startImapPolling() {
   console.log(`  Correo entrante (IMAP Gmail): cada ${minutes} min`);
 }
 startImapPolling();
+startAutopilot(store, notifier, (line) => console.log(line));
 
 /* Extrae el procesamiento de un correo entrante para reutilizarlo
    desde el webhook y desde IMAP. Devuelve el hilo afectado. */
@@ -1969,6 +1971,16 @@ async function handle(req, res) {
     const id = String(body?.id || '');
     const result = await testConnection(id, store.settings());
     json(res, 200, result);
+    return;
+  }
+
+  if (pathname === '/api/autopilot' && method === 'GET') {
+    json(res, 200, getAutopilotState());
+    return;
+  }
+
+  if (pathname === '/api/autopilot/run' && method === 'POST') {
+    json(res, 200, await runAutopilot(store, notifier, (line) => console.log(line)));
     return;
   }
 

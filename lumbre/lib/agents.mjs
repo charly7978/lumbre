@@ -1945,7 +1945,15 @@ async function runMissionNow(missionId, deps) {
   const aiChoice = resolveAIWithFallback(settings);
   const cfg = aiChoice.cfg;
   if (aiChoice.isFallback && mission.status !== 'queued') {
-    await logMission(store, broadcast, mission, `IA de respaldo activa: ${aiChoice.reason}`);
+    const fallbackNote = `IA de respaldo activa: ${aiChoice.reason}`;
+    await logMission(store, broadcast, mission, fallbackNote);
+    // Aviso por Telegram: el dueño sabe que el cerebro cambió solo.
+    if (deps.notifier?.notify) {
+      deps.notifier.notify(
+        `🔄 *Lucian cambió de IA automáticamente*\n\n${fallbackNote}\n\nSeguí vendiendo con normalidad: el respaldo es local, gratis e ilimitado.`,
+        { kind: 'system' },
+      ).catch(() => {});
+    }
   }
   const demo = Boolean(mission.demo || mission.mode === 'demo');
 
