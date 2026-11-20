@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { buildSalesAgenda } from '../lib/sales-ops.mjs';
+import { buildSalesAgenda, buildCatalogHealth } from '../lib/sales-ops.mjs';
 const now = new Date('2026-11-20T14:00:00Z').getTime();
 const base = (id, fields = {}) => ({ id, productId: 'lamp', stage: 'nuevo', contact: { company: id, email: `${id}@buyer.test` }, drafts: [], quotes: [], messages: [], ...fields });
 const tasks = buildSalesAgenda({ now, products: [{ id: 'lamp', name: 'Lámpara Órbita' }], threads: [
@@ -29,4 +29,15 @@ assert.equal(repeat.total, 1, 'No repetir la misma conversación');
 const limited = buildSalesAgenda({ now, threads: [base('a', { stage: 'respondio', messages: [{ direction: 'in' }] }), base('b', { stage: 'respondio', messages: [{ direction: 'in' }] })], limit: 1 });
 assert.equal(limited.total, 2);
 assert.equal(limited.tasks.length, 1);
+const health = buildCatalogHealth([
+  { id: 'a', name: 'Incompleta', price: 0, photos: [] },
+  { id: 'b', name: 'Básica', price: 100, photos: [{ file: 'img.jpg' }], description: '' },
+  { id: 'c', name: 'Archivada', price: 0, photos: [], status: 'archivado' },
+]);
+assert.equal(health.total, 2);
+assert.equal(health.ready, 1);
+assert.equal(health.blocked, 1);
+assert.equal(health.missingPrices, 1);
+assert.equal(health.missingPhotos, 1);
+assert.equal(health.toImprove[0].id, 'a');
 console.log('OK sales-ops: respuestas, cobros pendientes, seguimiento, cotizaciones, revisión, opt-out, demo, duplicados y límite.');
