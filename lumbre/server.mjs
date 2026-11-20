@@ -3178,8 +3178,8 @@ function readinessLines() {
 console.log('');
 console.log('  LUCIAN · sistema de ventas para lámparas de diseño');
 console.log(`  ${url}`);
-if (lanUrl) {
-  console.log(`  Desde otra PC de la red: ${lanUrl}`);
+if (lanUrl) console.log(`  Desde otra PC de la red: ${lanUrl}`);
+if (lanMode || process.env.LUCIAN_REQUIRE_AUTH === '1') {
   console.log('');
   console.log('  ┌──────────────────────────────────────────────────────────┐');
   console.log('  │  CLAVE DE ACCESO (pedila en esta PC para abrir Lucian)  │');
