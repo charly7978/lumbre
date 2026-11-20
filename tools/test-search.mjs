@@ -82,7 +82,7 @@ ok(tavilyDetail.errors.some((e) => /Falta la clave/.test(e)), 'proveedor sin cla
 
 let result = null;
 try {
-  result = await searchWeb({ search: { provider: 'tavily', apiKey: '' } }, 'tiendas de diseÃ±o Madrid');
+  result = await searchWeb({ search: { provider: 'tavily', apiKey: '' } }, 'tiendas de diseño Madrid');
 } catch { result = null; }
 ok(Array.isArray(result) || result === null, 'searchWeb con fallback devuelve lista o lanza');
 
