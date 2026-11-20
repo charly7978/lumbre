@@ -3,7 +3,7 @@ chcp 65001 >nul
 title LUCIAN // ACCESO REMOTO
 cd /d "%~dp0lumbre"
 set LUCIAN_PORT=4321
-set LUCIAN_HOST=127.0.0.1
+set LUCIAN_HOST=0.0.0.0
 color 0F
 
 cls
@@ -29,6 +29,8 @@ echo  [3/5] Abriendo la conexion segura...
 if exist "tunnel.log" del "tunnel.log" /f /q
 if exist "url.txt" del "url.txt" /f /q
 start "LUCIAN-TUNEL" /MIN cmd /c "cloudflared.exe tunnel --url http://localhost:4321 > tunnel.log 2>&1"
+rem Guardia: si el tunel se cae, lo reconecta solo cada 30 s
+start "LUCIAN-GUARDIA" /MIN cmd /c "vigilar-tunel.cmd"
 
 echo  [4/5] Buscando la direccion publica...
 set INTENTOS=0
