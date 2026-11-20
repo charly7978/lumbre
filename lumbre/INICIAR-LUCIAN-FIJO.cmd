@@ -38,6 +38,7 @@ set "LUCIAN_HOST=127.0.0.1"
 set "LUCIAN_PORT=4321"
 set "LUCIAN_PUBLIC_HOST=%DOMINIO%"
 set "LUCIAN_NO_OPEN=1"
+set "LUCIAN_REQUIRE_AUTH=1"
 start "LUCIAN-SERVIDOR" cmd /k "node server.mjs"
 timeout /t 4 /nobreak >nul
 start "LUCIAN-TUNEL-FIJO" cmd /k ""%CLOUDFLARED%" tunnel run lucian"
