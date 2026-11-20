@@ -4,44 +4,44 @@
    Sin fuentes externas. Sin dependencias.
    ============================================================ */
 
-'':root {
-  --paper: #0f1220;
-  --paper-2: #161a2e;
-  --paper-3: #1e2340;
-  --paper-4: #262c4d;
-  --ink: #eef0f8;
-  --ink-2: #c8ccdf;
-  --ink-3: #9aa0bf;
-  --muted: #6b7194;
-  --line: #2a3056;
-  --line-strong: #3a4170;
-  --amber: #7c5cff;
-  --amber-deep: #5a3fd6;
-  --amber-bright: #a78bff;
-  --amber-soft: #2a2350;
-  --olive: #2dd4bf;
-  --olive-soft: #133a36;
-  --terracotta: #ff6b6b;
-  --terracotta-soft: #3a1f24;
-  --plum: #c084fc;
-  --blue: #38bdf8;
-  --rose: #f472b6;
-  --ok: #34d399;
-  --ok-soft: #12362a;
-  --warn: #fbbf24;
-  --warn-soft: #3a3010;
-  --danger: #f87171;
-  --danger-soft: #3a1f24;
-  --sidebar: #0a0d1a;
-  --sidebar-2: #12162a;
-  --cream: #f5f3ff;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .35), 0 6px 18px rgba(0, 0, 0, .25);
-  --shadow-md: 0 2px 6px rgba(0, 0, 0, .4), 0 18px 40px rgba(0, 0, 0, .35);
-  --shadow-lg: 0 30px 80px rgba(0, 0, 0, .5);
+''':root {
+  --paper: #f6f7fb;
+  --paper-2: #ffffff;
+  --paper-3: #eef1f7;
+  --paper-4: #e2e7f1;
+  --ink: #0f172a;
+  --ink-2: #1e293b;
+  --ink-3: #334155;
+  --muted: #64748b;
+  --line: #e2e8f0;
+  --line-strong: #cbd5e1;
+  --amber: #4f46e5;
+  --amber-deep: #3730a3;
+  --amber-bright: #818cf8;
+  --amber-soft: #e0e7ff;
+  --olive: #0d9488;
+  --olive-soft: #ccfbf1;
+  --terracotta: #e11d48;
+  --terracotta-soft: #ffe4e6;
+  --plum: #7c3aed;
+  --blue: #0284c7;
+  --rose: #db2777;
+  --ok: #16a34a;
+  --ok-soft: #dcfce7;
+  --warn: #d97706;
+  --warn-soft: #fef3c7;
+  --danger: #dc2626;
+  --danger-soft: #fee2e2;
+  --sidebar: #0f172a;
+  --sidebar-2: #1e293b;
+  --cream: #f8fafc;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, .06), 0 4px 12px rgba(15, 23, 42, .05);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, .08), 0 16px 40px rgba(15, 23, 42, .10);
+  --shadow-lg: 0 24px 60px rgba(15, 23, 42, .18);
   --radius-sm: 10px;
-  --radius: 16px;
-  --radius-lg: 24px;
-  --radius-xl: 32px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
   --sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --ease: cubic-bezier(.2, .8, .2, 1);
@@ -49,6 +49,7 @@
   --dur: 280ms;
   --dur-slow: 480ms;
 }
+
 
 
 
@@ -125,17 +126,17 @@ table { border-collapse: collapse; width: 100%; }
   flex-direction: column;
   gap: 22px;
   background:
-    radial-gradient(420px 260px at 20% 0%, rgba(231, 182, 107, .12), transparent 65%),
+    radial-gradient(420px 260px at 20% 0%, rgba(129, 140, 248, .16), transparent 65%),
     linear-gradient(170deg, var(--sidebar-2), var(--sidebar) 55%);
   color: #e9dfcf;
   border-right: 1px solid rgba(255, 255, 255, .04);
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: #4b3d2e transparent;
+  scrollbar-color: #334155 transparent;
   z-index: 40;
 }
 .sidebar::-webkit-scrollbar { width: 6px; }
-.sidebar::-webkit-scrollbar-thumb { background: #4b3d2e; border-radius: 99px; }
+.sidebar::-webkit-scrollbar-thumb { background: #334155; border-radius: 99px; }
 
 .brand {
   display: flex;
@@ -151,7 +152,7 @@ table { border-collapse: collapse; width: 100%; }
   display: grid;
   place-items: center;
   color: var(--amber-bright);
-  background: rgba(231, 182, 107, .12);
+  background: rgba(129, 140, 248, .16);
   border: 1px solid rgba(231, 182, 107, .22);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
 }
@@ -835,7 +836,7 @@ table { border-collapse: collapse; width: 100%; }
   transition: width .5s ease;
 }
 .progress-bar.ok { background: linear-gradient(90deg, #5a7a52, #8fae7e); }
-.progress-bar.warn { background: linear-gradient(90deg, #c98a3c, #f0c987); }
+.progress-bar.warn { background: linear-gradient(90deg, var(--warn), #fcd34d); }
 .progress-bar.danger { background: linear-gradient(90deg, #a34839, #c97866); }
 .progress-label { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); margin-top: 5px; }
 .mission-steps-mini { display: flex; gap: 4px; margin-top: 9px; }
@@ -1050,7 +1051,7 @@ table { border-collapse: collapse; width: 100%; }
 }
 .switch .track::after {
   content: ""; position: absolute; top: 3px; left: 3px; width: 17px; height: 17px; border-radius: 50%;
-  background: #fffaf1; box-shadow: 0 1px 3px rgba(0, 0, 0, .2); transition: transform .18s;
+  background: var(--paper-2); box-shadow: 0 1px 3px rgba(0, 0, 0, .2); transition: transform .18s;
 }
 .switch input:checked + .track { background: var(--olive); }
 .switch input:checked + .track::after { transform: translateX(17px); }
@@ -1262,7 +1263,7 @@ input[type="range"] { accent-color: var(--amber-deep); flex: 1; }
 .mission-hero-bottom { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 18px; margin-top: 22px; position: relative; z-index: 1; }
 .mission-hero-progress { flex: 1 1 320px; max-width: 520px; }
 .mission-hero-progress .progress { background: rgba(255, 255, 255, .13); height: 7px; }
-.mission-hero-progress .progress-bar { background: linear-gradient(90deg, #c98a3c, #f0c987); }
+.mission-hero-progress .progress-bar { background: linear-gradient(90deg, var(--warn), #fcd34d); }
 .mission-hero-progress .progress-label { color: #b6a894; }
 .mission-hero-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .mission-hero-actions .btn-ghost { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .18); color: #f0e4d3; }
