@@ -1,4 +1,5 @@
 ﻿import { fetchJson, sleep, truncate } from './util.mjs';
+import { productReadiness } from './readiness.mjs';
 
 /* ─────────────────────────────────────────────────────────────
    Avisos al dueño. La regla es simple: interrumpir solo cuando
@@ -23,6 +24,9 @@ export class Notifier {
     this.polling = false;
     this.timer = null;
     this.lastError = '';
+    this.lastPollAt = null;
+    this.lastInboundAt = null;
+    this.lastReplyAt = null;
     this.started = false;
   }
 
@@ -39,7 +43,7 @@ export class Notifier {
   stop() {
     this.generation += 1;
     this.started = false;
-    this.polling = false;
+    // No liberamos polling hasta que el request en curso terminó.
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
   }
@@ -52,7 +56,11 @@ export class Notifier {
     const settings = this.store.settings();
     if (!settings.notify?.telegram?.enabled) return;
     if (!settings.notify.telegram.token || !settings.notify.telegram.chatId) return;
-    this.pollTelegram(this.generation).catch(() => {});
+    this.pollTelegram(this.generation).catch((error) => {
+      this.lastError = this._redact(error?.message || String(error));
+      this.polling = false;
+      this.store.activity('system', `Telegram: ${this.lastError}`).catch(() => {});
+    });
   }
 
   refresh() {
@@ -163,7 +171,7 @@ export class Notifier {
       return msg;
     }
     if (lower === '/ayuda' || lower === 'ayuda') {
-      const msg = 'Comandos: /estado, /misiones, /resumen, /pausar, /activar, /reiniciar. También podés escribirme una pregunta o pedirme una acción: "buscá tiendas en Madrid", "prepará borrador para X", "mandá el mail", "lanzá la misión", "subí el precio".';
+      const msg = 'Comandos: /estado, /prioridades, /oportunidades, /diagnostico, /misiones, /resumen, /pausar, /activar, /reiniciar. También podés escribirme una pregunta o pedirme una acción: "buscá tiendas en Madrid", "prepará borrador para X", "mandá el mail", "lanzá la misión", "subí el precio".';
       this._appendHistory(session, 'user', clean);
       this._appendHistory(session, 'assistant', msg);
       await this._persistSessions(sessions);
@@ -187,6 +195,37 @@ export class Notifier {
     }
     if (lower === '/estado' || lower === 'estado') {
       const msg = this.statusText();
+      this._appendHistory(session, 'user', clean);
+      this._appendHistory(session, 'assistant', msg);
+      await this._persistSessions(sessions);
+      return msg;
+    }
+    if (['/diagnostico', 'diagnostico', '/telegram'].includes(lower)) {
+      const health = this.telegramDiagnostics();
+      const msg = [
+        'Telegram, diagnóstico de entrada y salida:',
+        `Configurado: ${health.configured ? 'sí' : 'no'}`,
+        `Escuchando: ${health.polling ? 'sí' : 'no'}`,
+        `Última consulta: ${health.lastPollAt || 'sin datos'}`,
+        `Último mensaje recibido: ${health.lastInboundAt || 'sin datos'}`,
+        `Última respuesta enviada: ${health.lastReplyAt || 'sin datos'}`,
+        health.lastError ? `Error: ${health.lastError}` : 'Último error: ninguno',
+        'Este comando prueba la recepción. Para probar la IA escribí una pregunta libre.',
+      ].join('\n');
+      this._appendHistory(session, 'user', clean);
+      this._appendHistory(session, 'assistant', msg);
+      await this._persistSessions(sessions);
+      return msg;
+    }
+    if (['/prioridades', 'prioridades', '/comercial'].includes(lower)) {
+      const msg = this.commercialPrioritiesText();
+      this._appendHistory(session, 'user', clean);
+      this._appendHistory(session, 'assistant', msg);
+      await this._persistSessions(sessions);
+      return msg;
+    }
+    if (['/oportunidades', 'oportunidades'].includes(lower)) {
+      const msg = this.opportunitiesText();
       this._appendHistory(session, 'user', clean);
       this._appendHistory(session, 'assistant', msg);
       await this._persistSessions(sessions);
@@ -345,6 +384,65 @@ export class Notifier {
     return res;
   }
 
+  telegramDiagnostics() {
+    const t = this.store.settings().notify?.telegram || {};
+    return {
+      configured: Boolean(t.enabled && t.token && t.chatId),
+      polling: this.started && this.polling,
+      lastPollAt: this.lastPollAt,
+      lastInboundAt: this.lastInboundAt,
+      lastReplyAt: this.lastReplyAt,
+      lastError: this.lastError,
+    };
+  }
+
+  commercialPrioritiesText() {
+    const products = (this.store.get('products') || []).filter((p) => p.status !== 'archivado' && !p.demo);
+    const threads = (this.store.get('threads') || []).filter((t) => !t.demo);
+    const missing = products.map((p) => ({ name: p.name || p.sku || 'Producto', result: productReadiness(p) }))
+      .filter((p) => !p.result.readyForProspecting);
+    const hot = threads.filter((t) => ['interesado', 'negociando', 'respondio'].includes(t.stage));
+    const review = threads.reduce((n, t) => n + (t.drafts || []).filter((d) => d.status === 'revisar').length, 0);
+    const ready = threads.reduce((n, t) => n + (t.drafts || []).filter((d) => d.status === 'listo').length, 0);
+    const overdue = threads.filter((t) => t.nextFollowUp && new Date(t.nextFollowUp).getTime() <= Date.now()
+      && !['ganado', 'perdido'].includes(t.stage));
+    const email = this.store.settings().email || {};
+    const mailReady = email.provider !== 'manual' && (
+      (email.provider === 'resend' && Boolean(email.resendKey && email.from))
+      || (email.provider === 'gmail' && Boolean(email.smtpUser && email.smtpPassword))
+      || (email.provider === 'webhook' && Boolean(email.webhookUrl)));
+    const lines = [
+      'Prioridades comerciales REALES (sin datos demo):',
+      `Productos activos: ${products.length}; incompletos: ${missing.length}`,
+      `Conversaciones con respuesta o interés: ${hot.length}`,
+      `Borradores para revisar: ${review}; listos: ${ready}`,
+      `Seguimientos vencidos: ${overdue.length}`,
+      `Envío por correo: ${mailReady ? 'configurado; requiere verificación real' : 'pendiente de configurar'}`,
+    ];
+    if (missing.length) lines.push(`1. Completar ${missing[0].name}: ${missing[0].result.missing[0]?.label || 'revisar ficha'}.`);
+    if (hot.length) lines.push(`2. Responder a ${hot[0].contact?.company || hot[0].contact?.name || 'contacto interesado'}.`);
+    if (overdue.length) lines.push(`3. Revisar seguimiento de ${overdue[0].contact?.company || overdue[0].contact?.name || 'contacto'}.`);
+    if (review) lines.push('4. Revisar los borradores antes de enviarlos.');
+    if (!mailReady) lines.push('5. Conectar y probar el correo de salida para convertir borradores en contactos reales.');
+    if (!products.length) lines.push('Cargá al menos una lámpara real con foto y precio; sin catálogo no hay campaña verificable.');
+    if (!hot.length && !ready && !review && products.length && !missing.length) {
+      lines.push('Siguiente acción: ejecutar una misión comercial sobre un producto y revisar los prospectos verificables.');
+    }
+    return lines.join('\n');
+  }
+
+  opportunitiesText() {
+    const threads = (this.store.get('threads') || []).filter((t) =>
+      !t.demo && ['respondio', 'interesado', 'negociando'].includes(t.stage))
+      .sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0));
+    if (!threads.length) return 'No hay conversaciones reales con respuesta o interés registradas. Esto NO significa que se hayan concretado ventas.';
+    return [
+      `Oportunidades comerciales reales: ${threads.length}`,
+      ...threads.slice(0, 8).map((t, i) =>
+        `${i + 1}. ${t.contact?.company || t.contact?.name || 'Contacto'} [${t.stage}]. Próximo paso: ${truncate(t.nextStep || 'responder y calificar interés', 110)}`),
+    ].join('\n');
+  }
+
   statusText() {
     const settings = this.store.settings();
     const missions = this.store.get('missions');
@@ -443,68 +541,100 @@ export class Notifier {
     const chatId = String(settings.notify?.telegram?.chatId || '');
     if (!token || !chatId) { this.polling = false; return; }
 
-    while (this.generation === generation) {
-      try {
-        const offset = Number(this.store.get('meta').telegramOffset || 0);
-        const url = `https://api.telegram.org/bot${token}/getUpdates?timeout=25&allowed_updates=${encodeURIComponent('["message"]')}${offset ? `&offset=${offset}` : ''}`;
-        const { ok, data } = await fetchJson(url, { timeoutMs: 35000 });
-        if (this.generation !== generation) break;
-        if (!ok || !data?.ok) {
-          this.lastError = data?.description || 'Telegram rechazó la conexión';
-          if (/unauthorized|not found/i.test(this.lastError)) break;
-          await sleep(15000);
-          continue;
-        }
-        for (const update of data.result || []) {
-          const nextOffset = Number(update.update_id) + 1;
-          await this.store.setMeta({ telegramOffset: nextOffset });
-          const message = update.message;
-          if (String(message?.chat?.id) !== String(chatId)) continue;
-          if (!message?.text && !message?.voice && !message?.audio && !(Array.isArray(message?.photo) && message.photo.length)) {
-            try { await sendTelegramText(this.store.settings(), 'Puedo trabajar con texto, audio e imágenes; enviame el pedido y lo resuelvo.', { chatId: message.chat.id }); } catch { /* noop */ }
+    try {
+      while (this.started && this.generation === generation) {
+        try {
+          const offset = Number(this.store.get('meta').telegramOffset || 0);
+          const url = `https://api.telegram.org/bot${token}/getUpdates?timeout=25&allowed_updates=${encodeURIComponent('["message"]')}${offset ? `&offset=${offset}` : ''}`;
+          const { ok, data } = await fetchJson(url, { timeoutMs: 35000 });
+          if (this.generation !== generation || !this.started) break;
+          this.lastPollAt = new Date().toISOString();
+          if (!ok || !data?.ok) {
+            const detail = String(data?.description || 'Telegram rechazó la conexión');
+            this.lastError = /conflict/i.test(detail)
+              ? 'Conflicto: otro proceso lee este bot o hay un webhook activo. Debe existir un solo receptor de mensajes.'
+              : this._redact(detail);
+            if (/unauthorized|not found/i.test(detail)) break;
+            await sleep(15000);
             continue;
           }
-          const attachments = [];
-          const token = settings.notify?.telegram?.token;
-          if (message?.voice?.file_id || message?.audio?.file_id) {
-            const fileId = message.voice?.file_id || message.audio?.file_id;
-            const mime = message.voice?.mime_type || message.audio?.mime_type || 'audio/ogg';
-            try {
-              const file = await telegramGetFile(token, fileId);
-              if (file?.file_path) {
-                const buffer = await fetchTelegramFile(token, file.file_path);
-                if (buffer) attachments.push({ type: 'audio', buffer, mime });
-              }
-            } catch { /* noop */ }
-          }
-          if (Array.isArray(message?.photo) && message.photo.length) {
-            const photo = message.photo[message.photo.length - 1];
-            try {
-              const file = await telegramGetFile(token, photo.file_id);
-              if (file?.file_path) {
-                const buffer = await fetchTelegramFile(token, file.file_path);
-                if (buffer) {
-                  const mime = 'image/jpeg';
-                  const base64 = Buffer.from(buffer).toString('base64');
-                  attachments.push({ type: 'image', dataUrl: `data:${mime};base64,${base64}`, mime });
+          this.lastError = '';
+          for (const update of data.result || []) {
+            if (this.generation !== generation || !this.started) break;
+            const nextOffset = Number(update.update_id) + 1;
+            const message = update.message;
+            if (String(message?.chat?.id) !== chatId) {
+              // No se responde a chats que no son del dueño.
+              await this.store.setMeta({ telegramOffset: nextOffset, telegramPendingReply: null });
+              continue;
+            }
+
+            // Checkpoint persistente: si falla sendMessage, no volvemos a
+            // ejecutar una orden comercial al reintentar la entrega.
+            const pending = this.store.get('meta').telegramPendingReply;
+            const hasPending = pending && Number(pending.updateId) === Number(update.update_id)
+              && String(pending.chatId) === chatId;
+            let reply;
+            if (hasPending) {
+              reply = String(pending.reply || '');
+            } else {
+              this.lastInboundAt = new Date().toISOString();
+              if (!message?.text && !message?.voice && !message?.audio && !message?.caption
+                && !(Array.isArray(message?.photo) && message.photo.length)) {
+                reply = 'Puedo trabajar con texto, audio e imágenes; enviame el pedido y lo resuelvo.';
+              } else {
+                const attachments = [];
+                if (message.voice?.file_id || message.audio?.file_id) {
+                  const fileId = message.voice?.file_id || message.audio?.file_id;
+                  const mime = message.voice?.mime_type || message.audio?.mime_type || 'audio/ogg';
+                  try {
+                    const file = await telegramGetFile(token, fileId);
+                    if (file?.file_path) {
+                      const buffer = await fetchTelegramFile(token, file.file_path);
+                      if (buffer) attachments.push({ type: 'audio', buffer, mime });
+                    }
+                  } catch (error) { this.lastError = this._redact(error?.message || String(error)); }
                 }
+                if (Array.isArray(message.photo) && message.photo.length) {
+                  const photo = message.photo[message.photo.length - 1];
+                  try {
+                    const file = await telegramGetFile(token, photo.file_id);
+                    if (file?.file_path) {
+                      const buffer = await fetchTelegramFile(token, file.file_path);
+                      if (buffer) attachments.push({
+                        type: 'image', dataUrl: `data:image/jpeg;base64,${Buffer.from(buffer).toString('base64')}`, mime: 'image/jpeg',
+                      });
+                    }
+                  } catch (error) { this.lastError = this._redact(error?.message || String(error)); }
+                }
+                const text = message.text || message.caption || '';
+                reply = await this.handleOwnerText(text, 'telegram', message.chat.id, attachments);
               }
-            } catch { /* noop */ }
+              await this.store.setMeta({
+                telegramPendingReply: { updateId: update.update_id, chatId, reply: String(reply || '') },
+              });
+            }
+
+            if (reply) {
+              // No silenciar el error de transporte: una respuesta fallida
+              // permanece pendiente y se reintenta sin repetir la acción.
+              await sendTelegramText(this.store.settings(), reply, { chatId: message.chat.id });
+              this.lastReplyAt = new Date().toISOString();
+            }
+            await this.store.setMeta({ telegramOffset: nextOffset, telegramPendingReply: null });
           }
-          const text = message?.text || message?.caption || '';
-          const reply = await this.handleOwnerText(text, 'telegram', message.chat.id, attachments);
-          if (reply) await sendTelegramText(this.store.settings(), reply, { chatId: message.chat.id }).catch(() => {});
+        } catch (error) {
+          if (this.generation !== generation || !this.started) break;
+          this.lastError = this._redact(error?.message || String(error));
+          await this.store.activity('system', `Telegram no pudo procesar o entregar un mensaje: ${this.lastError}`).catch(() => {});
+          await sleep(15000);
         }
-      } catch (error) {
-        if (this.generation !== generation) break;
-        this.lastError = error.message;
-        await sleep(15000);
       }
+    } finally {
+      this.polling = false;
+      // El polling anterior termina antes de comenzar con nuevas credenciales.
+      this.startPolling();
     }
-    this.polling = false;
-    // Si guardaron ajustes mientras esperábamos una respuesta, el loop viejo
-    // ya terminó: levantamos el nuevo con la configuración más reciente.
-    this.startPolling();
   }
 }
 
@@ -590,8 +720,20 @@ export async function sendWhatsApp(settings, text) {
   return data;
 }
 
-export async function telegramChats(token) {
+export async function telegramChats(token, knownChatId = '') {
   if (!token) throw new Error('Falta el token de Telegram');
+  // Si ya conocemos el chat, consultar getChat evita competir con el polling.
+  if (knownChatId) {
+    const { ok, data, text } = await fetchJson(`https://api.telegram.org/bot${token}/getChat`, {
+      method: 'POST', body: { chat_id: knownChatId }, timeoutMs: 15000,
+    });
+    if (!ok || !data?.ok) throw new Error(`Telegram: ${data?.description || text.slice(0, 200)}`);
+    const chat = data.result || {};
+    return [{
+      id: String(chat.id), name: [chat.first_name, chat.last_name].filter(Boolean).join(' ')
+        || chat.title || chat.username || 'Chat', username: chat.username || '',
+    }];
+  }
   const { ok, data, text } = await fetchJson(`https://api.telegram.org/bot${token}/getUpdates?timeout=1&allowed_updates=${encodeURIComponent('["message"]')}`, { timeoutMs: 15000 });
   if (!ok || !data?.ok) throw new Error(`Telegram: ${data?.description || text.slice(0, 200)}`);
   const chats = [];
@@ -618,7 +760,13 @@ export async function testTelegram(settings) {
     await sendTelegram(settings, `Lucian conectado. Este es un mensaje de prueba para ${settings.brand?.name || 'tu marca'}.`);
     sent = true;
   }
-  return { bot: me.data.result?.username || '', name: me.data.result?.first_name || '', sent };
+  const hook = await fetchJson(`https://api.telegram.org/bot${token}/getWebhookInfo`, { timeoutMs: 15000 });
+  const webhook = hook.ok && hook.data?.ok ? hook.data.result?.url || '' : '';
+  return {
+    bot: me.data.result?.username || '', name: me.data.result?.first_name || '',
+    sent, inboundVerified: false, webhookActive: Boolean(webhook),
+    warning: webhook ? 'Hay un webhook activo: el polling local no recibirá mensajes.' : '',
+  };
 }
 
 export async function testWhatsApp(settings) {
