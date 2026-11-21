@@ -10,7 +10,7 @@ import {
   selectRelevantLearnings,
 } from '../lib/agents.mjs';
 import {
-  assertCanSend, buildEml, detectOptOut, isOptOutText, isSuppressed, parseEmailEvent, parseInbound, sentToday, stripQuotedText,
+  assertCanSend, buildEml, detectOptOut, ensureCompliance, isOptOutText, isSuppressed, parseEmailEvent, parseInbound, salesCopyIssues, sentToday, stripQuotedText,
 } from '../lib/email.mjs';
 import { buildQuote, quoteNumber, quoteTotals, validUntilDate } from '../lib/quotes.mjs';
 
@@ -612,6 +612,33 @@ const baseArtifacts = (messages) => ({
     quote: { ...quote, language: 'en' },
   });
   ok(english.text.startsWith('Hi John.') && english.text.includes('Quote valid until'), 'la cotización respeta el idioma del comprador');
+}
+
+
+/* Regresión: LUCIAN es la marca, Caseros no forma parte del nombre comercial.
+   Los agentes deben frenar mensajes autodestructivos, también si eran viejos. */
+{
+  const flawed = salesCopyIssues({
+    subject: 'Pieza de autor para tu surtido',
+    body: 'Hola, soy Carlos Ameghino, de Lucian (Caseros). Antes de nada: estoy cerrando costos y flete interno a Córdoba.',
+  });
+  ok(flawed.some((reason) => /localidad/i.test(reason)), 'detecta localidad agregada a LUCIAN');
+  ok(flawed.length >= 3, 'detecta correo comercial contraproducente');
+  const valid = salesCopyIssues({
+    subject: 'Lámpara Siri para tu tienda',
+    body: 'Hola, soy Carlos Ameghino, de LUCIAN. Te presento Siri, una lámpara colgante con terminación local. ¿Te interesa recibir fotos y una ficha breve del producto?',
+  });
+  ok(valid.length === 0, 'acepta presentación breve sin inventar ubicación ni autoría');
+  const footer = ensureCompliance('Consulta sobre una lámpara', {
+    brand: { name: 'LUCIAN', city: 'Caseros', website: 'https://example.test' },
+    email: {},
+  });
+  ok(!footer.includes('Caseros'), 'el pie no convierte localidad en nombre o domicilio postal');
+  const postal = ensureCompliance('Consulta sobre una lámpara', {
+    brand: { name: 'LUCIAN', city: 'Caseros', address: 'Calle 123, Provincia de Buenos Aires, Argentina' },
+    email: {},
+  });
+  ok(postal.includes('Calle 123'), 'conserva la dirección postal explícita cuando está configurada');
 }
 
 for (const dir of dirs) {
