@@ -322,7 +322,11 @@ export class Notifier {
       if (action.requiere_accion) {
         const { describeAction } = await import('./telegram-actions.mjs');
         const spec = (await import('./telegram-actions.mjs')).ACTION_SPECS[action.tipo];
-        const isAuto = spec?.auto === true;
+        // Marcar una venta ganada o una pérdida afecta métricas y postventa:
+        // requiere confirmación expresa del dueño, nunca solo decisión de la IA.
+        const finalStage = action.tipo === 'actualizar_hilo'
+          && ['ganado', 'perdido'].includes(String(action.args?.stage || '').toLowerCase());
+        const isAuto = spec?.auto === true && !finalStage;
         if (isAuto) {
           const { executeAction } = await import('./telegram-actions.mjs');
           const res = await executeAction({ action, store: this.store, actions: this.actions, chatId: effectiveChatId, search: async (s, q, o) => {
