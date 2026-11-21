@@ -1068,7 +1068,10 @@ async function openOperationsModal() {
             Ollama: <b>${ai.localAvailable ? 'activo con ' + esc(ai.localModel) : esc(ai.localError || 'no disponible')}</b>.</p>
           <p class="small">Telegram: <b>${tg.polling ? 'receptor activo' : 'receptor no activo'}</b>
             ${tg.lastError ? '· ' + esc(tg.lastError) : ''}</p>
-          <a href="#/ajustes?tab=ia" class="btn btn-ghost btn-sm mt-2">Configurar inteligencia artificial</a>
+          <div class="cluster mt-2">
+            <button class="btn btn-ghost btn-sm" type="button" data-action="operations-telegram-repair">Diagnosticar recepción de Telegram</button>
+            <a href="#/ajustes?tab=ia" class="btn btn-ghost btn-sm">Configurar inteligencia artificial</a>
+          </div>
         </div>
         <div class="card card-pad mt-3">
           <h3 class="card-title">Obstáculos comprobables</h3>
@@ -1082,6 +1085,27 @@ async function openOperationsModal() {
         <button class="btn btn-ghost" type="button" data-action="close-modal">Cerrar</button>`,
     });
   } catch (error) { toast('Diagnóstico falló: ' + error.message, 'error'); }
+}
+
+async function diagnoseTelegramWebhookUI() {
+  try {
+    const status = await api('/api/operations/telegram-webhook', { silent: true });
+    if (!status.active) {
+      toast(status.lastError
+        ? 'Webhook inactivo; error anterior: ' + status.lastError
+        : 'Sin webhook activo. Si Telegram no responde, puede existir otra app usando getUpdates con este bot.');
+      return;
+    }
+    const confirm = await confirmAction({
+      title: 'Reparar la recepción de Telegram',
+      message: 'Este bot tiene un webhook activo que impide recibir tus mensajes en LUCIAN. Se desactivará ese webhook anterior sin borrar mensajes pendientes. Si el webhook pertenece a otro servicio que todavía usás, dejará de recibir mensajes.',
+      confirmLabel: 'Desactivar webhook anterior',
+    });
+    if (!confirm) return;
+    const result = await api('/api/operations/telegram-repair', { method: 'POST' });
+    toast(result.message || 'Reparación enviada a Telegram.');
+    await openOperationsModal();
+  } catch (error) { toast('Telegram: ' + error.message, 'error'); }
 }
 
 async function runOperationsEmailTest() {
@@ -5667,6 +5691,7 @@ async function handleAction(action, el) {
     case 'reload-state': await loadState(); return;
     case 'operations-diagnose': await openOperationsModal(); return;
     case 'operations-send-test': await runOperationsEmailTest(); return;
+    case 'operations-telegram-repair': await diagnoseTelegramWebhookUI(); return;
     case 'new-product': openProductModal(); return;
     case 'import-products': $('#product-import-input')?.click(); return;
     case 'campaign-catalog': openCampaignModal(); return;
