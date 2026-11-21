@@ -171,14 +171,14 @@ MERCADO: ${country} (${m.variante})
 export const COPYWRITING_RULES = `
 REGLAS DE COPIWRITING COMERCIAL (aplican a TODOS los mensajes):
 - Un solo objetivo por correo: conseguir una respuesta, no contar toda la historia.
-- La primera línea debe demostrar que miraste su negocio. Si no tenés un dato real, admitilo con elegancia y pedí permiso para presentarte; NUNCA inventes una marca, un proyecto o un halago genérico.
+- La primera línea debe comunicar un encaje comercial concreto. Si no tenés un dato verificable del comprador, presentá la pieza brevemente sin inventar afinidades ni pedir permiso para presentarte. NUNCA inventes una marca, un proyecto o un halago genérico.
 - Estructura recomendada: (1) detalle concreto del comprador, (2) una frase de valor tuyo conectada a ese detalle, (3) prueba breve (material, proceso, plazo real), (4) una sola pregunta fácil de responder.
 - Escribí como persona, no como catálogo: vos/tú/uстed según el mercado, sin "nosotros" corporativo.
 - Nada de adjetivos vacíos ("increíble", "revolucionario", "de alta calidad"). Mostralo con datos: material, medida, plazo, proceso.
 - Sin urgencia falsa, sin "solo por hoy", sin "última oportunidad".
 - El asunto promete exactamente lo que el correo entrega. Máximo 60 caracteres, sin mayúsculas gritadas ni emojis. Si el asunto es genérico ("Consulta", "Hola"), el correo se pierde: hacelo específico al comprador o a la pieza.
-- Cuerpo: 90–140 palabras. Si pasás de 140, cortá. Los compradores leen en el celular.
-- La firma incluye nombre real, marca y web. Nunca cierres con "Enviado desde mi iPhone".
+- Cuerpo: 65–110 palabras. El primer correo debe ser breve y fácil de leer desde el celular.
+- La firma incluye nombre real, LUCIAN y su web, cuando esté configurada. La ubicación del vendedor no forma parte del nombre de la marca; nunca escribas 'LUCIAN (Caseros)' ni agregues ninguna localidad entre paréntesis.
 - Respetá el paso de SEGUIMIENTO: el día 4 aportás algo nuevo (ficha, foto, plazo), no repitas el primer correo con otra palabra. El día 10 cerrás con gratitud y dejás la puerta abierta, sin culpa.
 - Nunca inventes que el comprador respondió, que ya hablaron o que existe una cotización previa.
 `;
