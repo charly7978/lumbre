@@ -19,7 +19,7 @@ import {
   isSharedEmailDomain, isSuppressed, isValidEmail, normalizeCompany, normalizeEmail,
   parseEmailEvent, parseInbound, sendWithResend, sendWithWebhook, sendWithGmail, testResend,
 } from './lib/email.mjs';
-import { Notifier, parseWhatsAppWebhook, sendWhatsApp, telegramChats, testTelegram, testWhatsApp } from './lib/notify.mjs';
+import { Notifier, parseWhatsAppWebhook, sendWhatsApp, telegramChats, testTelegram, testWhatsApp, telegramWebhookStatus, repairTelegramWebhook } from './lib/notify.mjs';
 import {
   analyzeThread, askTeam, migrateLegacyDrafts, reconcileThreads, releaseInterruptedMissions, runMission, sanitizeLegacyThreads,
 } from './lib/agents.mjs';
@@ -2212,6 +2212,20 @@ async function handle(req, res) {
     json(res, 200, await commercialDiagnostic());
     return;
   }
+  if (pathname === '/api/operations/telegram-webhook' && method === 'GET') {
+    json(res, 200, await telegramWebhookStatus(store.settings()));
+    return;
+  }
+  if (pathname === '/api/operations/telegram-repair' && method === 'POST') {
+    const result = await repairTelegramWebhook(store.settings());
+    if (result.changed) {
+      await store.activity('system', 'Webhook antiguo de Telegram desactivado sin descartar mensajes pendientes.');
+      notifier.refresh();
+    }
+    json(res, 200, result);
+    return;
+  }
+
   if (pathname === '/api/operations/test-email' && method === 'POST') {
     json(res, 200, await sendSelfTestEmail());
     return;
