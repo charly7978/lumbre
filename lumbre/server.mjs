@@ -650,6 +650,7 @@ function statePayload() {
     limits: dailyLimitInfo(settings, threads),
     sales: buildSales(threads, products, settings.brand?.currency || 'USD'),
     outbox: outbox.status(),
+    telegram: notifier.telegramDiagnostics(),
     usage: meta.agentUsage || {},
     intel: buildIntel(missions),
   };
