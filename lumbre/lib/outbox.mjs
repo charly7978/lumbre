@@ -325,7 +325,12 @@ export class Outbox {
       const settings = this.store.settings();
       // Sin piloto automático no se envía nada, pero los seguimientos
       // y la postventa vencidos se preparan para revisión: el dueño solo aprueba.
-      if (this.canAutopilot(settings)) await this.processQueue(settings);
+      if (this.canAutopilot(settings)) {
+        // Al habilitar el piloto, recuperar también los borradores históricos
+        // APROBADOS; antes quedaban listos indefinidamente sin ingresar en cola.
+        await this.enqueueAllReady();
+        await this.processQueue(settings);
+      }
       if (settings.email?.followUps !== false) await this.maybeFollowUps(settings);
       if (settings.email?.postSales !== false) await this.maybePostSale(settings);
     } finally {
