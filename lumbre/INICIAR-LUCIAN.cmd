@@ -1,8 +1,8 @@
 @echo off
 title LUCIAN - Acceso desde cualquier lugar
 
-rem --- Ruta fija a la carpeta real de Lucian ---
-set "BASE=C:\Users\carlo.ROLITO\Downloads\Sistema-Ventas-Lamparas\lumbre\"
+rem --- Carpeta canónica (portátil, sin rutas personales fijas) ---
+set "BASE=%~dp0"
 cd /d "%BASE%"
 
 cls
@@ -62,6 +62,12 @@ ping -n 3 127.0.0.1 >nul
 goto ESPERAR
 
 :MOSTRAR
+rem Acceso remoto autenticado con enlace privado; el servidor elimina la clave de la URL al entrar.
+set "ACCESS_KEY="
+if not exist "%BASE%access-key.txt" goto SINCLAVE
+set /p ACCESS_KEY=<"%BASE%access-key.txt"
+if not defined ACCESS_KEY goto SINCLAVE
+set "PRIVATE_URL=%URL%/?access=%ACCESS_KEY%"
 cls
 echo.
 echo  ============================================================
@@ -70,10 +76,10 @@ echo    LUCIAN ESTA LISTO
 echo.
 echo    Esta es la direccion para el celular:
 echo.
-echo           %URL%
+echo           %PRIVATE_URL%
 echo.
-echo    Copiala y mandala por WhatsApp.
-echo    Al abrirla, entra directo. Sin clave.
+echo    Este enlace es privado: no lo compartas con terceros.
+echo    Al abrirlo el acceso se valida automaticamente.
 echo.
 echo    NO cierres esta ventana ni apagues la PC.
 echo.
@@ -81,12 +87,12 @@ echo  ============================================================
 echo.
 >"%BASE%DIRECCION-LUCIAN.txt" echo DIRECCION DE LUCIAN PARA EL CELULAR
 >>"%BASE%DIRECCION-LUCIAN.txt" echo.
->>"%BASE%DIRECCION-LUCIAN.txt" echo %URL%
+>>"%BASE%DIRECCION-LUCIAN.txt" echo %PRIVATE_URL%
 >>"%BASE%DIRECCION-LUCIAN.txt" echo.
->>"%BASE%DIRECCION-LUCIAN.txt" echo Copia esa direccion y mandala por WhatsApp.
+>>"%BASE%DIRECCION-LUCIAN.txt" echo ENLACE PRIVADO: no lo compartas.
 >>"%BASE%DIRECCION-LUCIAN.txt" echo NO cierres la ventana negra ni apagues la PC.
 start notepad "%BASE%DIRECCION-LUCIAN.txt"
-start "" "%URL%"
+start "" "%PRIVATE_URL%"
 
 :VIGILAR
 ping -n 20 127.0.0.1 >nul
@@ -97,6 +103,11 @@ if errorlevel 1 (
   start "LUCIAN-TUNEL" /MIN "%BASE%_lucian_tunnel.cmd"
 )
 goto VIGILAR
+
+:SINCLAVE
+echo  No se genero la clave de acceso. Verifica que haya iniciado server.mjs.
+pause
+exit /b 1
 
 :SINNODE
 echo  Falta Node.js. Instalalo desde https://nodejs.org
