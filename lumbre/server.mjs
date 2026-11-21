@@ -1979,9 +1979,27 @@ async function handle(req, res) {
   // o túnel, todas las rutas /api/* (excepto webhooks y /login)
   // exigen la clave que se muestra al arrancar. Sin esto, cualquiera
   // con la URL podría leer secretos o borrar datos.
-  const isLocalHost = allowedHosts.has(hostName) || !hostName;
-  // Modo simple (como al mediodia): sin clave, entra directo.
-  const needsAuth = false && !isLocalHost && !isWebhook && pathname.startsWith('/api/') && pathname !== '/api/login';
+  const directLoopback = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(String(req.socket?.remoteAddress || ''));
+  const isLocalHost = allowedHosts.has(hostName) && directLoopback
+    && !req.headers['x-forwarded-for'] && !req.headers['cf-connecting-ip'];
+  // Acceso desde el teléfono: el enlace privado se intercambia UNA vez
+  // por cookie HttpOnly y la URL queda limpia tras el redirect.
+  if (!isLocalHost && !isWebhook && pathname === '/' && method === 'GET' && url.searchParams.has('access')) {
+    if (!webhookTokenMatches(url.searchParams.get('access'), ACCESS_TOKEN)) {
+      fail(res, 401, 'El enlace de acceso venció. Generá uno nuevo desde la PC.');
+      return;
+    }
+    const secure = isTunnelHost || String(req.headers['x-forwarded-proto']) === 'https' ? 'Secure; ' : '';
+    res.writeHead(302, {
+      location: '/',
+      'cache-control': 'no-store',
+      'referrer-policy': 'no-referrer',
+      'set-cookie': `lucian_access=${ACCESS_TOKEN}; HttpOnly; ${secure}SameSite=Lax; Path=/`,
+    });
+    res.end();
+    return;
+  }
+  const needsAuth = !isLocalHost && !isWebhook && pathname.startsWith('/api/') && pathname !== '/api/login';
   if (needsAuth) {
     const provided = req.headers['x-lucian-access']
       || url.searchParams.get('access')
@@ -1999,7 +2017,7 @@ async function handle(req, res) {
     if (webhookTokenMatches(provided, ACCESS_TOKEN)) {
       res.writeHead(200, {
         'content-type': 'application/json; charset=utf-8',
-        'set-cookie': `lucian_access=${ACCESS_TOKEN}; HttpOnly; SameSite=Lax; Path=/`,
+        'set-cookie': `lucian_access=${ACCESS_TOKEN}; HttpOnly; ${isTunnelHost || String(req.headers['x-forwarded-proto']) === 'https' ? 'Secure; ' : ''}SameSite=Lax; Path=/`,
       });
       res.end(JSON.stringify({ ok: true }));
     } else {
