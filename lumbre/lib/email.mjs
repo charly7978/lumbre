@@ -1,6 +1,7 @@
 ﻿import crypto from 'node:crypto';
 import { fetchJson, localDayKey } from './util.mjs';
 import { sendWithGmailSmtp } from './smtp.mjs';
+import { productReadiness } from './readiness.mjs';
 
 /* ─────────────────────────────────────────────────────────────
    Correo: composición, .eml, Resend y webhook.
@@ -254,6 +255,45 @@ export function ensureCompliance(text, settings) {
   }
 
   return body;
+}
+
+/**
+ * Filtro único de calidad para el PRIMER contacto comercial generado por IA.
+ * No edita textos ni atribuye un origen al producto: obliga a revisar
+ * mensajes que exponen inseguridades internas o hechos no comprobados.
+ * Se usa tanto al crear borradores como justo antes del envío real.
+ */
+export function salesCopyIssues({ subject = '', body = '', product = null } = {}) {
+  const text = String(body || '').trim();
+  const heading = String(subject || '').trim();
+  const combined = heading + '\n' + text;
+  const issues = [];
+  const checks = [
+    [/\bpiezas? de autor\b|\bautor[ií]a (?:original|exclusiva)\b|\bdise[nñ]o (?:propio|exclusivo|original)\b/i,
+      'No atribuir autoría, exclusividad ni diseño propio sin datos documentados del producto.'],
+    [/\bno es (?:un )?dise[nñ]o (?:m[ií]o|propio|nuestro)\b|\bno (?:lo )?(?:dise[nñ][eé]|cre[eé]) (?:yo|nosotros)\b/i,
+      'No incluir justificaciones de autoría en una presentación inicial; describir el producto con hechos verificables.'],
+    [/\bantes de nada\b|\bquiero confirmar (?:que|si)\b|\bcanal correcto\b|\bmejor contacto para seguir\b/i,
+      'El primer correo debe presentar una propuesta relevante, no pedir permiso para escribir por el canal.'],
+    [/\bno vengo con precio\b|\bno tengo (?:a[uú]n )?(?:precio|costos|ficha|fotos)\b|\b(?:precio|tarifa) (?:a[uú]n )?(?:sin definir|pendiente)\b/i,
+      'No enviar un correo de captación anunciando que no hay datos comerciales preparados.'],
+    [/\b(?:estoy|estamos) (?:cerrando|calculando|definiendo|viendo|resolviendo) (?:los? |el |las? )?(?:costos?|flete|env[ií]o|precios?|log[ií]stica|fotos?|fotograf[ií]as|ficha)\b/i,
+      'Los costos, fotografías y logística pendientes son tareas internas, no argumentos de venta.'],
+    [/\bflete interno\b|\b(?:costos?|precios?) (?:todav[ií]a|a[uú]n) (?:no|sin)\b/i,
+      'No exponer problemas logísticos o precios incompletos en una primera propuesta comercial.'],
+  ];
+  for (const [pattern, explanation] of checks) {
+    if (pattern.test(combined)) issues.push(explanation);
+  }
+  if (!text || !heading) issues.push('Todo primer contacto necesita asunto y un mensaje concreto.');
+  if (product) {
+    const readiness = productReadiness(product);
+    if (!readiness.readyForProspecting) {
+      const critical = readiness.missing.filter((check) => check.critical).map((check) => check.label).join('; ');
+      issues.push('Ficha de producto incompleta: ' + (critical || 'verificar fotografías y precio'));
+    }
+  }
+  return [...new Set(issues)];
 }
 
 export function composeEmail(thread, draft, settings) {
