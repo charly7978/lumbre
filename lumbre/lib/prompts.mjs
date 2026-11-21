@@ -175,6 +175,15 @@ function productBlock(ctx) {
     notas: p.notes,
     fotos: (p.photos || []).length,
     categoria: p.category,
+    plazo_fabricacion_dias: p.leadTimeDays,
+    capacidad_semanal: p.capacityPerWeek,
+    link_de_compra: p.paymentLink,
+    // El redactor necesita saber QUÉ se ve en las fotos para escribir con
+    // concreción. Solo se envían las descripciones/urls, no los bytes.
+    detalle_fotos: (p.photos || []).slice(0, 4).map((f) => ({
+      descripcion: f.caption || f.alt || f.description || '',
+      url: f.url || f.dataUrl?.slice(0, 80) || '',
+    })),
   }, 2500);
 }
 

@@ -283,6 +283,21 @@ export function salesCopyIssues({ subject = '', body = '', product = null } = {}
       'Los costos, fotografías y logística pendientes son tareas internas, no argumentos de venta.'],
     [/\bflete interno\b|\b(?:costos?|precios?) (?:todav[ií]a|a[uú]n) (?:no|sin)\b/i,
       'No exponer problemas logísticos o precios incompletos en una primera propuesta comercial.'],
+    // Guardias añadidos tras detectar un correoREAL que se envió con todas estas frases.
+    [/\b(?:veladores?|l[aá]mparas?|piezas?|dise[nñ]os?) de autor\b/i,
+      'No atribuir autoría al producto: describirlo por material, medidas y proceso.'],
+    [/\b(?:estoy|estamos) (?:cotizando|validando|preparando) (?:el |los? |la )?(?:env[ií]o|precio|ficha|n[uú]meros)\b/i,
+      'No decir que estás cotizando o validando: eso espanta al comprador. Poné el precio concreto.'],
+    [/\bantes de hablar de n[uú]meros\b|\bantes de n[uú]meros\b/i,
+      'No anunciar que vas a hablar de números después: el precio va en el primer correo.'],
+    [/\bdesde caseros\b|\bdesde [A-Z][a-z]+, argentina\b/i,
+      'La ciudad postal no va en la presentación; solo en el pie legal si es obligatoria.'],
+    [/\bno es una oferta con precio\b|\besta no es una oferta\b|\bes para presentarme\b/i,
+      'Todo primer contacto es una oferta con precio concreto, no una presentación sin oferta.'],
+    [/\b(?:si prefieren|si prefer[ií]s) que no les escriba\b|\bno insisto\b/i,
+      'No cerrar con disculpas ni invitar al rechazo: cerrar con el pedido.'],
+    [/\b(?:les escribo en fr[ií]o|escribo en fr[ií]o)\b/i,
+      'No decir "escribo en frío": delata correo masivo. Empezá con un hecho concreto del comprador.'],
   ];
   for (const [pattern, explanation] of checks) {
     if (pattern.test(combined)) issues.push(explanation);
