@@ -736,7 +736,12 @@ function renderPanel() {
   const active = arr(s.missions).find((m) => ['running', 'queued'].includes(m.status));
   const products = arr(s.products);
   const threads = arr(s.threads);
-  const hotThreads = [...threads].filter((t) => ['interesado', 'negociando', 'respondio'].includes(t.stage)).sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 4);
+  const realThreads = threads.filter((t) => !t.demo);
+  const realAwaiting = realThreads.filter((t) => t.awaitingReply).length;
+  const realReady = realThreads.reduce((count, t) => count + num(t.draftCount), 0);
+  const realReview = realThreads.reduce((count, t) => count + num(t.reviewCount), 0);
+  const realWon = realThreads.filter((t) => t.stage === 'ganado').length;
+  const hotThreads = [...realThreads].filter((t) => ['interesado', 'negociando', 'respondio'].includes(t.stage)).sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 4);
   const latestMissions = [...arr(s.missions)].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 3);
   const activeProduct = active ? products.find((p) => p.id === active.productId) : null;
   const hasProducts = products.length > 0;
@@ -820,10 +825,10 @@ function renderPanel() {
     ${active ? activeMissionBanner(active) : ''}
 
     <section class="stat-grid">
-      ${statCard('Por aprobar', counts.draftsToReview || 0, 'mail', counts.draftsToReview ? 'borradores esperando tu OK' : 'nada pendiente', '#/bandeja?filtro=revisar', counts.draftsToReview ? 'warm' : '')}
-      ${statCard('Te escribieron', counts.awaitingReply || 0, 'message', counts.awaitingReply ? 'respuestas por leer' : 'sin novedades', '#/bandeja?filtro=responder', counts.awaitingReply ? 'warm' : '')}
-      ${statCard('Ventas cerradas', S.state.sales?.sold || 0, 'dollar', S.state.sales?.revenue ? `${money(S.state.sales.revenue, S.state.sales.currency)} ingresados` : 'todavía ninguna', '#/ventas', (S.state.sales?.sold || 0) ? 'warm' : '')}
-      ${statCard('Borradores listos', counts.drafts || 0, 'send', 'mensajes que pueden convertirse en contactos', '#/bandeja?filtro=listo', counts.drafts ? 'warm' : '')}
+      ${statCard('Por aprobar', realReview, 'mail', realReview ? 'borradores reales esperando tu OK' : 'nada pendiente', '#/bandeja?filtro=revisar', realReview ? 'warm' : '')}
+      ${statCard('Te escribieron', realAwaiting, 'message', realAwaiting ? 'respuestas reales por leer' : 'sin novedades', '#/bandeja?filtro=responder', realAwaiting ? 'warm' : '')}
+      ${statCard('Ventas registradas', realWon, 'dollar', 'estado Ganado, sin demostrar cobro', '#/ventas', realWon ? 'warm' : '')}
+      ${statCard('Borradores listos', realReady, 'send', 'mensajes reales aún sin enviar', '#/bandeja?filtro=listo', realReady ? 'warm' : '')}
     </section>
 
     ${panelSalesHTML()}
