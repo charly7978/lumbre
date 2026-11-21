@@ -11,7 +11,7 @@ import {
   asArray, asNumber, asObject, asString, clamp, dataUrlToBuffer, localDayKey, nowISO,
   sniffImage, toCsv, truncate, uid,
 } from './lib/util.mjs';
-import { isAIReady, listModels, resolveAIConfig, testAI, PROVIDERS, generateJson } from './lib/ai.mjs';
+import { isAIReady, listModels, resolveAIConfig, testAI, PROVIDERS } from './lib/ai.mjs';
 import { buildCommercialStrategy } from './lib/commercial-strategy.mjs';
 import { searchProviderInfo, searchWebDetailed } from './lib/search.mjs';
 import { hunterAccount } from './lib/hunter.mjs';
