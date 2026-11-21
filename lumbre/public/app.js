@@ -1015,6 +1015,7 @@ function renderVentas() {
       <p class="page-sub">Cotizaciones aceptadas, cobros informados y saldos pendientes. Aceptar una propuesta NO acredita dinero; los cobros se registran manualmente y no se concilian con el banco.</p>
     </div>
     <div class="page-actions">
+      <button class="btn btn-accent btn-sm" type="button" data-action="commercial-strategy">${icon('spark')} Director comercial IA</button>
       <a class="btn btn-ghost btn-sm" href="#/bandeja?filtro=revisar">${icon('mail')} Por aprobar</a>
       <a class="btn btn-primary btn-sm" href="#/bandeja">${icon('inbox')} Conversaciones</a>
     </div>
@@ -1285,6 +1286,7 @@ function renderProducts() {
       <p class="page-sub">Foto, precio, código y notas. Cuanto mejor el punto de partida, mejor el plan que devuelve el equipo.</p>
     </div>
     <div class="page-actions">
+      <button class="btn btn-accent" type="button" data-action="commercial-strategy">${icon('spark')} Estrategia IA</button>
       <button class="btn btn-ghost" type="button" data-action="import-products">${icon('upload')} Importar CSV</button>
       <button class="btn btn-ghost" type="button" data-action="campaign-catalog" ${products.length ? '' : 'disabled'}>${icon('spark')} Campaña de catálogo</button>
       <button class="btn btn-accent" type="button" data-action="quote-catalog" ${products.length ? '' : 'disabled'}>${icon('dollar')} Cotizar todo el catálogo</button>
@@ -1393,6 +1395,82 @@ function bindProducts() {
         importInput.value = '';
       }
     });
+  }
+}
+
+/* El director comercial investiga pero nunca envía ni publica.
+   La investigación puede consumir tokens/búsquedas: solo por acción expresa. */
+function openCommercialStrategyModal() {
+  const products = arr(S.state.products).filter((p) => p.status !== 'archivado');
+  if (!products.length) { toast('Primero cargá una lámpara activa.', 'error'); return; }
+  const market = arr(S.state.settings?.mission?.markets)[0] || S.state.brand?.country || 'Argentina';
+  openModal({
+    title: 'Director comercial IA',
+    subtitle: 'Investigación web + estrategia por lámpara, mercado y comprador. Nada se publica ni se envía.',
+    size: 'modal-lg',
+    body: `<form id="commercial-strategy-form" autocomplete="off">
+      <div class="form-grid">
+        <div class="field full"><label for="cs-product">Lámpara</label>
+          <select class="select" id="cs-product" name="productId">${products.map((p) => `<option value="${attr(p.id)}">${esc(p.name)} (${esc(p.code || 'sin código')})</option>`).join('')}</select></div>
+        <div class="field"><label for="cs-market">País o mercado</label>
+          <input class="input" id="cs-market" name="market" maxlength="80" value="${attr(market)}" required></div>
+        <div class="field"><label for="cs-audience">Comprador ideal</label>
+          <select class="select" id="cs-audience" name="audience">
+            <option value="retail">Tiendas de diseño e iluminación</option>
+            <option value="architects">Arquitectos e interioristas</option>
+            <option value="hospitality">Hoteles, gastronomía y proyectos</option>
+            <option value="consumer">Comprador particular</option>
+          </select></div>
+      </div>
+      <p class="field-hint mt-3">Se consultarán dos búsquedas web y un modelo de IA. El resultado tendrá fuentes verificables, guion de reel, tácticas por canal y email B2B en borrador. Puede consumir créditos.</p>
+    </form>`,
+    footer: `<button class="btn btn-ghost" data-action="close-modal" type="button">Cancelar</button>
+      <button class="btn btn-primary" data-action="commercial-strategy-run" type="button">${icon('spark')} Investigar y preparar estrategia</button>`,
+  });
+}
+async function runCommercialStrategy() {
+  const form = $('#commercial-strategy-form');
+  if (!form) return;
+  const data = new FormData(form);
+  const payload = {
+    confirmResearch: true, productId: String(data.get('productId') || ''),
+    market: String(data.get('market') || '').trim(),
+    audience: String(data.get('audience') || 'retail'),
+  };
+  if (!payload.market) { toast('Indicá un país o mercado.', 'error'); return; }
+  const button = $('[data-action="commercial-strategy-run"]');
+  if (button) { button.disabled = true; button.textContent = 'Investigando fuentes y preparando propuesta…'; }
+  try {
+    const result = await api('/api/commercial/strategy', { method: 'POST', body: payload });
+    S.ui.commercialStrategyLast = result.plan;
+    const p = result.plan || {};
+    const channel = (c) => `<li><b>${esc(c.canal || '')}</b>: ${esc(c.hipotesis || '')} — ${esc(c.pieza || '')}<div class="small muted">Acción: ${esc(c.cta || '')}</div></li>`;
+    const rows = (values) => arr(values).map((v) => `<li>${esc(typeof v === 'string' ? v : v.accion || '')}</li>`).join('');
+    openModal({
+      title: 'Investigación comercial — para revisión',
+      subtitle: `${p.producto?.nombre || ''} · ${p.mercado || ''} · no publicado`,
+      size: 'modal-lg',
+      body: `<div class="artifact-callout"><b>Diagnóstico</b><p>${esc(p.diagnostico || 'No disponible')}</p></div>
+        <h3 class="mt-3">Oferta y comprador ideal</h3>
+        <p><b>${esc(p.propuesta?.titulo || '')}</b> — ${esc(p.propuesta?.argumento || '')}</p>
+        <p>${esc(p.compradorIdeal?.argumento || '')}</p>
+        <h3 class="mt-3">Canales y campañas</h3><ul>${arr(p.canales).map(channel).join('')}</ul>
+        <h3 class="mt-3">Acciones priorizadas</h3><ul>${rows(p.acciones)}</ul>
+        <h3 class="mt-3">Email B2B (borrador, NO enviado)</h3>
+        <p><b>${esc(p.emailB2B?.asunto || '')}</b></p>
+        <p style="white-space:pre-wrap">${esc(p.emailB2B?.mensaje || '')}</p>
+        <h3 class="mt-3">Reel / video corto</h3>
+        <p><b>${esc(p.reel?.gancho || '')}</b></p><ol>${rows(p.reel?.escenas)}</ol><p>${esc(p.reel?.cta || '')}</p>
+        <h3 class="mt-3">Advertencias y datos que faltan</h3><ul>${rows(p.alertas)}</ul>
+        <h3 class="mt-3">Fuentes encontradas</h3>
+        ${arr(p.fuentes).length ? `<ul>${arr(p.fuentes).map((f) => `<li>${esc(f.id)}: <a href="${attr(f.url)}" target="_blank" rel="noopener noreferrer">${esc(f.title || f.url)}</a></li>`).join('')}</ul>` : '<p>Sin fuentes verificables; tratá el plan como hipótesis.</p>'}
+        <p class="small muted">El modelo puede equivocarse. Revisá datos, licencias, precios y contactos antes de utilizar cualquier material.</p>`,
+      footer: `<button class="btn btn-ghost" type="button" data-action="close-modal">Cerrar</button>
+        <button class="btn btn-primary" type="button" data-action="commercial-strategy-copy">${icon('copy')} Copiar informe completo</button>`,
+    });
+  } catch (error) {
+    toast(error.message || 'No fue posible completar la investigación.', 'error');
+    if (button) { button.disabled = false; button.textContent = 'Reintentar investigación'; }
   }
 }
 
@@ -5628,6 +5706,9 @@ async function handleAction(action, el) {
     case 'reload-state': await loadState(); return;
     case 'new-product': openProductModal(); return;
     case 'import-products': $('#product-import-input')?.click(); return;
+    case 'commercial-strategy': openCommercialStrategyModal(); return;
+    case 'commercial-strategy-run': await runCommercialStrategy(); return;
+    case 'commercial-strategy-copy': await copyToClipboard(JSON.stringify(S.ui.commercialStrategyLast || {}, null, 2), 'Informe comercial copiado.'); return;
     case 'campaign-catalog': openCampaignModal(); return;
     case 'campaign-selected': {
       if (!S.ui.selectedProducts.length) { toast('Seleccioná al menos un producto.', 'error'); return; }
