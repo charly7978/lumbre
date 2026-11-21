@@ -31,7 +31,7 @@ import { productReadiness } from './lib/readiness.mjs';
 import { buildQuote, quoteLanguage, quoteNumber, quoteTotals, quoteTotalsMulti, roundMoney, validUntilDate } from './lib/quotes.mjs';
 import { createZip, readZip } from './lib/zip.mjs';
 import { fetchNewEmails } from './lib/imap.mjs';
-import { diagnoseConnections, testConnection, getAiFailoverState, resetAiFailover } from './lib/connections.mjs';
+import { diagnoseConnections, testConnection, getAiFailoverState, resetAiFailover, probeLocalAI } from './lib/connections.mjs';
 import { startAutopilot, runAutopilot, getAutopilotState } from './lib/autopilot.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -888,9 +888,10 @@ async function createMission(body) {
   const markets = [...new Set(asArray(body.markets).map((m) => asString(m).trim()).filter(Boolean))].slice(0, 6);
   const finalMarkets = markets.length ? markets : asArray(settings.mission.markets).slice(0, 6);
   const requestedMode = ['auto', 'real', 'demo'].includes(body.mode) ? body.mode : 'auto';
-  const demo = requestedMode === 'demo' || (requestedMode === 'auto' && !isAIReady(settings));
-  if (requestedMode === 'real' && !isAIReady(settings)) {
-    throw new HttpError(400, 'Para lanzar una misión real primero configurá una IA en Ajustes.');
+  const hasAI = isAIReady(settings) || (await probeLocalAI(settings)).ok;
+  const demo = requestedMode === 'demo' || (requestedMode === 'auto' && !hasAI);
+  if (requestedMode === 'real' && !hasAI) {
+    throw new HttpError(400, 'No hay IA operativa. Probá el proveedor o iniciá Ollama con un modelo instalado.');
   }
   if (!finalMarkets.length) {
     throw new HttpError(400, 'Elegí al menos un mercado para la misión. Sin mercado no hay a quién venderle.');
@@ -986,9 +987,10 @@ async function createCampaign(body = {}) {
     .sort((a, b) => (a.status === 'listo' ? -1 : 0) - (b.status === 'listo' ? -1 : 0));
   if (!pool.length) throw new HttpError(400, 'No hay productos activos para lanzar una campaña.');
   const requestedMode = ['auto', 'real', 'demo'].includes(body.mode) ? body.mode : 'auto';
-  const demo = requestedMode === 'demo' || (requestedMode === 'auto' && !isAIReady(settings));
-  if (requestedMode === 'real' && !isAIReady(settings)) {
-    throw new HttpError(400, 'Para lanzar una campaña real primero configurá una IA en Ajustes.');
+  const hasAI = isAIReady(settings) || (await probeLocalAI(settings)).ok;
+  const demo = requestedMode === 'demo' || (requestedMode === 'auto' && !hasAI);
+  if (requestedMode === 'real' && !hasAI) {
+    throw new HttpError(400, 'No hay IA operativa para campaña real. Probá el proveedor o iniciá Ollama local.');
   }
   const active = new Set(store.get('missions').filter((mission) => ['running', 'queued'].includes(mission.status)).map((mission) => mission.productId));
   const markets = [...new Set(asArray(body.markets).map((market) => asString(market).trim()).filter(Boolean))].slice(0, 6);
@@ -1840,6 +1842,116 @@ async function restoreBackup(buffer) {
    Pruebas de integración
    ───────────────────────────────────────────────────────────── */
 
+function ownEmailAddress(raw) {
+  const value = String(raw || '').trim();
+  return String(value.match(/<([^<>]+)>/)?.[1] || value).trim().toLowerCase();
+}
+
+/* Canal de salida observable: cifras reales; no confundir aceptación,
+   entrega, apertura, respuesta ni cobro. */
+async function commercialDiagnostic({ checkDomain = true } = {}) {
+  const settings = store.settings();
+  const email = settings.email || {};
+  const provider = email.provider || 'manual';
+  const from = ownEmailAddress(email.from || (provider === 'gmail' ? email.smtpUser : ''));
+  const own = ownEmailAddress(settings.brand?.email || email.smtpUser || '');
+  const products = (store.get('products') || []).filter((p) => !p.demo && p.status !== 'archivado');
+  const threads = (store.get('threads') || []).filter((t) => !t.demo);
+  const messages = threads.flatMap((t) => t.messages || []);
+  const drafts = threads.flatMap((t) => t.drafts || []);
+  const errors = [];
+  let ready = false;
+  let domain = { checked: false, verified: false, status: 'no comprobado' };
+  if (provider === 'resend') {
+    ready = Boolean(email.resendKey && from && isValidEmail(from));
+    if (!ready) errors.push('Resend requiere API key y remitente válido.');
+    if (ready && checkDomain) {
+      try {
+        const list = await testResend(settings);
+        const name = from.split('@')[1];
+        const match = (list.domains || []).find((item) => String(item.name).toLowerCase() === name);
+        domain = { checked: true, verified: match?.status === 'verified',
+          status: match?.status || 'dominio ausente', name };
+        if (!domain.verified) errors.push('El dominio remitente no está verificado en Resend: ' + domain.status);
+      } catch (err) {
+        errors.push('No puedo verificar Resend: ' + String(err.message).slice(0,150));
+      }
+    }
+  } else if (provider === 'gmail') {
+    ready = Boolean(email.smtpUser && email.smtpPassword);
+    if (!ready) errors.push('Falta usuario o contraseña de aplicación de Gmail.');
+    domain.status = 'requiere prueba SMTP';
+  } else if (provider === 'webhook') {
+    ready = Boolean(email.webhookUrl);
+    if (!ready) errors.push('Falta la URL real de envío del webhook.');
+    domain.status = 'requiere prueba real';
+  } else errors.push('El proveedor de correo está en modo manual: LUCIAN no envía por sí mismo.');
+  if (!isValidEmail(own)) errors.push('Configurá tu dirección propia en Marca para recibir una prueba.');
+  if (!products.length) errors.push('No cargaste lámparas reales.');
+  else {
+    const incomplete = products.filter((p) => !productReadiness(p).readyForProspecting);
+    if (incomplete.length) errors.push(incomplete.length + ' lámpara(s) no tienen foto y precio aptos para campaña.');
+  }
+  const approved = drafts.filter((d) => d.status === 'listo').length;
+  if (!approved) errors.push('No hay borradores aprobados.');
+  if (!email.autopilot) errors.push('El piloto de correos está apagado. No habrá envíos automáticos.');
+  const local = await probeLocalAI(settings);
+  return {
+    at: nowISO(),
+    email: { provider, configured: ready, from, selfTestAddress: own,
+      autopilot: Boolean(email.autopilot), domain,
+      lastTest: store.get('meta')?.emailSelfTest || null },
+    ai: { mainConfigured: isAIReady(settings), localAvailable: local.ok,
+      localModel: local.model || '', localError: local.ok ? '' : local.error },
+    telegram: notifier.telegramDiagnostics(),
+    metrics: {
+      products: products.length, realContacts: threads.length,
+      approved, toReview: drafts.filter((d) => d.status === 'revisar').length,
+      acceptedByProvider: messages.filter((m) => m.direction === 'out'
+        && m.status === 'enviado' && m.provider !== 'manual').length,
+      replies: messages.filter((m) => m.direction === 'in').length,
+      pending: outbox.items().filter((m) => m.status === 'pending').length,
+      errors: outbox.items().filter((m) => m.status === 'error').length,
+    },
+    blockers: errors,
+    nextAction: errors[0] || 'Hacer prueba de envío propia y revisar las respuestas.',
+  };
+}
+
+async function sendSelfTestEmail() {
+  const report = await commercialDiagnostic();
+  const e = report.email;
+  if (!e.configured) throw new HttpError(400, 'El proveedor no está configurado: ' + report.nextAction);
+  if (!isValidEmail(e.selfTestAddress)) throw new HttpError(400, 'Configurá tu correo propio en Marca.');
+  if (e.provider === 'resend' && !e.domain.verified)
+    throw new HttpError(400, 'Resend no verifica tu dominio de salida: ' + e.domain.status);
+  const recent = Date.parse(e.lastTest?.at || 0) || 0;
+  if (Date.now() - recent < 60_000) throw new HttpError(429, 'Máximo una prueba por minuto.');
+  const message = {
+    from: store.settings().email.from || (e.provider === 'gmail' ? store.settings().email.smtpUser : ''),
+    to: e.selfTestAddress,
+    subject: 'LUCIAN - prueba real de correo',
+    text: 'Prueba solicitada desde LUCIAN el ' + nowISO() + '. Si llega a tu casilla, el canal funcionó para esta dirección. No confirma entregas a otros compradores.',
+  };
+  await store.setMeta({ emailSelfTest: { at: nowISO(), status: 'trying', provider: e.provider } });
+  try {
+    const receipt = e.provider === 'resend' ? await sendWithResend(store.settings(), message)
+      : e.provider === 'gmail' ? await sendWithGmail(store.settings(), message)
+      : e.provider === 'webhook' ? await sendWithWebhook(store.settings(), message)
+      : null;
+    if (!receipt) throw new Error('No hay proveedor habilitado.');
+    const result = { at: nowISO(), status: 'accepted', provider: e.provider,
+      to: e.selfTestAddress, providerId: receipt.id || '' };
+    await store.setMeta({ emailSelfTest: result });
+    await store.activity('system', 'El proveedor aceptó una prueba de correo. Revisar bandeja de entrada y spam.');
+    return { ok: true, ...result, message: 'Proveedor aceptó la prueba. Verificá que llegó a tu casilla: aceptación no significa entrega.' };
+  } catch (err) {
+    await store.setMeta({ emailSelfTest: { at: nowISO(), status: 'failed', provider: e.provider,
+      error: String(err.message).slice(0,200) } });
+    throw new HttpError(502, 'No salió el correo: ' + String(err.message).slice(0,250));
+  }
+}
+
 async function runIntegrationTest(target) {
   const settings = store.settings();
   if (target === 'ai') {
@@ -1869,9 +1981,8 @@ async function runIntegrationTest(target) {
     return { email: account.email || '', plan: account.plan_name || account.plan || '', credito: account.credits ?? null };
   }
   if (target === 'email') {
-    const from = settings.email?.from || '';
-    if (!from) throw new Error('Falta configurar el remitente.');
-    return { remitente: from, proveedor: settings.email.provider, limite: dailyLimitInfo(settings, store.get('threads')) };
+    const diagnosis = await commercialDiagnostic();
+    return { tipo: 'solo diagnóstico, no envío', ...diagnosis.email, bloqueos: diagnosis.blockers };
   }
   throw new HttpError(400, 'Prueba desconocida.');
 }
@@ -2094,6 +2205,15 @@ async function handle(req, res) {
     }
     await pollGmailInbox();
     json(res, 200, { ok: true, message: 'Bandeja revisada.' });
+    return;
+  }
+
+  if (pathname === '/api/operations/diagnose' && method === 'GET') {
+    json(res, 200, await commercialDiagnostic());
+    return;
+  }
+  if (pathname === '/api/operations/test-email' && method === 'POST') {
+    json(res, 200, await sendSelfTestEmail());
     return;
   }
 
