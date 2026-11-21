@@ -94,7 +94,11 @@ export class Notifier {
 
     const channels = this.channels(settings);
     const results = [];
-    if (channels.telegram) {
+    // Telegram responde siempre al dueño; los mensajes automáticos quedan
+    // silenciados por defecto salvo respuestas comerciales y fallos importantes.
+    const quietTelegram = settings.notify?.telegram?.quietMode !== false && !force
+      && !['hot_reply', 'mission_error', 'mission_warning', 'opt_out'].includes(kind);
+    if (channels.telegram && !quietTelegram) {
       try {
         await sendTelegram(settings, text);
         results.push({ channel: 'telegram', ok: true });
@@ -171,7 +175,19 @@ export class Notifier {
       return msg;
     }
     if (lower === '/ayuda' || lower === 'ayuda') {
-      const msg = 'Comandos: /estado, /prioridades, /oportunidades, /diagnostico, /misiones, /resumen, /pausar, /activar, /reiniciar. También podés escribirme una pregunta o pedirme una acción: "buscá tiendas en Madrid", "prepará borrador para X", "mandá el mail", "lanzá la misión", "subí el precio".';
+      const msg = 'Comandos: /estado, /prioridades, /oportunidades, /diagnostico, /misiones, /resumen, /avisos, /avisos todos, /avisos importantes, /pausar, /activar, /reiniciar. También podés escribirme una pregunta o pedirme una acción: "buscá tiendas en Madrid", "prepará borrador para X", "mandá el mail", "lanzá la misión", "subí el precio".';
+      this._appendHistory(session, 'user', clean);
+      this._appendHistory(session, 'assistant', msg);
+      await this._persistSessions(sessions);
+      return msg;
+    }
+    if (['/avisos', 'avisos', '/avisos todos', 'avisos todos', '/avisos importantes', 'avisos importantes'].includes(lower)) {
+      if (lower.includes('todos')) await this.store.saveSettings({ notify: { telegram: { quietMode: false } } });
+      if (lower.includes('importantes')) await this.store.saveSettings({ notify: { telegram: { quietMode: true } } });
+      const quiet = this.store.settings().notify?.telegram?.quietMode !== false;
+      const msg = quiet
+        ? 'Telegram en modo conversación: sólo te avisaré espontáneamente sobre clientes interesados, fallas importantes o bajas. Para todos los avisos escribí /avisos todos.'
+        : 'Telegram enviará los avisos habilitados. Para recibir sólo los importantes escribí /avisos importantes.';
       this._appendHistory(session, 'user', clean);
       this._appendHistory(session, 'assistant', msg);
       await this._persistSessions(sessions);
@@ -525,6 +541,7 @@ export class Notifier {
   async maybeDigest() {
     const settings = this.store.settings();
     if (!settings.notify?.events?.digest) return;
+    if (settings.notify?.telegram?.quietMode !== false && !this.channels(settings).whatsapp) return;
     if (settings.notify?.paused) return;
     const hour = Number(settings.notify?.telegram?.digestHour ?? 9);
     const now = new Date();
