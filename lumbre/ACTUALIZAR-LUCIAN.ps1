@@ -27,6 +27,17 @@ try {
   Expand-Archive -LiteralPath $archive -DestinationPath $temporary -Force
   $source = Join-Path $temporary 'lumbre-main\lumbre'
   if (!(Test-Path (Join-Path $source 'server.mjs'))) { throw 'La descarga no contiene lumbre/server.mjs. No se aplicó nada.' }
+  # Validar el código NUEVO ANTES de reemplazar una instalación que hoy funciona.
+  if (!(Get-Command node -ErrorAction SilentlyContinue)) { throw 'Falta Node.js: no se puede verificar la actualización.' }
+  if (!(Get-Command npm.cmd -ErrorAction SilentlyContinue)) { throw 'Falta npm: no se puede verificar la actualización.' }
+  Write-Host 'Validando sintaxis de los módulos descargados antes de tocar LUCIAN...'
+  Push-Location $source
+  try {
+    & npm.cmd run check
+    if ($LASTEXITCODE -ne 0) {
+      throw 'La nueva versión no superó la comprobación de código. La instalación existente no se modificó.'
+    }
+  } finally { Pop-Location }
   Write-Host ('Guardando respaldo anterior en: ' + $backup)
   foreach ($dir in $folders) {
     $existing = Join-Path $target $dir
