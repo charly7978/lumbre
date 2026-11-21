@@ -314,6 +314,10 @@ export async function sendWithResend(settings, message) {
   const key = settings?.email?.resendKey;
   if (!key) throw new Error('Falta la clave de Resend en Ajustes → Correo');
   if (!message.from) throw new Error('Falta configurar el remitente en Ajustes → Correo');
+  if (message.consentVerified !== true) throw new Error('Resend requiere consentimiento explícito y documentado del destinatario.');
+  if (!/^lumbre-[a-f0-9]{64}$/.test(String(message.idempotencyKey || ''))) {
+    throw new Error('Resend requiere una clave de idempotencia persistente por borrador aprobado.');
+  }
 
   const headers = {};
   if (message.messageId) headers['Message-ID'] = sanitizeHeader(message.messageId);
@@ -322,7 +326,7 @@ export async function sendWithResend(settings, message) {
 
   const { ok, data, text } = await fetchJson('https://api.resend.com/emails', {
     method: 'POST',
-    headers: { authorization: `Bearer ${key}` },
+    headers: { authorization: `Bearer ${key}`, 'idempotency-key': message.idempotencyKey },
     body: {
       from: message.from,
       to: [message.to],

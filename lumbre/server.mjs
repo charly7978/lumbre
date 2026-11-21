@@ -12,6 +12,7 @@ import {
   sniffImage, toCsv, truncate, uid,
 } from './lib/util.mjs';
 import { isAIReady, listModels, resolveAIConfig, testAI, PROVIDERS } from './lib/ai.mjs';
+import { buildCommercialStrategy } from './lib/commercial-strategy.mjs';
 import { searchProviderInfo, searchWebDetailed } from './lib/search.mjs';
 import { hunterAccount } from './lib/hunter.mjs';
 import {
@@ -33,6 +34,9 @@ import { createZip, readZip } from './lib/zip.mjs';
 import { fetchNewEmails } from './lib/imap.mjs';
 import { diagnoseConnections, testConnection, getAiFailoverState, resetAiFailover } from './lib/connections.mjs';
 import { startAutopilot, runAutopilot, getAutopilotState } from './lib/autopilot.mjs';
+import { verifyMetaSignature, hasDocumentedOptIn, resendIdempotencyKey } from './lib/security.mjs';
+import { buildSalesAgenda, buildCatalogHealth } from './lib/sales-ops.mjs';
+import { supervisedMissionPreflight } from './lib/sales-launch.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.LUCIAN_DATA_DIR ? path.resolve(process.env.LUCIAN_DATA_DIR) : path.join(__dirname, 'data');
@@ -204,6 +208,8 @@ function threadSummary(thread, suppressions = []) {
     createdAt: quote.createdAt || null,
     sentAt: quote.sentAt || null,
     acceptedAt: quote.acceptedAt || null,
+    paymentReceived: quotePaymentTotals(quote).received,
+    paymentRemaining: quotePaymentTotals(quote).remaining,
     draftId: quote.draftId || null,
   }));
   return {
@@ -300,20 +306,38 @@ const QUOTE_STATUS_LABELS = {
   rechazada: 'Rechazada',
 };
 
+/* Aceptacion no equivale a cobro. Registro manual sin conciliacion bancaria. */
+function quotePaymentTotals(quote) {
+  const total = quote.status === 'aceptada' ? Math.max(0, Number(quote.total) || 0) : 0;
+  const records = Array.isArray(quote.payments) ? quote.payments : [];
+  const received = roundMoney(records.reduce((sum, item) => sum + (Number(item.amount) || 0), 0));
+  return { received, remaining: roundMoney(Math.max(0, total - received)), records: records.length };
+}
+
 function buildSales(threads, products, currency = 'USD') {
   const productName = (id) => products.find((product) => product.id === id)?.name || 'Producto';
   const quotes = threads.flatMap((thread) => (thread.quotes || []).map((quote) => ({
     ...quote,
+    demo: Boolean(thread.demo),
     threadId: thread.id,
     company: thread.contact?.company || thread.contact?.name || 'Contacto',
     productId: thread.productId,
     productName: productName(thread.productId),
     stage: thread.stage,
   })));
-  const accepted = quotes.filter((quote) => quote.status === 'aceptada');
-  const revenue = roundMoney(accepted.reduce((acc, quote) => acc + (Number(quote.total) || 0), 0));
+  const realQuotes = quotes.filter((quote) => !quote.demo);
+  const accepted = realQuotes.filter((quote) => quote.status === 'aceptada');
+  const paymentsByCurrency = {};
+  const outstandingByCurrency = {};
+  for (const quote of accepted) {
+    const moneyCurrency = String(quote.currency || currency).toUpperCase();
+    const amount = quotePaymentTotals(quote);
+    paymentsByCurrency[moneyCurrency] = roundMoney((paymentsByCurrency[moneyCurrency] || 0) + amount.received);
+    outstandingByCurrency[moneyCurrency] = roundMoney((outstandingByCurrency[moneyCurrency] || 0) + amount.remaining);
+  }
+  const revenue = paymentsByCurrency[currency] || 0;
   const wonThreads = threads
-    .filter((thread) => thread.stage === 'ganado')
+    .filter((thread) => !thread.demo && thread.stage === 'ganado')
     .map((thread) => {
       const quote = (thread.quotes || []).find((item) => item.status === 'aceptada') || (thread.quotes || [])[0];
       return {
@@ -325,15 +349,17 @@ function buildSales(threads, products, currency = 'USD') {
         total: Number(quote?.total) || 0,
         currency: quote?.currency || currency,
         acceptedAt: quote?.acceptedAt || null,
+        paymentReceived: quote && quote.status === 'aceptada' ? quotePaymentTotals(quote).received : 0,
+        paymentRemaining: quote && quote.status === 'aceptada' ? quotePaymentTotals(quote).remaining : 0,
         at: quote?.acceptedAt || thread.updatedAt || thread.createdAt,
       };
     })
     .sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
-  const openQuotes = quotes
+  const openQuotes = realQuotes
     .filter((quote) => ['borrador', 'enviada'].includes(quote.status))
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
   const byProduct = {};
-  for (const quote of quotes) {
+  for (const quote of realQuotes) {
     const key = quote.productId || 'sin-producto';
     const bucket = byProduct[key] || {
       productId: key,
@@ -346,11 +372,11 @@ function buildSales(threads, products, currency = 'USD') {
     bucket.quotes += 1;
     if (quote.status === 'aceptada') {
       bucket.accepted += 1;
-      bucket.revenue = roundMoney(bucket.revenue + (Number(quote.total) || 0));
+      bucket.revenue = roundMoney(bucket.revenue + quotePaymentTotals(quote).received);
     }
     byProduct[key] = bucket;
   }
-  for (const thread of threads.filter((item) => item.stage === 'ganado')) {
+  for (const thread of threads.filter((item) => !item.demo && item.stage === 'ganado')) {
     const key = thread.productId || 'sin-producto';
     const bucket = byProduct[key] || {
       productId: key,
@@ -367,9 +393,13 @@ function buildSales(threads, products, currency = 'USD') {
     currency,
     sold: wonThreads.length,
     revenue,
+    revenueMeaning: 'Cobros informados por el usuario; no conciliados con el banco',
+    paymentsByCurrency,
+    outstandingByCurrency,
+    unpaidAcceptedQuotes: accepted.filter((q) => quotePaymentTotals(q).remaining > 0).length,
     acceptedQuotes: accepted.length,
     openQuotes: openQuotes.length,
-    quotesByStatus: quotes.reduce((acc, quote) => {
+    quotesByStatus: realQuotes.reduce((acc, quote) => {
       acc[quote.status] = (acc[quote.status] || 0) + 1;
       return acc;
     }, {}),
@@ -439,7 +469,7 @@ const outbox = new Outbox({
     if (settings.email?.provider === 'resend' && settings.email?.resendKey) channel = 'resend';
     else if (settings.email?.provider === 'gmail' && settings.email?.smtpUser && settings.email?.smtpPassword) channel = 'gmail';
     else if (settings.email?.webhookUrl) channel = 'webhook';
-    return sendThreadMessage(threadId, { draftId, channel });
+    return sendThreadMessage(threadId, { draftId, channel, automated: true });
   },
   notify: notifier,
 });
@@ -570,7 +600,7 @@ function resumeQueuedMissions() {
         store,
         broadcast,
         notifier,
-        onMissionFinished: (finished) => outbox.scheduleMission(finished),
+        onMissionFinished: (finished) => finished.manualReviewOnly ? Promise.resolve({ queued: 0 }) : outbox.scheduleMission(finished),
       }).catch((error) => console.error('[Lucian] No se pudo retomar una misión en cola:', error));
     }, 500);
   }
@@ -649,6 +679,9 @@ function statePayload() {
     },
     limits: dailyLimitInfo(settings, threads),
     sales: buildSales(threads, products, settings.brand?.currency || 'USD'),
+    salesAgenda: buildSalesAgenda({ threads, products, suppressions }),
+    catalogHealth: buildCatalogHealth(products),
+    salesLaunch: supervisedMissionPreflight({ products, missions, settings, aiReady: isAIReady(settings), searchInfo: searchProviderInfo(settings) }),
     outbox: outbox.status(),
     usage: meta.agentUsage || {},
     intel: buildIntel(missions),
@@ -929,6 +962,8 @@ async function createMission(body) {
     id,
     demo,
     mode: demo ? 'demo' : 'real',
+    manualReviewOnly: !demo && body.manualReviewOnly === true,
+    commercialQualityReview: !demo,
     requestedMode,
     productId: product.id,
     name: asString(body.name).trim() || `${product.name} · ${finalMarkets[0] || 'Mercado global'}`,
@@ -964,7 +999,7 @@ async function createMission(body) {
   await store.set('missions', store.get('missions'));
   await store.activity('mission', `Misión creada: ${mission.name}${demo ? ' (demo)' : ''}.`, { missionId: id, demo });
   setTimeout(() => {
-    runMission(id, { store, broadcast, notifier, onMissionFinished: (mission) => outbox.scheduleMission(mission) }).catch((error) => {
+    runMission(id, { store, broadcast, notifier, onMissionFinished: (mission) => mission.manualReviewOnly ? Promise.resolve({ queued: 0 }) : outbox.scheduleMission(mission) }).catch((error) => {
       console.error('[Lucian] Error no controlado en la misión:', error);
     });
   }, 80);
@@ -1118,7 +1153,7 @@ async function retryMission(id) {
   const done = (mission.steps || []).filter((s) => s.status === 'done').length;
   mission.progress = Math.round((done / Math.max(1, mission.steps.length)) * 100);
   await store.activity('mission', `Misión reintentada: ${mission.name}.`, { missionId: id });
-  setTimeout(() => runMission(id, { store, broadcast, notifier, onMissionFinished: (mission) => outbox.scheduleMission(mission) }).catch((error) => console.error(error)), 80);
+  setTimeout(() => runMission(id, { store, broadcast, notifier, onMissionFinished: (mission) => mission.manualReviewOnly ? Promise.resolve({ queued: 0 }) : outbox.scheduleMission(mission) }).catch((error) => console.error(error)), 80);
   return mission;
 }
 
@@ -1286,6 +1321,10 @@ async function setQuoteStatus(threadId, quoteId, status) {
   if (!thread) throw new HttpError(404, 'Conversación no encontrada.');
   const quote = (thread.quotes || []).find((item) => item.id === quoteId);
   if (!quote) throw new HttpError(404, 'Cotización no encontrada.');
+  if (Array.isArray(quote.payments) && quote.payments.length && status !== 'aceptada') {
+    throw new HttpError(409, 'Esta cotización tiene cobros registrados. No se puede rechazar o reabrir sin conciliarlos antes.');
+  }
+  if (quote.status === status) return { quote, thread };
   const now = nowISO();
   quote.status = status;
   quote.updatedAt = now;
@@ -1313,6 +1352,41 @@ async function setQuoteStatus(threadId, quoteId, status) {
   return { quote, thread };
 }
 
+async function recordQuotePayment(threadId, quoteId, body) {
+  const threads = store.get('threads');
+  const thread = threads.find((item) => item.id === threadId);
+  if (!thread) throw new HttpError(404, 'Conversación no encontrada.');
+  if (thread.demo) throw new HttpError(400, 'No se registran cobros reales en conversaciones de demostración.');
+  const quote = (thread.quotes || []).find((item) => item.id === quoteId);
+  if (!quote) throw new HttpError(404, 'Cotización no encontrada.');
+  if (quote.status !== 'aceptada') throw new HttpError(409, 'Primero se debe registrar la aceptación de la cotización.');
+  if (body?.confirm !== true) throw new HttpError(400, 'Debés confirmar expresamente que ya recibiste el dinero.');
+  const method = asString(body.method).trim().toLowerCase();
+  if (!['transferencia', 'mercadopago', 'efectivo', 'otro'].includes(method)) throw new HttpError(400, 'Método de cobro inválido.');
+  const reference = asString(body.reference).trim().slice(0, 120);
+  if (reference.length < 4) throw new HttpError(400, 'Ingresá una referencia verificable del cobro (mínimo 4 caracteres).');
+  const amountRaw = body.amount;
+  const amount = Number(amountRaw);
+  if (amountRaw === null || amountRaw === '' || !Number.isFinite(amount) || amount <= 0 || Math.abs(amount * 100 - Math.round(amount * 100)) > 0.00001) {
+    throw new HttpError(400, 'El importe cobrado debe ser positivo y tener hasta dos decimales.');
+  }
+  quote.payments = Array.isArray(quote.payments) ? quote.payments : [];
+  const existing = quote.payments.find((item) => item.method === method && item.reference.toLowerCase() === reference.toLowerCase());
+  if (existing) {
+    if (existing.amount !== amount) throw new HttpError(409, 'Esa referencia ya existe con otro importe. No se duplicó el cobro.');
+    return { payment: existing, quote, totals: quotePaymentTotals(quote), alreadyRecorded: true };
+  }
+  const current = quotePaymentTotals(quote);
+  if (roundMoney(amount) > current.remaining + 0.001) throw new HttpError(409, 'El importe excede el saldo de la cotización.');
+  const payment = { id: uid('pay'), method, reference, amount: roundMoney(amount), currency: quote.currency || 'USD', at: nowISO(), source: 'manual', verifiedByProvider: false };
+  quote.payments.push(payment);
+  quote.updatedAt = payment.at;
+  thread.updatedAt = payment.at;
+  await store.set('threads', threads);
+  await store.activity('outreach', `Cobro informado manualmente para ${quote.number || quote.id}: ${payment.amount} ${payment.currency}. No conciliado.`, { threadId: thread.id, quoteId: quote.id, paymentId: payment.id });
+  return { payment, quote, totals: quotePaymentTotals(quote), alreadyRecorded: false };
+}
+
 async function sendThreadMessage(threadId, body) {
   const threads = store.get('threads');
   const thread = threads.find((t) => t.id === threadId);
@@ -1336,6 +1410,9 @@ async function sendThreadMessage(threadId, body) {
 
   const settings = store.settings();
   const channel = ['resend', 'webhook', 'gmail', 'manual'].includes(body.channel) ? body.channel : 'manual';
+  if (body.automated === true && !hasDocumentedOptIn(thread.contact)) {
+    throw new HttpError(400, 'El piloto automático exige consentimiento documentado del destinatario.');
+  }
   const company = thread.contact?.company || '';
   let message;
   try {
@@ -1348,7 +1425,16 @@ async function sendThreadMessage(threadId, body) {
   // mensaje entrante. Sin esto, el webhook no puede saber a qué producto
   // pertenece una respuesta cuando el comprador tiene varios hilos abiertos.
   const previousInbound = lastInboundMessage(thread);
-  message.messageId = newMessageId(settings);
+  if (channel === 'resend' && !hasDocumentedOptIn(thread.contact)) {
+    throw new HttpError(400, 'Resend exige consentimiento explícito documentado. Editá el contacto y registrá la evidencia antes de enviar.');
+  }
+  if (channel === 'resend') {
+    message.idempotencyKey = resendIdempotencyKey(thread.id, draft.id);
+    message.consentVerified = true;
+    message.messageId = `<lucian-${message.idempotencyKey.slice(7, 39)}@${messageIdDomain(settings)}>`;
+  } else {
+    message.messageId = newMessageId(settings);
+  }
   message.inReplyTo = previousInbound?.messageId || '';
   message.references = [previousInbound?.references, previousInbound?.messageId]
     .filter(Boolean)
@@ -1961,10 +2047,11 @@ async function handle(req, res) {
   // de la red local para que otra PC pueda abrir la interfaz.
   const lanMode = HOST === '0.0.0.0' || HOST === '::';
   const isLanHost = lanMode && /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.)/.test(hostName);
-  // Túneles (Cloudflare/ngrok) llegan con su propio dominio. Se permiten
-  // porque el tráfico ya viene autenticado por el túnel, no directo a internet.
+  // Un túnel aporta HTTPS, pero NO autentica al visitante.
   const isTunnelHost = /\.trycloudflare\.com$/.test(hostName) || /\.ngrok(-free)?\.app$/.test(hostName);
-  if (!isWebhook && hostName && !allowedHosts.has(hostName) && !isLanHost && !isTunnelHost) {
+  const publicHost = String(process.env.LUCIAN_PUBLIC_HOST || '').trim().toLowerCase().split(':')[0];
+  const isNamedPublicHost = Boolean(publicHost && hostName === publicHost);
+  if (!isWebhook && (!hostName || (!allowedHosts.has(hostName) && !isLanHost && !isTunnelHost && !isNamedPublicHost))) {
     res.writeHead(403, { 'content-type': 'text/plain' });
     res.end('Host no permitido.');
     return;
@@ -1979,13 +2066,20 @@ async function handle(req, res) {
   // o túnel, todas las rutas /api/* (excepto webhooks y /login)
   // exigen la clave que se muestra al arrancar. Sin esto, cualquiera
   // con la URL podría leer secretos o borrar datos.
-  const isLocalHost = allowedHosts.has(hostName) || !hostName;
-  // Modo simple (como al mediodia): sin clave, entra directo.
-  const needsAuth = false && !isLocalHost && !isWebhook && pathname.startsWith('/api/') && pathname !== '/api/login';
+  // Host es controlado por el cliente: nunca basta para determinar localhost.
+  // Cloudflare y otros proxies pueden usar un socket loopback; sus cabeceras
+  // forwarded y su dominio público deben obligar a autenticarse.
+  const peer = String(req.socket.remoteAddress || '').replace(/^::ffff:/, '');
+  const isLoopbackPeer = peer === '127.0.0.1' || peer === '::1';
+  const isLocalHost = process.env.LUCIAN_REQUIRE_AUTH !== '1'
+    && allowedHosts.has(hostName) && isLoopbackPeer
+    && !req.headers['x-forwarded-for'] && !req.headers['x-forwarded-host']
+    && !req.headers.forwarded && !req.headers['x-real-ip']
+    && !req.headers['cf-connecting-ip'];
+  const needsAuth = !isLocalHost && !isWebhook && pathname.startsWith('/api/') && pathname !== '/api/login';
   if (needsAuth) {
     const provided = req.headers['x-lucian-access']
-      || url.searchParams.get('access')
-      || (String(req.headers.cookie || '').match(/lucian_access=([^;]+)/) || [])[1]
+      || (String(req.headers.cookie || '').match(/(?:^|;\s*)lucian_access=([^;]+)/) || [])[1]
       || '';
     if (!webhookTokenMatches(provided, ACCESS_TOKEN)) {
       fail(res, 401, 'Se requiere clave de acceso. Pegala en la pantalla de Lucian.');
@@ -1994,12 +2088,13 @@ async function handle(req, res) {
   }
 
   if (pathname === '/api/login' && method === 'POST') {
+    if (!originAllowed(req)) { fail(res, 403, 'Origen no permitido.'); return; }
     const body = await readJson(req).catch(() => ({}));
     const provided = String(body.token || '');
     if (webhookTokenMatches(provided, ACCESS_TOKEN)) {
       res.writeHead(200, {
         'content-type': 'application/json; charset=utf-8',
-        'set-cookie': `lucian_access=${ACCESS_TOKEN}; HttpOnly; SameSite=Lax; Path=/`,
+        'set-cookie': `lucian_access=${ACCESS_TOKEN}; HttpOnly; SameSite=Strict; Path=/${isTunnelHost || isNamedPublicHost || String(req.headers['x-forwarded-proto'] || '').toLowerCase() === 'https' ? '; Secure' : ''}`,
       });
       res.end(JSON.stringify({ ok: true }));
     } else {
@@ -2063,6 +2158,57 @@ async function handle(req, res) {
 
   if (pathname === '/api/state' && method === 'GET') {
     json(res, 200, statePayload());
+    return;
+  }
+
+  // Investigación y estrategia comercial bajo solicitud expresa del dueño.
+  // Solo lectura de catálogo y servicios de búsqueda/IA; nunca envía ni publica.
+  if (pathname === '/api/commercial/strategy' && method === 'POST') {
+    const body = await readJson(req);
+    if (body.confirmResearch !== true) throw new HttpError(400, 'Confirmá la investigación comercial; puede consumir créditos de IA y búsqueda.');
+    const product = store.find('products', asString(body.productId));
+    if (!product || product.status === 'archivado') throw new HttpError(400, 'Elegí una lámpara activa del catálogo.');
+    const settings = store.settings();
+    if (!isAIReady(settings)) throw new HttpError(409, 'Configurá y verificá primero una IA en Conexiones.');
+    const plan = await buildCommercialStrategy({
+      product, market: asString(body.market), audience: asString(body.audience, 'retail'),
+      brand: settings.brand || {}, settings,
+    }, {
+      search: searchWebDetailed,
+      generate: (options) => generateJson(resolveAIConfig(settings), options),
+    });
+    json(res, 200, { plan });
+    return;
+  }
+
+  // Primera misión real supervisada: una lámpara lista y máximo 8 contactos.
+  // Nunca cambia la configuración de envíos ni aprueba borradores.
+  if (pathname === '/api/sales/prepare-one' && method === 'POST') {
+    const body = await readJson(req);
+    if (body.confirm !== true) throw new HttpError(400, 'Confirmá expresamente el lanzamiento de esta misión real.');
+    const settings = store.settings();
+    const preflight = supervisedMissionPreflight({
+      products: store.get('products'), missions: store.get('missions'), settings,
+      aiReady: isAIReady(settings), searchInfo: searchProviderInfo(settings),
+    });
+    if (!preflight.canStart) throw new HttpError(409, preflight.reasons.join(' '));
+    const requested = asString(body.productId).trim();
+    if (requested && requested !== preflight.candidate.id) {
+      throw new HttpError(409, 'La lámpara recomendada cambió. Recargá Ventas para comprobarla.');
+    }
+    const mission = await createMission({
+      productId: preflight.candidate.id,
+      name: `${preflight.candidate.name} · prospección supervisada`,
+      markets: preflight.markets,
+      mode: 'real',
+      depth: 'estandar',
+      goal: 'conseguir-mayoristas',
+      maxProspects: 8,
+      manualReviewOnly: true,
+      notes: 'Revisión humana obligatoria de destinatarios y mensajes. No programar envíos automáticos.',
+    });
+    await store.activity('mission', `Propuesta comercial supervisada creada: ${mission.name}. Envío sujeto a aprobación.`, { missionId: mission.id });
+    json(res, 201, { ok: true, mission: missionSummary(mission), message: 'Agentes en marcha. Revisá los compradores y aprobá los borradores antes de enviar.' });
     return;
   }
 
@@ -2511,6 +2657,24 @@ async function handle(req, res) {
           if (body.contact[key] !== undefined) contact[key] = asString(body.contact[key]).slice(0, 300);
         }
         if (contact.email && !isValidEmail(contact.email)) throw new HttpError(400, 'El email del contacto no es válido.');
+        if (normalizeEmail(contact.email) !== normalizeEmail(target.contact?.email)) {
+          contact.permission = { status: 'unknown' }; // Un permiso nunca se transfiere a otra dirección.
+        }
+        if (body.contact.permission !== undefined) {
+          const requested = body.contact.permission;
+          if (!isObject(requested) || !['unknown', 'opted_in'].includes(requested.status)) {
+            throw new HttpError(400, 'Estado de consentimiento inválido.');
+          }
+          if (requested.status === 'opted_in') {
+            const evidence = asString(requested.evidence).trim().slice(0, 600);
+            if (evidence.length < 10) throw new HttpError(400, 'Describí dónde y cuándo se obtuvo el consentimiento (mínimo 10 caracteres).');
+            const sameEvidence = contact.permission?.status === 'opted_in' && contact.permission.evidence === evidence;
+            contact.permission = { status: 'opted_in', source: 'manual', evidence,
+              capturedAt: sameEvidence ? contact.permission.capturedAt : nowISO() };
+          } else {
+            contact.permission = { status: 'unknown' };
+          }
+        }
         target.contact = contact;
       }
       target.updatedAt = nowISO();
@@ -2543,6 +2707,14 @@ async function handle(req, res) {
     const body = await readJson(req);
     const result = await setQuoteStatus(id, quoteId, asString(body.status));
     json(res, 200, result);
+    return;
+  }
+
+  const paymentMatch = pathname.match(/^\/api\/threads\/([^/]+)\/quotes\/([^/]+)\/payments$/);
+  if (paymentMatch && method === 'POST') {
+    const body = await readJson(req);
+    const result = await recordQuotePayment(decodeURIComponent(paymentMatch[1]), decodeURIComponent(paymentMatch[2]), body);
+    json(res, result.alreadyRecorded ? 200 : 201, result);
     return;
   }
 
@@ -2995,7 +3167,8 @@ async function handle(req, res) {
     const mode = url.searchParams.get('hub.mode');
     const token = url.searchParams.get('hub.verify_token');
     const challenge = url.searchParams.get('hub.challenge');
-    const expected = store.settings().notify?.whatsapp?.verifyToken || 'lucian';
+    const expected = process.env.META_VERIFY_TOKEN || store.settings().notify?.whatsapp?.verifyToken || '';
+    if (!expected) { fail(res, 503, 'Configurá META_VERIFY_TOKEN para activar WhatsApp.'); return; }
     if (mode === 'subscribe' && token === expected) {
       res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' });
       res.end(challenge || 'ok');
@@ -3006,7 +3179,16 @@ async function handle(req, res) {
   }
 
   if (pathname === '/api/webhooks/whatsapp' && method === 'POST') {
-    const payload = await readJson(req, 5 * 1024 * 1024);
+    const appSecret = String(process.env.META_APP_SECRET || '');
+    if (!appSecret) { fail(res, 503, 'Configurá META_APP_SECRET para recibir webhooks de WhatsApp.'); return; }
+    const rawBody = await readBody(req, 5 * 1024 * 1024);
+    if (!verifyMetaSignature(rawBody, req.headers['x-hub-signature-256'], appSecret)) {
+      fail(res, 401, 'Firma de Meta inválida.');
+      return;
+    }
+    let payload;
+    try { payload = JSON.parse(rawBody.toString('utf8')); }
+    catch { throw new HttpError(400, 'El cuerpo del webhook no es JSON válido.'); }
     res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' });
     res.end('ok');
     const settings = store.settings();
@@ -3068,6 +3250,9 @@ for (let attempt = 0; attempt < 8; attempt += 1) {
     break;
   } catch (error) {
     if (error.code !== 'EADDRINUSE') throw error;
+    if (process.env.LUCIAN_REQUIRE_AUTH === '1') {
+      throw new Error(`Puerto ${port + attempt} ocupado: no se iniciará un túnel apuntando a otro servidor.`);
+    }
     if (attempt === 7) throw error;
   }
 }
@@ -3079,10 +3264,11 @@ const lanUrl = lanMode
   : '';
 // Clave de acceso obligatoria cuando la app se expone fuera de la PC.
 // Se genera al arrancar y se muestra en consola. En local no se pide.
-const ACCESS_TOKEN = crypto.randomBytes(12).toString('base64url');
+const ACCESS_TOKEN = process.env.LUCIAN_ACCESS_TOKEN || crypto.randomBytes(24).toString('base64url');
+if (ACCESS_TOKEN.length < 20) throw new Error('LUCIAN_ACCESS_TOKEN debe tener al menos 20 caracteres.');
 // Escribir la clave en un archivo para que el script de túnel la muestre
 if (lanMode) {
-  try { await import('node:fs/promises').then((m) => m.writeFile(path.join(__dirname, 'access-key.txt'), ACCESS_TOKEN, 'utf8')); } catch { /* noop */ }
+  try { await import('node:fs/promises').then((m) => m.writeFile(path.join(__dirname, 'access-key.txt'), ACCESS_TOKEN, { encoding: 'utf8', mode: 0o600 })); } catch { /* noop */ }
 }
 const settings = store.settings();
 const aiLabel = isAIReady(settings) ? `${settings.ai.provider} · ${resolveAIConfig(settings).model}` : 'modo demo (sin clave de IA)';
@@ -3127,8 +3313,8 @@ function readinessLines() {
 console.log('');
 console.log('  LUCIAN · sistema de ventas para lámparas de diseño');
 console.log(`  ${url}`);
-if (lanUrl) {
-  console.log(`  Desde otra PC de la red: ${lanUrl}`);
+if (lanUrl) console.log(`  Desde otra PC de la red: ${lanUrl}`);
+if (lanMode || process.env.LUCIAN_REQUIRE_AUTH === '1') {
   console.log('');
   console.log('  ┌──────────────────────────────────────────────────────────┐');
   console.log('  │  CLAVE DE ACCESO (pedila en esta PC para abrir Lucian)  │');

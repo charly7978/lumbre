@@ -167,7 +167,7 @@ console.log('confirm flow OK');
   store.get('settings').notify.telegram = { enabled: true, token: 't', chatId: '42' };
   await store.saveSettings(store.get('settings'));
   const notifier = new Notifier({ store, ask: async () => 'x', actions: {} });
-  await notifier.handleOwnerText('hola', 'telegram', '42');
+  await notifier.handleOwnerText('/start', 'telegram', '42');
   const r = await notifier.handleOwnerText('/reiniciar', 'telegram', '42');
   if (!/reiniciado/i.test(r)) throw new Error('reiniciar failed');
   const sessions = store.get('telegramSessions');

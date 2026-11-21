@@ -363,7 +363,9 @@ async function api(path, options = {}) {
   if (!response.ok) {
     if (!silent) setSaveState('error');
     const message = typeof data === 'object' ? data.error : String(data || '');
-    throw new Error(message || `Error ${response.status}`);
+    const error = new Error(message || `Error ${response.status}`);
+    error.status = response.status;
+    throw error;
   }
   if (!silent) setSaveState('saved');
   return data;
@@ -462,11 +464,27 @@ function confirmAction({ title, message, details = '', confirmLabel = 'Confirmar
 async function loadState({ render: shouldRender = true, silent = false } = {}) {
   try {
     S.state = await api('/api/state', { silent });
+    S.loginAttempted = false;
     updateShell();
     scheduleAutoRefresh();
     if (shouldRender) render();
     maybeShowWelcome();
   } catch (error) {
+    if (error.status === 401 && !S.loginAttempted) {
+      S.loginAttempted = true;
+      const token = window.prompt('Lucian está protegido. Escribí la clave que aparece en la PC del servidor:');
+      if (token) {
+        try {
+          const response = await fetch('/api/login', {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ token }),
+          });
+          if (response.ok) return loadState({ render: shouldRender, silent });
+          renderFatal(new Error('Clave incorrecta. Recargá la página para volver a intentarlo.'));
+          return;
+        } catch { /* mostrar el error sin filtrar la clave */ }
+      }
+    }
     renderFatal(error);
   }
 }
@@ -665,13 +683,13 @@ function panelSalesHTML() {
         <a class="section-link" href="#/ventas">Ver ventas ${icon('arrowRight')}</a>
       </div>
       <div class="card card-pad" style="text-align:center">
-        <p class="muted small">Las cotizaciones abiertas y los ingresos los ves en la vista de Ventas. El ingreso se calcula solo con cotizaciones aceptadas.</p>
+        <p class="muted small">Las cotizaciones abiertas y los ingresos los ves en la vista de Ventas. Aceptar una cotización no confirma un pago. Los cobros se registran manualmente.</p>
       </div>
     </section>`;
   }
   return `<section class="section">
     <div class="section-head">
-      <div><h2 class="section-title">Ventas recientes</h2><p class="section-sub">${won.length} venta${won.length === 1 ? '' : 's'} · ${money(sales.revenue || 0, sales.currency)} ingresados.</p></div>
+      <div><h2 class="section-title">Ventas recientes</h2><p class="section-sub">${won.length} venta${won.length === 1 ? '' : 's'} · ${money(sales.revenue || 0, sales.currency)} informados manualmente (no conciliados).</p></div>
       <a class="section-link" href="#/ventas">Ver todas ${icon('arrowRight')}</a>
     </div>
     <div class="card" style="padding:6px 0">
@@ -821,7 +839,7 @@ function renderPanel() {
     <section class="stat-grid">
       ${statCard('Por aprobar', counts.draftsToReview || 0, 'mail', counts.draftsToReview ? 'borradores esperando tu OK' : 'nada pendiente', '#/bandeja?filtro=revisar', counts.draftsToReview ? 'warm' : '')}
       ${statCard('Te escribieron', counts.awaitingReply || 0, 'message', counts.awaitingReply ? 'respuestas por leer' : 'sin novedades', '#/bandeja?filtro=responder', counts.awaitingReply ? 'warm' : '')}
-      ${statCard('Ventas cerradas', S.state.sales?.sold || 0, 'dollar', S.state.sales?.revenue ? `${money(S.state.sales.revenue, S.state.sales.currency)} ingresados` : 'todavía ninguna', '#/ventas', (S.state.sales?.sold || 0) ? 'warm' : '')}
+      ${statCard('Ventas cerradas', S.state.sales?.sold || 0, 'dollar', S.state.sales?.revenue ? `${money(S.state.sales.revenue, S.state.sales.currency)} cobros informados` : 'todavía ninguna', '#/ventas', (S.state.sales?.sold || 0) ? 'warm' : '')}
       ${statCard('Piezas de contenido', counts.content || 0, 'image', 'ideas, borradores y publicadas', '#/contenido')}
     </section>
 
@@ -986,13 +1004,18 @@ function renderVentas() {
   const won = arr(sales.won);
   const open = arr(sales.open);
   const byProduct = arr(sales.byProduct);
+  const agenda = S.state.salesAgenda || { tasks: [], total: 0, counts: {} };
+  const agendaTasks = arr(agenda.tasks);
+  const health = S.state.catalogHealth || { total: 0, ready: 0, blocked: 0, toImprove: [] };
+  const launch = S.state.salesLaunch || { canStart: false, reasons: ['Actualizá Lucian para usar esta función.'] };
   return `<div class="page-head">
     <div class="page-head-main">
       <p class="eyebrow">Ventas</p>
       <h2 class="page-title">Lo vendido y lo que está por cerrar.</h2>
-      <p class="page-sub">Una venta es una cotización aceptada o una conversación marcada como Ganada. El ingreso se calcula solo con cotizaciones aceptadas. Nada se inventa.</p>
+      <p class="page-sub">Cotizaciones aceptadas, cobros informados y saldos pendientes. Aceptar una propuesta NO acredita dinero; los cobros se registran manualmente y no se concilian con el banco.</p>
     </div>
     <div class="page-actions">
+      <button class="btn btn-accent btn-sm" type="button" data-action="commercial-strategy">${icon('spark')} Director comercial IA</button>
       <a class="btn btn-ghost btn-sm" href="#/bandeja?filtro=revisar">${icon('mail')} Por aprobar</a>
       <a class="btn btn-primary btn-sm" href="#/bandeja">${icon('inbox')} Conversaciones</a>
     </div>
@@ -1000,9 +1023,70 @@ function renderVentas() {
 
   <section class="stat-grid">
     ${statCard('Ventas cerradas', sales.sold || 0, 'dollar', sales.sold ? 'conversaciones ganadas' : 'todavía ninguna', '', sales.sold ? 'warm' : '')}
-    ${statCard('Ingresos', money(sales.revenue || 0, currency), 'chart', 'cotizaciones aceptadas', '', '')}
+    ${statCard('Cobros informados', money(sales.revenue || 0, currency), 'chart', 'manual · sin conciliación bancaria', '', '')}
     ${statCard('Cotizaciones abiertas', sales.openQuotes || 0, 'mail', open.length ? 'borrador o enviada' : 'ninguna', '', sales.openQuotes ? 'warm' : '')}
-    ${statCard('Cotizaciones aceptadas', sales.acceptedQuotes || 0, 'check', 'cerraron la venta', '', '')}
+    ${statCard('Cotizaciones aceptadas', sales.acceptedQuotes || 0, 'check', `${sales.unpaidAcceptedQuotes || 0} con saldo pendiente`, '', '')}
+  </section>
+
+  <section class="section" id="agentes-supervisados">
+    <div class="section-head">
+      <div><h2 class="section-title">Activar agentes: primera prospección real</h2><p class="section-sub">Lucian buscará compradores verificables para una lámpara, analizará oportunidades y preparará mensajes individuales para revisión humana.</p></div>
+    </div>
+    <div class="card card-pad">
+      ${launch.candidate ? `<p class="small"><b>Lámpara seleccionada:</b> ${esc(launch.candidate.name)} (${num(launch.candidate.score)}% de ficha completa).</p>` : `<p class="small muted">Todavía no hay una lámpara elegible para iniciar.</p>`}
+      <p class="small muted mt-2">${num(launch.eligible || 0)} lámparas elegibles · ${num(launch.unready || 0)} requieren completar datos · ${num(launch.recent || 0)} ya prospectadas en los últimos 7 días.</p>
+      ${arr(launch.reasons).length ? `<div class="artifact-callout warn mt-3">${arr(launch.reasons).map(t => `<p>${esc(t)}</p>`).join('')}</div>` : ''}
+      ${arr(launch.warnings).length ? `<p class="small muted mt-2">${arr(launch.warnings).map(t => esc(t)).join(' ')}</p>` : ''}
+      <div class="mt-3" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button type="button" class="btn btn-primary" data-action="launch-supervised-agents" ${launch.canStart ? '' : 'disabled'}>${icon('spark')} Preparar misión real con agentes</button>
+        <a class="btn btn-ghost" href="#/ajustes">Configuración de IA y búsqueda</a>
+      </div>
+      <p class="tiny muted mt-2">Una sola misión simultánea · máximo 8 prospectos · sin envíos automáticos · sin cobros ficticios. Las búsquedas externas pueden consumir créditos.</p>
+    </div>
+  </section>
+
+  <section class="section" id="agenda-comercial">
+    <div class="section-head">
+      <div><h2 class="section-title">Agenda comercial priorizada</h2><p class="section-sub">Qué conviene revisar primero para avanzar ventas reales. No envía mensajes ni acredita cobros.</p></div>
+      <span class="badge badge-info">${num(agenda.total)} tarea${num(agenda.total) === 1 ? '' : 's'}</span>
+    </div>
+    ${agendaTasks.length ? `<div class="card" style="padding:6px 0">
+      ${agendaTasks.map((task) => `<a class="thread-row" href="#/bandeja/${encodeURIComponent(task.threadId)}" style="text-decoration:none">
+        <div class="thread-row-top">
+          <span class="avatar sm">${esc(initials(task.company || '?'))}</span>
+          <div style="min-width:0;flex:1">
+            <div class="thread-company">${esc(task.company)} <span class="badge badge-${task.priority >= 85 ? 'warn' : 'info'}">${esc(task.title)}</span></div>
+            <div class="thread-person">${esc(task.productName)}${task.amount > 0 ? ` · Saldo: ${esc(money(task.amount, task.currency))}` : ''}</div>
+          </div>
+          ${icon('chevronRight')}
+        </div>
+        <div class="thread-preview">${esc(task.detail)}</div>
+      </a>`).join('')}
+    </div>
+    ${agenda.total > agendaTasks.length ? `<p class="tiny muted mt-2">Mostrando las ${agendaTasks.length} prioridades principales de ${num(agenda.total)}. Revisá el resto desde Conversaciones.</p>` : ''}` : `<div class="card card-pad"><p class="small muted">No hay tareas urgentes detectadas con los datos actuales. Revisá los contactos verificados y las propuestas antes de iniciar nuevos seguimientos.</p></div>`}
+  </section>
+
+  <section class="section" id="estado-catalogo">
+    <div class="section-head">
+      <div><h2 class="section-title">Preparación del catálogo para vender</h2><p class="section-sub">Las misiones reales requieren una imagen cargada y un precio mayor a cero. Los otros datos mejoran las propuestas y la logística.</p></div>
+      <a class="section-link" href="#/productos">Ver las lámparas ${icon('arrowRight')}</a>
+    </div>
+    <div class="card card-pad">
+      <p class="small"><b>${num(health.ready)} de ${num(health.total)}</b> lámparas activas cumplen los requisitos mínimos para iniciar misiones. <b>${num(health.blocked)}</b> requieren completar foto o precio.</p>
+      <p class="tiny muted mt-2">Sin foto cargada: ${num(health.missingPhotos)} · Sin precio: ${num(health.missingPrices)}. Esta comprobación no valida la calidad de la imagen, la capacidad de fabricación ni certificaciones eléctricas.</p>
+      ${arr(health.toImprove).length ? `<div style="margin-top:10px">
+        ${arr(health.toImprove).map((item) => `<a class="thread-row" href="#/productos/${encodeURIComponent(item.id)}" style="text-decoration:none">
+          <div class="thread-row-top">
+            <span class="avatar sm">${esc(initials(item.name || '?'))}</span>
+            <div style="min-width:0;flex:1">
+              <div class="thread-company">${esc(item.name)} <span class="badge badge-${item.readyForProspecting ? 'info' : 'warn'}">${item.readyForProspecting ? 'Mejorable' : 'Requiere completar'}</span></div>
+              <div class="thread-person">${esc((item.criticalMissing.length ? item.criticalMissing : item.recommendedMissing).slice(0, 2).join(' · '))}</div>
+            </div>
+            <span class="tiny muted">${num(item.score)}%</span>
+          </div>
+        </a>`).join('')}
+      </div>` : '<p class="tiny muted mt-2">Todas las fichas activas cumplen los requisitos revisados.</p>'}
+    </div>
   </section>
 
   <div class="section" style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,1fr);gap:22px">
@@ -1046,7 +1130,7 @@ function renderVentas() {
 
   ${byProduct.length ? `<section class="section">
     <div class="section-head">
-      <div><h2 class="section-title">Por lámpara</h2><p class="section-sub">Ventas e ingresos por producto. Hacé clic para ver la ruta completa.</p></div>
+      <div><h2 class="section-title">Por lámpara</h2><p class="section-sub">Cotizaciones y cobros manualmente registrados por producto. Hacé clic para ver el detalle.</p></div>
     </div>
     <div class="card" style="padding:6px 0">
       ${byProduct.sort((a,b) => (b.revenue||0)-(a.revenue||0)).map((p) => `<a class="thread-row" href="#/productos/${encodeURIComponent(p.productId)}" style="text-decoration:none">
@@ -1062,6 +1146,24 @@ function renderVentas() {
     </div>
   </section>` : ''}
 `;
+}
+
+async function launchSupervisedAgents() {
+  const launch = S.state.salesLaunch;
+  if (!launch?.canStart || !launch.candidate) { toast('Revisá las condiciones de inicio de la misión.', 'error'); return; }
+  const confirmed = await confirmAction({
+    title: 'Iniciar una misión real supervisada',
+    message: `Los agentes investigarán compradores para ${launch.candidate.name}. Buscarán hasta ${launch.maximumProspects} prospectos y prepararán propuestas individuales para revisar.`,
+    details: 'Puede consumir consultas web y créditos de IA. No se enviarán mensajes ni se aprobarán destinatarios automáticamente.',
+    confirmLabel: 'Iniciar agentes',
+  });
+  if (!confirmed) return;
+  try {
+    const data = await api('/api/sales/prepare-one', { method: 'POST', body: { confirm: true, productId: launch.candidate.id } });
+    await loadState({ silent: true, render: false });
+    toast('Misión iniciada. Los mensajes quedarán pendientes de aprobación.');
+    navigate(`#/misiones/${encodeURIComponent(data.mission.id)}`);
+  } catch (error) { toast(error.message, 'error'); await loadState({silent:true}); }
 }
 
 function bindVentas() { /* sin filtros adicionales */ }
@@ -1144,7 +1246,7 @@ function renderProductRoute(id) {
     ${statCard('Misiones', missions.length, 'spark', missions.length ? 'pasadas del equipo' : 'sin misiones aún', '', '')}
     ${statCard('Compradores', threads.length, 'users', threads.length ? `${hot} calientes` : 'ninguno aún', '', '')}
     ${statCard('Por aprobar', draftsToReview, 'mail', draftsToReview ? 'borradores pendientes' : 'nada pendiente', '', draftsToReview ? 'warm' : '')}
-    ${statCard('Ventas', sales.sold || 0, 'dollar', sales.revenue ? `${money(sales.revenue, currency)} ingresados` : 'todavía ninguna', '#/ventas', sales.sold ? 'warm' : '')}
+    ${statCard('Ventas', sales.sold || 0, 'dollar', sales.revenue ? `${money(sales.revenue, currency)} cobros manuales` : 'todavía ninguna', '#/ventas', sales.sold ? 'warm' : '')}
     ${statCard('Contenido', content.length, 'image', content.filter((c)=>c.status==='publicado').length ? `${content.filter((c)=>c.status==='publicado').length} publicado${content.filter((c)=>c.status==='publicado').length===1?'':'s'}` : 'ideas y borradores', '', '')}
   </section>
 
@@ -1184,6 +1286,7 @@ function renderProducts() {
       <p class="page-sub">Foto, precio, código y notas. Cuanto mejor el punto de partida, mejor el plan que devuelve el equipo.</p>
     </div>
     <div class="page-actions">
+      <button class="btn btn-accent" type="button" data-action="commercial-strategy">${icon('spark')} Estrategia IA</button>
       <button class="btn btn-ghost" type="button" data-action="import-products">${icon('upload')} Importar CSV</button>
       <button class="btn btn-ghost" type="button" data-action="campaign-catalog" ${products.length ? '' : 'disabled'}>${icon('spark')} Campaña de catálogo</button>
       <button class="btn btn-accent" type="button" data-action="quote-catalog" ${products.length ? '' : 'disabled'}>${icon('dollar')} Cotizar todo el catálogo</button>
@@ -1292,6 +1395,82 @@ function bindProducts() {
         importInput.value = '';
       }
     });
+  }
+}
+
+/* El director comercial investiga pero nunca envía ni publica.
+   La investigación puede consumir tokens/búsquedas: solo por acción expresa. */
+function openCommercialStrategyModal() {
+  const products = arr(S.state.products).filter((p) => p.status !== 'archivado');
+  if (!products.length) { toast('Primero cargá una lámpara activa.', 'error'); return; }
+  const market = arr(S.state.settings?.mission?.markets)[0] || S.state.brand?.country || 'Argentina';
+  openModal({
+    title: 'Director comercial IA',
+    subtitle: 'Investigación web + estrategia por lámpara, mercado y comprador. Nada se publica ni se envía.',
+    size: 'modal-lg',
+    body: `<form id="commercial-strategy-form" autocomplete="off">
+      <div class="form-grid">
+        <div class="field full"><label for="cs-product">Lámpara</label>
+          <select class="select" id="cs-product" name="productId">${products.map((p) => `<option value="${attr(p.id)}">${esc(p.name)} (${esc(p.code || 'sin código')})</option>`).join('')}</select></div>
+        <div class="field"><label for="cs-market">País o mercado</label>
+          <input class="input" id="cs-market" name="market" maxlength="80" value="${attr(market)}" required></div>
+        <div class="field"><label for="cs-audience">Comprador ideal</label>
+          <select class="select" id="cs-audience" name="audience">
+            <option value="retail">Tiendas de diseño e iluminación</option>
+            <option value="architects">Arquitectos e interioristas</option>
+            <option value="hospitality">Hoteles, gastronomía y proyectos</option>
+            <option value="consumer">Comprador particular</option>
+          </select></div>
+      </div>
+      <p class="field-hint mt-3">Se consultarán dos búsquedas web y un modelo de IA. El resultado tendrá fuentes verificables, guion de reel, tácticas por canal y email B2B en borrador. Puede consumir créditos.</p>
+    </form>`,
+    footer: `<button class="btn btn-ghost" data-action="close-modal" type="button">Cancelar</button>
+      <button class="btn btn-primary" data-action="commercial-strategy-run" type="button">${icon('spark')} Investigar y preparar estrategia</button>`,
+  });
+}
+async function runCommercialStrategy() {
+  const form = $('#commercial-strategy-form');
+  if (!form) return;
+  const data = new FormData(form);
+  const payload = {
+    confirmResearch: true, productId: String(data.get('productId') || ''),
+    market: String(data.get('market') || '').trim(),
+    audience: String(data.get('audience') || 'retail'),
+  };
+  if (!payload.market) { toast('Indicá un país o mercado.', 'error'); return; }
+  const button = $('[data-action="commercial-strategy-run"]');
+  if (button) { button.disabled = true; button.textContent = 'Investigando fuentes y preparando propuesta…'; }
+  try {
+    const result = await api('/api/commercial/strategy', { method: 'POST', body: payload });
+    S.ui.commercialStrategyLast = result.plan;
+    const p = result.plan || {};
+    const channel = (c) => `<li><b>${esc(c.canal || '')}</b>: ${esc(c.hipotesis || '')} — ${esc(c.pieza || '')}<div class="small muted">Acción: ${esc(c.cta || '')}</div></li>`;
+    const rows = (values) => arr(values).map((v) => `<li>${esc(typeof v === 'string' ? v : v.accion || '')}</li>`).join('');
+    openModal({
+      title: 'Investigación comercial — para revisión',
+      subtitle: `${p.producto?.nombre || ''} · ${p.mercado || ''} · no publicado`,
+      size: 'modal-lg',
+      body: `<div class="artifact-callout"><b>Diagnóstico</b><p>${esc(p.diagnostico || 'No disponible')}</p></div>
+        <h3 class="mt-3">Oferta y comprador ideal</h3>
+        <p><b>${esc(p.propuesta?.titulo || '')}</b> — ${esc(p.propuesta?.argumento || '')}</p>
+        <p>${esc(p.compradorIdeal?.argumento || '')}</p>
+        <h3 class="mt-3">Canales y campañas</h3><ul>${arr(p.canales).map(channel).join('')}</ul>
+        <h3 class="mt-3">Acciones priorizadas</h3><ul>${rows(p.acciones)}</ul>
+        <h3 class="mt-3">Email B2B (borrador, NO enviado)</h3>
+        <p><b>${esc(p.emailB2B?.asunto || '')}</b></p>
+        <p style="white-space:pre-wrap">${esc(p.emailB2B?.mensaje || '')}</p>
+        <h3 class="mt-3">Reel / video corto</h3>
+        <p><b>${esc(p.reel?.gancho || '')}</b></p><ol>${rows(p.reel?.escenas)}</ol><p>${esc(p.reel?.cta || '')}</p>
+        <h3 class="mt-3">Advertencias y datos que faltan</h3><ul>${rows(p.alertas)}</ul>
+        <h3 class="mt-3">Fuentes encontradas</h3>
+        ${arr(p.fuentes).length ? `<ul>${arr(p.fuentes).map((f) => `<li>${esc(f.id)}: <a href="${attr(f.url)}" target="_blank" rel="noopener noreferrer">${esc(f.title || f.url)}</a></li>`).join('')}</ul>` : '<p>Sin fuentes verificables; tratá el plan como hipótesis.</p>'}
+        <p class="small muted">El modelo puede equivocarse. Revisá datos, licencias, precios y contactos antes de utilizar cualquier material.</p>`,
+      footer: `<button class="btn btn-ghost" type="button" data-action="close-modal">Cerrar</button>
+        <button class="btn btn-primary" type="button" data-action="commercial-strategy-copy">${icon('copy')} Copiar informe completo</button>`,
+    });
+  } catch (error) {
+    toast(error.message || 'No fue posible completar la investigación.', 'error');
+    if (button) { button.disabled = false; button.textContent = 'Reintentar investigación'; }
   }
 }
 
@@ -2828,7 +3007,7 @@ function quotesHTML(thread) {
       <div class="draft-actions">
         ${!accepted ? `<button class="btn btn-primary btn-xs" type="button" data-action="quote-status" data-id="${attr(thread.id)}" data-quote-id="${attr(quote.id)}" data-status="aceptada">${icon('check')} Aceptada</button>` : ''}
         ${!rejected && !accepted ? `<button class="btn btn-ghost btn-xs" type="button" data-action="quote-status" data-id="${attr(thread.id)}" data-quote-id="${attr(quote.id)}" data-status="rechazada">Rechazada</button>` : ''}
-        ${accepted ? `<span class="tiny muted">Cierra la venta y reinicia la postventa desde hoy.</span>` : ''}
+        ${accepted ? `<span class="tiny muted">Cotización aceptada, no significa cobrada.</span><span class="tiny muted">Cobrado manualmente: ${esc(money(arr(quote.payments).reduce((a,p)=>a+num(p.amount,0),0), quote.currency))} / ${esc(money(total, quote.currency))}</span><button class="btn btn-primary btn-xs" type="button" data-action="record-payment" data-id="${attr(thread.id)}" data-quote-id="${attr(quote.id)}">Registrar cobro</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -3146,6 +3325,51 @@ async function saveQuote(threadId) {
 }
 
 
+async function setQuoteStatusUI(threadId, quoteId, status) {
+  try {
+    const confirmed = await confirmAction({ title: 'Cambiar estado de cotización', message: status === 'aceptada' ? '¿Confirmás que el cliente aceptó? Esto NO confirma un pago.' : '¿Confirmás que la rechazó?', confirmLabel: 'Actualizar cotización' });
+    if (!confirmed) return;
+    await api(`/api/threads/${encodeURIComponent(threadId)}/quotes/${encodeURIComponent(quoteId)}`, { method: 'PATCH', body: { status } });
+    await loadState({ silent: true, render: false });
+    await refreshThread();
+    toast(status === 'aceptada' ? 'Cotización aceptada. Registrá un cobro cuando efectivamente ingrese.' : 'Cotización rechazada.');
+  } catch (error) { toast(error.message, 'error'); }
+}
+
+function openPaymentModal(threadId, quoteId) {
+  const quote = arr(S.thread?.thread?.quotes).find((item) => item.id === quoteId);
+  if (!quote || quote.status !== 'aceptada') { toast('Primero se debe aceptar la cotización.', 'error'); return; }
+  const received = arr(quote.payments).reduce((sum, item) => sum + num(item.amount, 0), 0);
+  const remaining = Math.max(0, Math.round((num(quote.total) - received) * 100) / 100);
+  if (!remaining) { toast('La cotización ya figura cobrada por completo.', 'info'); return; }
+  openModal({
+    title: 'Registrar cobro recibido',
+    subtitle: 'Registro manual. No consulta Mercado Pago ni el banco: comprobá la acreditación antes de confirmar.',
+    body: `<form id="payment-form" class="form-grid">
+      <div class="field"><label>Importe recibido (${esc(quote.currency || 'USD')})</label><input class="input" type="number" name="amount" step="0.01" min="0.01" max="${attr(String(remaining))}" value="${attr(String(remaining))}" required></div>
+      <div class="field"><label>Medio de cobro</label><select class="select" name="method"><option value="transferencia">Transferencia</option><option value="mercadopago">Mercado Pago</option><option value="efectivo">Efectivo</option><option value="otro">Otro</option></select></div>
+      <div class="field full"><label>Número de operación o referencia</label><input class="input" name="reference" maxlength="120" placeholder="ID de operación / número de comprobante" required></div>
+      <div class="field full"><label><input type="checkbox" name="confirm"> Confirmo que comprobé personalmente que este importe ingresó. Entiendo que Lucian no lo concilia automáticamente.</label></div>
+    </form>`,
+    footer: `<button class="btn btn-ghost" data-action="close-modal">Cancelar</button><button class="btn btn-primary" data-action="save-payment" data-id="${attr(threadId)}" data-quote-id="${attr(quoteId)}">Guardar cobro manual</button>`,
+  });
+}
+
+async function savePaymentUI(threadId, quoteId) {
+  const form = $('#payment-form');
+  if (!form) return;
+  const values = new FormData(form);
+  try {
+    await api(`/api/threads/${encodeURIComponent(threadId)}/quotes/${encodeURIComponent(quoteId)}/payments`, {
+      method: 'POST', body: { amount: Number(values.get('amount')), method: values.get('method'), reference: String(values.get('reference') || '').trim(), confirm: values.get('confirm') === 'on' },
+    });
+    closeModal();
+    await loadState({ silent: true, render: false });
+    await refreshThread();
+    toast('Cobro informado guardado. No fue verificado con el proveedor bancario.');
+  } catch (error) { toast(error.message, 'error'); }
+}
+
 function openContactModal(thread) {
   const contact = thread.contact || {};
   openModal({
@@ -3161,6 +3385,8 @@ function openContactModal(thread) {
         <div class="field"><label for="ct-country">País</label><input class="input" id="ct-country" name="country" value="${attr(contact.country || '')}"></div>
         <div class="field"><label for="ct-city">Ciudad</label><input class="input" id="ct-city" name="city" value="${attr(contact.city || '')}"></div>
         <div class="field full"><label for="ct-website">Sitio web</label><input class="input" id="ct-website" name="website" value="${attr(contact.website || '')}" placeholder="https://”¦"></div>
+        <div class="field full"><label for="ct-permission">Permiso para campañas por Resend</label><select class="select" id="ct-permission" name="permissionStatus"><option value="unknown" ${contact.permission?.status !== 'opted_in' ? 'selected' : ''}>Sin consentimiento documentado (no enviar)</option><option value="opted_in" ${contact.permission?.status === 'opted_in' ? 'selected' : ''}>Dio consentimiento explícito</option></select></div>
+        <div class="field full"><label for="ct-evidence">Evidencia del consentimiento</label><textarea class="textarea" id="ct-evidence" name="permissionEvidence" rows="2" placeholder="Formulario, fecha, finalidad y enlace o registro verificable">${esc(contact.permission?.evidence || '')}</textarea></div>
       </div>
       <p class="field-hint mt-3">Lucian no inventa direcciones. Si no tenés un email verificado, dejalo vacío y usá el formulario del sitio o el contacto manual.</p>
     </form>`,
@@ -3172,6 +3398,9 @@ async function saveContact(threadId) {
   const form = $('#contact-form');
   if (!form) return;
   const data = Object.fromEntries(new FormData(form).entries());
+  data.permission = { status: data.permissionStatus === 'opted_in' ? 'opted_in' : 'unknown', evidence: data.permissionEvidence || '' };
+  delete data.permissionStatus;
+  delete data.permissionEvidence;
   if (data.email && !isEmail(data.email)) { toast('Ese email no parece válido.', 'error'); return; }
   try {
     await api(`/api/threads/${encodeURIComponent(threadId)}`, { method: 'PATCH', body: { contact: data } });
@@ -3295,7 +3524,10 @@ function openSendModal(thread, draft) {
   const demoEmail = isDemoEmail(contact.email);
   const suppressed = Boolean(thread.suppressed);
   const gmailReady = settings.email?.provider === 'gmail' && Boolean(S.state.flags?.email);
-  const canResend = Boolean(S.state.flags?.email) && valid && !demoEmail && !suppressed;
+  const hasConsent = contact.permission?.status === 'opted_in'
+    && String(contact.permission?.evidence || '').trim().length >= 10
+    && Boolean(contact.permission?.capturedAt);
+  const canResend = Boolean(S.state.flags?.email) && valid && !demoEmail && !suppressed && hasConsent;
   const canWebhook = Boolean(settings.email?.webhookUrl) && valid && !demoEmail && !suppressed;
   const canGmail = gmailReady && valid && !demoEmail && !suppressed;
   const limits = S.state.limits || {};
@@ -3325,7 +3557,7 @@ function openSendModal(thread, draft) {
     <div class="form-section"><p class="form-section-title">Cómo lo mandás</p>
       <div class="stack">
         ${gmailReady ? `<div class="integration-card"><span class="status-dot ok"></span><div><h4>Gmail · listo</h4><p>Envío real desde ${esc(settings.email?.from || 'tu Gmail')} con tu contraseña de aplicación. Sale directo, sin copiar nada.</p></div></div>` : ''}
-        <div class="integration-card"><span class="status-dot ${canResend ? 'ok' : 'muted'}"></span><div><h4>Resend ${canResend ? '· listo' : '· no configurado'}</h4><p>${canResend ? 'Envío real desde tu dominio verificado.' : 'Requiere verificar un dominio en Resend.'}</p></div></div>
+        <div class="integration-card"><span class="status-dot ${canResend ? 'ok' : 'muted'}"></span><div><h4>Resend ${canResend ? '· listo' : '· no disponible'}</h4><p>${canResend ? 'Envío permitido por consentimiento registrado.' : !hasConsent ? 'No hay consentimiento explícito documentado. Editá el contacto para registrar evidencia real.' : 'Requiere verificar un dominio en Resend.'}</p></div></div>
         <div class="integration-card"><span class="status-dot ${canWebhook ? 'ok' : 'muted'}"></span><div><h4>Webhook propio ${canWebhook ? '· listo' : '· opcional'}</h4><p>${canWebhook ? 'Lucian manda el mensaje a tu automatización.' : 'Ideal si ya tenés Make, n8n o un servidor propio.'}</p></div></div>
       </div>
     </div>`,
@@ -5474,6 +5706,9 @@ async function handleAction(action, el) {
     case 'reload-state': await loadState(); return;
     case 'new-product': openProductModal(); return;
     case 'import-products': $('#product-import-input')?.click(); return;
+    case 'commercial-strategy': openCommercialStrategyModal(); return;
+    case 'commercial-strategy-run': await runCommercialStrategy(); return;
+    case 'commercial-strategy-copy': await copyToClipboard(JSON.stringify(S.ui.commercialStrategyLast || {}, null, 2), 'Informe comercial copiado.'); return;
     case 'campaign-catalog': openCampaignModal(); return;
     case 'campaign-selected': {
       if (!S.ui.selectedProducts.length) { toast('Seleccioná al menos un producto.', 'error'); return; }
@@ -5490,6 +5725,7 @@ async function handleAction(action, el) {
       return;
     }
     case 'launch-campaign': await launchCampaign(); return;
+    case 'launch-supervised-agents': await launchSupervisedAgents(); return;
     case 'edit-product': openProductModal(el.dataset.id); return;
     case 'delete-product': await deleteProduct(el.dataset.id); return;
     case 'save-product': await saveProduct(); return;
@@ -5634,6 +5870,8 @@ async function handleAction(action, el) {
       return;
     }
     case 'quote-status': await setQuoteStatusUI(el.dataset.id, el.dataset.quoteId, el.dataset.status); return;
+    case 'record-payment': openPaymentModal(el.dataset.id, el.dataset.quoteId); return;
+    case 'save-payment': await savePaymentUI(el.dataset.id, el.dataset.quoteId); return;
     case 'new-draft': {
       if (!S.thread?.thread) return;
       openDraftModal(S.thread.thread);
@@ -5810,17 +6048,12 @@ function bindView(route) {
    ───────────────────────────────────────────────────────────── */
 
 function init() {
-  // Si la dirección viene con ?access=CLAVE (la que manda el script del túnel),
-  // la guardamos en una cookie y la quitamos de la URL. Así se entra directo,
-  // sin pedirla, igual que cuando se usaba sin clave.
+  // Las claves no se aceptan por URL: pueden quedar en historiales y registros.
   try {
     const params = new URLSearchParams(location.search);
-    const token = params.get('access');
-    if (token) {
-      document.cookie = `lucian_access=${encodeURIComponent(token)}; path=/; max-age=2592000; SameSite=Lax`;
+    if (params.has('access')) {
       params.delete('access');
-      const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
-      history.replaceState(null, '', clean);
+      history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : '') + location.hash);
     }
   } catch { /* noop */ }
   document.addEventListener('click', onGlobalClick);

@@ -77,14 +77,9 @@ clearSearchCache();
 const noneDetail = await searchWebDetailed({ search: { provider: 'none' } }, 'tiendas de diseño Madrid');
 ok(noneDetail.results.length === 0 && noneDetail.errors.length === 0, 'proveedor none no inventa resultados ni errores');
 
-const tavilyDetail = await searchWebDetailed({ search: { provider: 'tavily', apiKey: '' } }, 'tiendas de diseño Madrid');
-ok(tavilyDetail.errors.some((e) => /Falta la clave/.test(e)), 'proveedor sin clave explica el error');
-
-let result = null;
-try {
-  result = await searchWeb({ search: { provider: 'tavily', apiKey: '' } }, 'tiendas de diseño Madrid');
-} catch { result = null; }
-ok(Array.isArray(result) || result === null, 'searchWeb con fallback devuelve lista o lanza');
+// Los tests no consultan proveedores externos: resultados de fallback deben probarse con mocks.
+const withKey = searchProviderInfo({ search: { provider: 'tavily', apiKey: 'tvly_test_only' } });
+ok(withKey.ready === true, 'Tavily con clave se declara configurado (sin llamar a internet)');
 
 /* 413 de Groq por tokens por minuto: es cuota temporal, no un pedido
    imposible. Si se tratara como error fatal, el paso se cae y la misión

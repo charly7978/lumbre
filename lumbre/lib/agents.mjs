@@ -1,4 +1,5 @@
-﻿import fs from 'node:fs/promises';
+﻿import { assessCommercialMessage } from './commercial-quality.mjs';
+import fs from 'node:fs/promises';
 import {
   asArray, asNumber, asObject, asString, clamp, cleanWebsite, humanError, normalizeDomain, nowISO,
   sleep, sniffImage, truncate, uid, uniqueBy,
@@ -1244,6 +1245,22 @@ function draftPlanForBuyer({ mission, product, buyer, state, reviewDirectory = f
     reviewNote = 'Comprador del directorio semilla: confirmá que sea una tienda multimarca y que compre a un maker antes de enviarlo.';
   }
 
+  // La IA puede redactar con cortesía y aun así no ofrecer nada evaluable.
+  // Este guardián no envía: obliga a revisar antes de aprobar el mensaje.
+  const commercialQuality = assessCommercialMessage({ subject, body, product, buyer });
+  if (mission.commercialQualityReview === true && commercialQuality.reviewRequired && status === 'listo') {
+    status = 'revisar';
+    reviewKind = 'calidad-comercial';
+    reviewNote = commercialQuality.reasons.map((reason) => reason.text).join(' ').slice(0, 600)
+      || 'Incluí una propuesta comercial verificable.';
+  }
+
+  if (mission.manualReviewOnly && status === 'listo') {
+    status = 'revisar';
+    reviewKind = 'operacion-supervisada';
+    reviewNote = 'Esta misión exige revisar al comprador y aprobar expresamente el borrador antes de enviar.';
+  }
+
   return {
     subject: subject || `${product.name}: una serie corta`,
     body,
@@ -1257,6 +1274,7 @@ function draftPlanForBuyer({ mission, product, buyer, state, reviewDirectory = f
     revisionApplied: source?._bodySource === 'revision',
     sourceLayer: source?._source || null,
     mentionsBuyer,
+    commercialQuality,
   };
 }
 
@@ -1287,6 +1305,7 @@ function makeDraft(plan, hasEmail, now) {
     complianceCorrections: plan.complianceCorrections || undefined,
     compliancePending: plan.compliancePending || undefined,
     revisionApplied: plan.revisionApplied || undefined,
+    commercialQuality: plan.commercialQuality || undefined,
     guardVersion: 2,
   };
 }
@@ -1387,6 +1406,7 @@ function applyPlanToThread(thread, plan, { hasEmail, suppressed, now, buyer = {}
 
   missionDraft.subject = plan.subject;
   missionDraft.body = plan.body;
+  missionDraft.commercialQuality = plan.commercialQuality || undefined;
   missionDraft.language = missionDraft.language || plan.language;
   missionDraft.reviewNote = plan.reviewNote || undefined;
   missionDraft.reviewKind = plan.reviewKind || undefined;
