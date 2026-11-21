@@ -488,16 +488,19 @@ ${verifiedBuyersBlock(ctx)}
 - Si PROSPECTING no trae compradores, devolvé "mensajes": [] y explicá en "estrategia" qué falta para tener la lista. No escribas mensajes para compradores que no existen.
 - Si no tenés un dato específico de una tienda, escribí un mensaje más breve y honesto, pero seguí siendo 1:1. Nunca uses el mensaje de otro comprador como relleno.
 - Asunto de máximo 60 caracteres, sin mayúsculas gritadas ni emojis.
-- Cuerpo de 90 a 140 palabras. Un solo pedido concreto al final.
+- Cuerpo de 65 a 110 palabras: presentación, encaje para este comprador y una oferta de valor comprobable. Un solo pedido concreto al final.
 - Nada de "espero que estés bien", "soy un apasionado", "revolucionario" ni listas de features.
-- Cada mensaje tiene que demostrar que vimos la tienda: mencioná una marca, una colección o un detalle real de la fuente.
+- Personalizá solamente con un hecho verificable y citá su URL en el campo personalizacion. Si la fuente no demuestra una marca o colección, hablá del tipo de negocio y no inventes afinidades.
 - IDIOMA OBLIGATORIO POR COMPRADOR: escribí cada mensaje EXACTAMENTE en el idioma indicado en el bloque de su país (ESPAÑOL / INGLÉS / PORTUGUÉS). España, Argentina, Chile, Uruguay, México y Colombia van en ESPAÑOL —aunque el comprador tenga un nombre o web en inglés, NO traduzcas el correo al inglés. Brasil va en PORTUGUÉS. Estados Unidos, Reino Unido y Alemania van en INGLÉS. Respetá también la variante local (vos/tú/usted) y el registro de cortesía de cada bloque.
-- La secuencia base tiene 3 pasos: apertura (día 0), seguimiento con valor (día 4) y cierre amable (día 10).
+- La secuencia base tiene 3 pasos: apertura (día 0), seguimiento con valor (día 4) y cierre amable (día 10), pero cualquier rechazo o respuesta detiene el contacto automático.
+- CTA de interés, no reunión obligatoria: pedí permiso para mandar ficha real con medidas, materiales y opciones. No prometas adjuntos inexistentes.
+- Ajustá la oferta al segmento: estudio/interiorista → especificaciones y personalización; hotel → series y tiempos sólo si constan; tienda → catálogo y condiciones mayoristas verificadas; galería → historia del objeto y terminaciones.
+- Planteá en "estrategia" una hipótesis comercial comprobable por segmento (quién, beneficio concreto, objeción probable) y el resultado esperado medible en RESPUESTAS, no aperturas.
 - Para WhatsApp, un mensaje de 35 palabras como máximo, sin archivos.
 - Incluá 3 objeciones probables con respuestas honestas.
 - No prometas ventas, certificaciones ni plazos que no estén en los datos.
 - Respetá la recomendación de PRICING: si recomienda no abrir canal mayorista todavía, no ofrezcas precio mayorista ni pedido mínimo; presentá la pieza y pedí permiso para mandar la ficha.
-- No afirmes qué marcas vende el comprador salvo que aparezcan en las fuentes o en su ficha; si no, usá un detalle seguro (ciudad, tipo de tienda, estilo).
+- No afirmes qué marcas vende el comprador salvo que aparezcan en las fuentes o en su ficha; si no, usá un detalle seguro (ciudad o tipo de tienda). No inventes certificaciones, stock, plazos, precios ni resultados.
 Devolvé este JSON:
 ${STEPS.outreach.schemaHint}`,
   },
