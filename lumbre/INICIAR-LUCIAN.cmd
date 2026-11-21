@@ -1,8 +1,8 @@
 @echo off
 title LUCIAN - Acceso desde cualquier lugar
 
-rem --- Ruta fija a la carpeta real de Lucian ---
-set "BASE=C:\Users\carlo.ROLITO\Downloads\Sistema-Ventas-Lamparas\lumbre\"
+rem --- Carpeta canonica (portatil, funciona desde donde se abra) ---
+set "BASE=%~dp0"
 cd /d "%BASE%"
 
 cls
@@ -26,7 +26,7 @@ if not exist "%BASE%cloudflared.exe" (
   powershell -NoProfile -Command "$ProgressPreference='SilentlyContinue'; Invoke-WebRequest -Uri 'https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe' -OutFile '%BASE%cloudflared.exe' -TimeoutSec 300"
 )
 
-rem --- Archivos auxiliares con rutas absolutas ---
+rem --- Archivo auxiliar para el servidor con ruta absoluta ---
 > "%BASE%_lucian_start.cmd" echo @echo off
 >> "%BASE%_lucian_start.cmd" echo cd /d "%BASE%"
 >> "%BASE%_lucian_start.cmd" echo set "LUCIAN_DATA_DIR=%BASE%data"
@@ -50,9 +50,7 @@ set INTENTOS=0
 set /a INTENTOS+=1
 if %INTENTOS% GTR 60 goto SINURL
 set "URL="
-if exist "%BASE%url.txt" (
-  set /p URL=<"%BASE%url.txt"
-)
+if exist "%BASE%url.txt" set /p URL=<"%BASE%url.txt"
 if defined URL goto MOSTRAR
 echo        esperando... (%INTENTOS%)
 ping -n 3 127.0.0.1 >nul
@@ -69,9 +67,9 @@ echo    Esta es la direccion para el celular:
 echo.
 echo           %URL%
 echo.
-echo    Copiala y mandala por WhatsApp.
+echo    Copiala y mandala por WhatsApp. Entra directo, sin clave.
 echo    Si se corta, se reconecta sola con otra direccion.
-echo    Mirsiempre la direccion en DIRECCION-LUCIAN.txt
+echo    Mirar siempre DIRECCION-LUCIAN.txt
 echo.
 echo    NO cierres esta ventana ni apagues la PC.
 echo.

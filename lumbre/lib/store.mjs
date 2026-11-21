@@ -88,7 +88,7 @@ export const DEFAULT_SETTINGS = {
   },
   notify: {
     paused: false,
-    telegram: { enabled: false, token: '', chatId: '', digestHour: 9 },
+    telegram: { enabled: false, token: '', chatId: '', digestHour: 9, quietMode: true },
     whatsapp: { enabled: false, token: '', phoneNumberId: '', to: '', verifyToken: '', apiVersion: 'v23.0' },
     events: { missionDone: true, missionError: true, missionWarning: true, hotReply: true, optOut: true, digest: true },
   },

@@ -6,6 +6,8 @@ import { Notifier } from '../lib/notify.mjs';
 import { parseAction, executeAction, ACTION_SPECS } from '../lib/telegram-actions.mjs';
 import { searchWebDetailed } from '../lib/search.mjs';
 import { askPrompt } from '../lib/prompts.mjs';
+import { probeLocalAI } from '../lib/connections.mjs';
+import { Outbox } from '../lib/outbox.mjs';
 
 // parseAction tests
 {
@@ -69,16 +71,36 @@ console.log('executeAction buscar OK');
   const dir = path.join(os.tmpdir(), `lucian-tg-${Date.now()}`);
   const store = new Store(dir);
   await store.init();
+  await store.saveSettings({ email: { provider: 'resend', resendKey: 'test-only', from: 'ventas@example.com' } });
   let called = null;
-  const actions = { sendThreadMessage: async (tid, body) => { called = { tid, body }; return { message: 'enviado' }; } };
+  const actions = { sendThreadMessage: async (tid, body) => {
+    called = { tid, body };
+    return { thread: { contact: { company: 'Tienda prueba' } }, message: { id: 'msg-test', status: 'enviado', channel: 'resend' } };
+  } };
   const res = await executeAction({
     action: { tipo: 'enviar_borrador', args: { threadId: 't1', draftId: 'd1' }, resumen: '', requiere_accion: true },
     store, actions, chatId: '1',
   });
-  if (!res.ok) throw new Error('enviar failed: ' + res.message);
-  if (!called || called.body.confirm !== true) throw new Error('confirm not passed');
+  if (!res.ok || !/realmente enviado/.test(res.message)) throw new Error('enviar failed: ' + res.message);
+  if (!called || called.body.confirm !== true || called.body.channel !== 'resend') throw new Error('proveedor real no utilizado');
   await fs.rm(dir, { recursive: true, force: true });
 }
+// No atribuirse envíos si el proveedor es manual.
+{
+  const dir = path.join(os.tmpdir(), `lucian-tg-manual-${Date.now()}`);
+  const store = new Store(dir);
+  await store.init();
+  let called = false;
+  const res = await executeAction({
+    action: { tipo: 'enviar_borrador', args: { threadId: 't1', draftId: 'd1' }, requiere_accion: true },
+    store,
+    actions: { sendThreadMessage: async () => { called = true; return {}; } },
+    chatId: '1',
+  });
+  if (res.ok || called || !/no envié|No envié/.test(res.message)) throw new Error('El modo manual simula un envío.');
+  await fs.rm(dir, { recursive: true, force: true });
+}
+
 console.log('enviar_borrador OK');
 
 // lanzar_mision calls createMission
@@ -184,5 +206,90 @@ console.log('reiniciar OK');
   if (!/no puedo/.test(out) === false) {}
 }
 console.log('askPrompt OK');
+
+
+/* Regresión: el operador debe poder consultar datos reales sin consumir IA
+   y el estado de Telegram debe explicitar si existe recepción activa. */
+{
+  const dir = path.join(os.tmpdir(), `lucian-ops-test-${Date.now()}`);
+  const store = new Store(dir);
+  await store.init();
+  await store.saveSettings({ notify: { telegram: { enabled: true, token: 'test-token', chatId: '42' } } });
+  await store.set('products', [{
+    id: 'prod-real', name: 'Lámpara prueba real', status: 'activo',
+    price: 100, photos: [], description: 'Pieza artesanal de prueba con pantalla de impresión 3D.',
+  }]);
+  await store.set('threads', [{
+    id: 'thread-real', demo: false, stage: 'interesado',
+    contact: { company: 'Estudio de Interiorismo', email: 'contacto@example.com' },
+    nextStep: 'Enviar ficha y cotización',
+    drafts: [{ id: 'd1', status: 'revisar' }],
+    messages: [{ direction: 'in', body: 'Quisiera una cotización', at: new Date().toISOString() }],
+  }, {
+    id: 'thread-demo', demo: true, stage: 'interesado',
+    contact: { company: 'Cliente inventado', email: 'demo@example.com' },
+    drafts: [], messages: [],
+  }]);
+  const notifier = new Notifier({ store, ask: async () => { throw new Error('No debe usarse IA'); } });
+  const diagnostic = await notifier.handleOwnerText('/diagnostico', 'telegram', '42');
+  if (!/Escuchando: no/.test(diagnostic)) throw new Error('El diagnóstico no revela la falta de polling');
+  const agenda = await notifier.handleOwnerText('/prioridades', 'telegram', '42');
+  if (!/Lámpara prueba real/.test(agenda) || !/Estudio de Interiorismo/.test(agenda)) {
+    throw new Error('No se muestran las prioridades comerciales verificables');
+  }
+  const opportunities = await notifier.handleOwnerText('/oportunidades', 'telegram', '42');
+  if (!/Estudio de Interiorismo/.test(opportunities) || /Cliente inventado/.test(opportunities)) {
+    throw new Error('Las oportunidades no excluyen datos demo');
+  }
+  await store.flush();
+  await fs.rm(dir, { recursive: true, force: true });
+}
+console.log('Comandos operativos y separación demo/real OK');
+
+/* IA local: reconocer un modelo descargado aun cuando el nombre sugerido
+   en Ajustes no exista. Se usa una respuesta simulada, nunca red real. */
+{
+  const original = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => ({
+      ok: true, json: async () => ({ models: [{ name: 'qwen2.5-coder:3b' }] }),
+    });
+    const local = await probeLocalAI({
+      fallback: { enabled: true, ollama: { baseUrl: 'http://127.0.0.1:11434/v1', model: 'qwen2.5:3b' } },
+    }, { fresh: true });
+    if (!local.ok || local.model !== 'qwen2.5-coder:3b' || !local.substituted) {
+      throw new Error('No se detectó el modelo Ollama instalado.');
+    }
+  } finally {
+    globalThis.fetch = original;
+  }
+}
+console.log('Fallback local comprobable OK');
+
+/* El piloto activo debe recuperar un borrador histórico aprobado UNA sola
+   vez, sin fabricar un envío ni contactar un correo de ejemplo. */
+{
+  const dir = path.join(os.tmpdir(), `lucian-outbox-test-${Date.now()}`);
+  const store = new Store(dir);
+  await store.init();
+  await store.saveSettings({ email: { autopilot: true, provider: 'resend', resendKey: 'test', from: 'ventas@lucian.com' } });
+  await store.set('threads', [{
+    id: 'hilo-1', demo: false, stage: 'nuevo',
+    contact: { company: 'Tienda comprobable', email: 'compras@tienda-real.test' },
+    drafts: [{ id: 'borrador-1', status: 'listo', channel: 'email', subject: 'Consulta', body: 'Correo preparado.' }],
+    messages: [],
+  }]);
+  const outbox = new Outbox({ store, deliver: async () => ({ ok: true }) });
+  const first = await outbox.enqueueAllReady();
+  const again = await outbox.enqueueAllReady();
+  if (first.queued !== 1 || again.queued !== 0 || outbox.items().length !== 1) {
+    throw new Error('Encolar duplicó un envío aprobado.');
+  }
+  await store.flush();
+  await fs.rm(dir, { recursive: true, force: true });
+}
+console.log('Recuperación de borradores y antiduplcado OK');
+
+
 
 console.log('\\n test-telegram OK');

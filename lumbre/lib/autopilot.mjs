@@ -88,7 +88,7 @@ export async function runAutopilot(store, notifier, logger = () => {}, deps = {}
 
   // 5) AUTOMATIZACIÓN DE CONTENIDO: si no hay piezas listas para publicar,
   //    el piloto crea una misión de contenido por su cuenta.
-  if (deps.createMission && settings.autopilot?.ensureContent !== false) {
+  if (deps.createMission && settings.autopilot?.ensureContent !== false && isAIReady(settings)) {
     try {
       const content = store.get('content') || [];
       const ideas = content.filter((c) => c.status === 'idea' || c.status === 'borrador');
@@ -97,7 +97,10 @@ export async function runAutopilot(store, notifier, logger = () => {}, deps = {}
       const meta = store.get('meta') || {};
       const lastAt = meta.autopilotLastContentMission ? new Date(meta.autopilotLastContentMission).getTime() : 0;
       const cooldown = Math.max(15, Math.min(720, Number(settings.autopilot?.contentCooldownMinutes) || 90)) * 60 * 1000;
-      const products = (store.get('products') || []).filter((p) => p.status !== 'archivado');
+      // No lanzar misiones automáticas si el catálogo carece de los datos críticos.
+      const { productReadiness } = await import('./readiness.mjs');
+      const products = (store.get('products') || []).filter((p) =>
+        p.status !== 'archivado' && productReadiness(p).readyForProspecting);
 
       if (ideas.length < minIdeas && active.length === 0 && products.length && (Date.now() - lastAt) >= cooldown) {
         // Rotar producto para no saturar siempre el mismo
@@ -109,17 +112,17 @@ export async function runAutopilot(store, notifier, logger = () => {}, deps = {}
           name: `Contenido automático · ${product.name}`,
           markets: (settings.mission?.markets || ['España']).slice(0, 2),
           depth: 'rapida',
-          mode: 'auto',
           maxProspects: 4,
           notes: 'Misión creada automáticamente por el piloto para reponer contenido listo para publicar en redes.',
           autoContent: true,
+          mode: 'real',
         });
         await store.setMeta({
           autopilotLastContentMission: new Date().toISOString(),
           autopilotContentIndex: idx + 1,
         });
         actions.push(`Misión de contenido creada: ${mission?.name || product.name}`);
-        await notify(notifier, `🎨 *Lucian generó contenido automáticamente*\n\nNo había piezas listas para publicar, así que el piloto lanzó una misión rápida para ${product.name}. En unos minutos vas a ver nuevas publicaciones en Contenido.`);
+        // La generación rutinaria queda en el panel y en el log; Telegram se reserva para acciones o fallas.
         state.recoveryAttempts += 1;
       }
     } catch (error) {

@@ -7,8 +7,8 @@ import { nowISO, uid } from './util.mjs';
    Qué hace y qué no:
    - Solo envía borradores que YA pasaron las guardas de la misión
      (cumplimiento, red team, corrección) y quedaron en estado "listo".
-   - Solo usa Resend o webhook. Nunca el canal manual: marcar como
-     enviado sin enviar sería mentirse a sí mismo.
+   - Solo usa Resend, Gmail o webhook con credenciales reales.
+     Nunca el canal manual: marcar como enviado sin enviar sería mentirse a sí mismo.
    - Respeta la lista de no contactar, el límite diario y el
      calentamiento. Si el cupo se agota, reprograma para el día siguiente.
    - No inventa destinatarios: exige un email válido y no de ejemplo.
@@ -224,11 +224,18 @@ export class Outbox {
   }
 
   canAutopilot(settings = this.store.settings()) {
-    return Boolean(settings?.email?.autopilot) && ['resend', 'webhook'].includes(settings?.email?.provider);
+    const email = settings?.email || {};
+    if (!email.autopilot) return false;
+    if (email.provider === 'resend') return Boolean(email.resendKey && email.from);
+    if (email.provider === 'gmail') return Boolean(email.smtpUser && email.smtpPassword);
+    if (email.provider === 'webhook') return Boolean(email.webhookUrl);
+    return false;
   }
 
   pendingFor(threadId, draftId = null) {
-    return this.items().some((item) => item.status === 'pending'
+    // Un error definitivo no puede disparar otro intento automático.
+    // El dueño debe revisarlo antes de reprogramar ese borrador.
+    return this.items().some((item) => ['pending', 'error'].includes(item.status)
       && item.threadId === threadId
       && (!draftId || item.draftId === draftId));
   }
@@ -320,7 +327,12 @@ export class Outbox {
       const settings = this.store.settings();
       // Sin piloto automático no se envía nada, pero los seguimientos
       // y la postventa vencidos se preparan para revisión: el dueño solo aprueba.
-      if (this.canAutopilot(settings)) await this.processQueue(settings);
+      if (this.canAutopilot(settings)) {
+        // Al habilitar el piloto, recuperar también los borradores históricos
+        // APROBADOS; antes quedaban listos indefinidamente sin ingresar en cola.
+        await this.enqueueAllReady();
+        await this.processQueue(settings);
+      }
       if (settings.email?.followUps !== false) await this.maybeFollowUps(settings);
       if (settings.email?.postSales !== false) await this.maybePostSale(settings);
     } finally {

@@ -119,6 +119,8 @@ REGLAS DEL EQUIPO:
 - Cuando uses una fuente, incluí la URL en el campo correspondiente. No cites una fuente que no aparezca en los datos entregados.
 - Escribí en español rioplatense neutro, profesional y concreto. Los mensajes a compradores van en el idioma del país (inglés si no es hispanohablante).
 - Nada de promesas de resultados, urgencia falsa, superlativos vacíos ni presión. El tono es seguro, específico y humano.
+- La marca se llama LUCIAN. No es una ciudad ni una localidad. Nunca le agregues entre paréntesis la ciudad del dueño ni escribas 'LUCIAN (Caseros)' en el saludo, la presentación, el asunto o la firma. La localidad puede ser un dato interno o postal, no parte del nombre de marca.
+- Nunca atribuyas al producto autoría, diseño propio o una fabricación de origen que no estén confirmados por sus datos.
 - Los precios y aranceles son estimaciones de trabajo, no asesoría legal ni contable. Marcá los supuestos.
 - El dueño es un maker solo: el plan tiene que caber en su tiempo y presupuesto reales.
 - Sé breve: cada campo de texto, máximo 2 frases; cada lista, máximo 5 elementos, salvo que la tarea pida otro número. Un JSON cortado no sirve.
@@ -128,7 +130,7 @@ ${COPYWRITING_RULES}
 
 export function systemFor(agentId) {
   const agent = getAgent(agentId);
-  return `Sos ${agent.name} en Lucian, el equipo comercial de un maker que diseña y vende lámparas de autor impresas en 3D.
+  return `Sos ${agent.name} del equipo comercial de LUCIAN, una marca que comercializa productos de iluminación. El origen y autoría de cada producto deben extraerse de su ficha; no presupongas que LUCIAN diseñó cada lámpara.
 Tu rol: ${agent.role}. ${agent.bio}
 Tu estándar: pensás como alguien con diez años vendiendo diseño a tiendas y estudios, no como un generador de contenido.
 ${COMMON_RULES}`;
@@ -488,16 +490,21 @@ ${verifiedBuyersBlock(ctx)}
 - Si PROSPECTING no trae compradores, devolvé "mensajes": [] y explicá en "estrategia" qué falta para tener la lista. No escribas mensajes para compradores que no existen.
 - Si no tenés un dato específico de una tienda, escribí un mensaje más breve y honesto, pero seguí siendo 1:1. Nunca uses el mensaje de otro comprador como relleno.
 - Asunto de máximo 60 caracteres, sin mayúsculas gritadas ni emojis.
-- Cuerpo de 90 a 140 palabras. Un solo pedido concreto al final.
+- Cuerpo de 65 a 110 palabras: presentación, encaje para este comprador y una oferta de valor comprobable. Un solo pedido concreto al final.
 - Nada de "espero que estés bien", "soy un apasionado", "revolucionario" ni listas de features.
-- Cada mensaje tiene que demostrar que vimos la tienda: mencioná una marca, una colección o un detalle real de la fuente.
+- Presentación limpia: 'Soy [nombre del responsable], de LUCIAN.' Nunca 'de LUCIAN (Caseros)' ni 'desde Caseros' por iniciativa del modelo; la ciudad postal, si es obligatoria, va sólo en el pie legal.
+- No traslades al comprador discusiones internas del equipo sobre falta de fotos, importación, flete, costos inciertos o autoría. Si faltan elementos para ofrecer la pieza, señalá el bloqueo en el plan interno en vez de redactar una disculpa comercial.
+- Personalizá solamente con un hecho verificable y citá su URL en el campo personalizacion. Si la fuente no demuestra una marca o colección, hablá del tipo de negocio y no inventes afinidades.
 - IDIOMA OBLIGATORIO POR COMPRADOR: escribí cada mensaje EXACTAMENTE en el idioma indicado en el bloque de su país (ESPAÑOL / INGLÉS / PORTUGUÉS). España, Argentina, Chile, Uruguay, México y Colombia van en ESPAÑOL —aunque el comprador tenga un nombre o web en inglés, NO traduzcas el correo al inglés. Brasil va en PORTUGUÉS. Estados Unidos, Reino Unido y Alemania van en INGLÉS. Respetá también la variante local (vos/tú/usted) y el registro de cortesía de cada bloque.
-- La secuencia base tiene 3 pasos: apertura (día 0), seguimiento con valor (día 4) y cierre amable (día 10).
+- La secuencia base tiene 3 pasos: apertura (día 0), seguimiento con valor (día 4) y cierre amable (día 10), pero cualquier rechazo o respuesta detiene el contacto automático.
+- CTA de interés, no reunión obligatoria: pedí permiso para mandar ficha real con medidas, materiales y opciones. No prometas adjuntos inexistentes.
+- Ajustá la oferta al segmento: estudio/interiorista → especificaciones y personalización; hotel → series y tiempos sólo si constan; tienda → catálogo y condiciones mayoristas verificadas; galería → historia del objeto y terminaciones.
+- Planteá en "estrategia" una hipótesis comercial comprobable por segmento (quién, beneficio concreto, objeción probable) y el resultado esperado medible en RESPUESTAS, no aperturas.
 - Para WhatsApp, un mensaje de 35 palabras como máximo, sin archivos.
 - Incluá 3 objeciones probables con respuestas honestas.
 - No prometas ventas, certificaciones ni plazos que no estén en los datos.
 - Respetá la recomendación de PRICING: si recomienda no abrir canal mayorista todavía, no ofrezcas precio mayorista ni pedido mínimo; presentá la pieza y pedí permiso para mandar la ficha.
-- No afirmes qué marcas vende el comprador salvo que aparezcan en las fuentes o en su ficha; si no, usá un detalle seguro (ciudad, tipo de tienda, estilo).
+- No afirmes qué marcas vende el comprador salvo que aparezcan en las fuentes o en su ficha; si no, usá un detalle seguro (ciudad o tipo de tienda). No inventes certificaciones, stock, plazos, precios ni resultados.
 Devolvé este JSON:
 ${STEPS.outreach.schemaHint}`,
   },
@@ -616,6 +623,7 @@ ${contextBlock(ctx, { prior: [['brief', 2000], ['pricing', 3000], ['outreach', 6
 - Reescribí solo los mensajes que lo necesiten. Si un mensaje queda igual, no lo repitas.
 - Usá el campo "comprador" exactamente como aparece en OUTREACH. No mezcles el mensaje de una tienda con otra.
 - Los ajustes tienen que ser acciones concretas, no principios.
+- Nunca insertes la localidad de LUCIAN en el nombre o presentación del remitente ni conviertas riesgos internos (precio, flete, origen) en la apertura de venta.
 Devolvé este JSON:
 ${STEPS.revision.schemaHint}`,
   },
@@ -645,7 +653,8 @@ ${verifiedBuyersBlock(ctx)}
 - El plan de 7 días tiene que ser realista para una persona sola: máximo 3 horas por día.
 - Cada día tiene una sola acción principal, un resultado esperado y un tiempo estimado.
 - Priorizá lo que genera conversaciones esta semana, no lo que se ve lindo en un tablero.
-- Incluí los mensajes listos para enviar, con asunto y cuerpo, corregidos según compliance y red team.
+- Incluí los mensajes comercialmente aptos para revisión, con asunto y cuerpo, corregidos según compliance y red team.
+- No agregues una ciudad al nombre de LUCIAN (por ejemplo, 'LUCIAN (Caseros)'); no insertes problemas internos de costos o fletes ni atribuciones de diseño no verificadas.
 - El presupuesto tiene que ser concreto: cuánto y en qué. Si no hace falta gastar, decilo.
 - "No hacer" es tan importante como el plan: qué distracción evitar.
 - El resumen es para el dueño, en 120 palabras, sin jerga.

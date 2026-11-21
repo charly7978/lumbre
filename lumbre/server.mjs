@@ -17,9 +17,9 @@ import { hunterAccount } from './lib/hunter.mjs';
 import {
   assertCanSend, buildEml, composeEmail, dailyLimitInfo, detectOptOut, emailDomain, emlFilename,
   isSharedEmailDomain, isSuppressed, isValidEmail, normalizeCompany, normalizeEmail,
-  parseEmailEvent, parseInbound, sendWithResend, sendWithWebhook, sendWithGmail, testResend,
+  parseEmailEvent, parseInbound, sendWithResend, sendWithWebhook, sendWithGmail, testResend, salesCopyIssues,
 } from './lib/email.mjs';
-import { Notifier, parseWhatsAppWebhook, sendWhatsApp, telegramChats, testTelegram, testWhatsApp } from './lib/notify.mjs';
+import { Notifier, parseWhatsAppWebhook, sendWhatsApp, telegramChats, testTelegram, testWhatsApp, telegramWebhookStatus, repairTelegramWebhook } from './lib/notify.mjs';
 import {
   analyzeThread, askTeam, migrateLegacyDrafts, reconcileThreads, releaseInterruptedMissions, runMission, sanitizeLegacyThreads,
 } from './lib/agents.mjs';
@@ -31,7 +31,7 @@ import { productReadiness } from './lib/readiness.mjs';
 import { buildQuote, quoteLanguage, quoteNumber, quoteTotals, quoteTotalsMulti, roundMoney, validUntilDate } from './lib/quotes.mjs';
 import { createZip, readZip } from './lib/zip.mjs';
 import { fetchNewEmails } from './lib/imap.mjs';
-import { diagnoseConnections, testConnection, getAiFailoverState, resetAiFailover } from './lib/connections.mjs';
+import { diagnoseConnections, testConnection, getAiFailoverState, resetAiFailover, probeLocalAI } from './lib/connections.mjs';
 import { startAutopilot, runAutopilot, getAutopilotState } from './lib/autopilot.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -650,6 +650,7 @@ function statePayload() {
     limits: dailyLimitInfo(settings, threads),
     sales: buildSales(threads, products, settings.brand?.currency || 'USD'),
     outbox: outbox.status(),
+    telegram: notifier.telegramDiagnostics(),
     usage: meta.agentUsage || {},
     intel: buildIntel(missions),
   };
@@ -887,9 +888,10 @@ async function createMission(body) {
   const markets = [...new Set(asArray(body.markets).map((m) => asString(m).trim()).filter(Boolean))].slice(0, 6);
   const finalMarkets = markets.length ? markets : asArray(settings.mission.markets).slice(0, 6);
   const requestedMode = ['auto', 'real', 'demo'].includes(body.mode) ? body.mode : 'auto';
-  const demo = requestedMode === 'demo' || (requestedMode === 'auto' && !isAIReady(settings));
-  if (requestedMode === 'real' && !isAIReady(settings)) {
-    throw new HttpError(400, 'Para lanzar una misión real primero configurá una IA en Ajustes.');
+  const hasAI = isAIReady(settings) || (await probeLocalAI(settings)).ok;
+  const demo = requestedMode === 'demo' || (requestedMode === 'auto' && !hasAI);
+  if (requestedMode === 'real' && !hasAI) {
+    throw new HttpError(400, 'No hay IA operativa. Probá el proveedor o iniciá Ollama con un modelo instalado.');
   }
   if (!finalMarkets.length) {
     throw new HttpError(400, 'Elegí al menos un mercado para la misión. Sin mercado no hay a quién venderle.');
@@ -985,9 +987,10 @@ async function createCampaign(body = {}) {
     .sort((a, b) => (a.status === 'listo' ? -1 : 0) - (b.status === 'listo' ? -1 : 0));
   if (!pool.length) throw new HttpError(400, 'No hay productos activos para lanzar una campaña.');
   const requestedMode = ['auto', 'real', 'demo'].includes(body.mode) ? body.mode : 'auto';
-  const demo = requestedMode === 'demo' || (requestedMode === 'auto' && !isAIReady(settings));
-  if (requestedMode === 'real' && !isAIReady(settings)) {
-    throw new HttpError(400, 'Para lanzar una campaña real primero configurá una IA en Ajustes.');
+  const hasAI = isAIReady(settings) || (await probeLocalAI(settings)).ok;
+  const demo = requestedMode === 'demo' || (requestedMode === 'auto' && !hasAI);
+  if (requestedMode === 'real' && !hasAI) {
+    throw new HttpError(400, 'No hay IA operativa para campaña real. Probá el proveedor o iniciá Ollama local.');
   }
   const active = new Set(store.get('missions').filter((mission) => ['running', 'queued'].includes(mission.status)).map((mission) => mission.productId));
   const markets = [...new Set(asArray(body.markets).map((market) => asString(market).trim()).filter(Boolean))].slice(0, 6);
@@ -1337,6 +1340,16 @@ async function sendThreadMessage(threadId, body) {
   const settings = store.settings();
   const channel = ['resend', 'webhook', 'gmail', 'manual'].includes(body.channel) ? body.channel : 'manual';
   const company = thread.contact?.company || '';
+  // Revalidar incluso borradores viejos o aprobados: el piloto nunca debe
+  // enviar una presentación con "LUCIAN (Caseros)" ni excusas de logística.
+  const isFirstContact = !(thread.messages || []).some((entry) => entry.direction === 'out');
+  if (channel !== 'manual' && isFirstContact && ['mision', 'ia'].includes(String(draft.source || ''))) {
+    const product = store.find('products', thread.productId);
+    const issues = salesCopyIssues({ subject: draft.subject, body: draft.body, product: product || null });
+    if (issues.length) {
+      throw new HttpError(400, 'Borrador comercial no apto para enviar. Editalo y aprobalo nuevamente: ' + issues.join(' '));
+    }
+  }
   let message;
   try {
     message = composeEmail(thread, draft, settings);
@@ -1839,6 +1852,116 @@ async function restoreBackup(buffer) {
    Pruebas de integración
    ───────────────────────────────────────────────────────────── */
 
+function ownEmailAddress(raw) {
+  const value = String(raw || '').trim();
+  return String(value.match(/<([^<>]+)>/)?.[1] || value).trim().toLowerCase();
+}
+
+/* Canal de salida observable: cifras reales; no confundir aceptación,
+   entrega, apertura, respuesta ni cobro. */
+async function commercialDiagnostic({ checkDomain = true } = {}) {
+  const settings = store.settings();
+  const email = settings.email || {};
+  const provider = email.provider || 'manual';
+  const from = ownEmailAddress(email.from || (provider === 'gmail' ? email.smtpUser : ''));
+  const own = ownEmailAddress(settings.brand?.email || email.smtpUser || '');
+  const products = (store.get('products') || []).filter((p) => !p.demo && p.status !== 'archivado');
+  const threads = (store.get('threads') || []).filter((t) => !t.demo);
+  const messages = threads.flatMap((t) => t.messages || []);
+  const drafts = threads.flatMap((t) => t.drafts || []);
+  const errors = [];
+  let ready = false;
+  let domain = { checked: false, verified: false, status: 'no comprobado' };
+  if (provider === 'resend') {
+    ready = Boolean(email.resendKey && from && isValidEmail(from));
+    if (!ready) errors.push('Resend requiere API key y remitente válido.');
+    if (ready && checkDomain) {
+      try {
+        const list = await testResend(settings);
+        const name = from.split('@')[1];
+        const match = (list.domains || []).find((item) => String(item.name).toLowerCase() === name);
+        domain = { checked: true, verified: match?.status === 'verified',
+          status: match?.status || 'dominio ausente', name };
+        if (!domain.verified) errors.push('El dominio remitente no está verificado en Resend: ' + domain.status);
+      } catch (err) {
+        errors.push('No puedo verificar Resend: ' + String(err.message).slice(0,150));
+      }
+    }
+  } else if (provider === 'gmail') {
+    ready = Boolean(email.smtpUser && email.smtpPassword);
+    if (!ready) errors.push('Falta usuario o contraseña de aplicación de Gmail.');
+    domain.status = 'requiere prueba SMTP';
+  } else if (provider === 'webhook') {
+    ready = Boolean(email.webhookUrl);
+    if (!ready) errors.push('Falta la URL real de envío del webhook.');
+    domain.status = 'requiere prueba real';
+  } else errors.push('El proveedor de correo está en modo manual: LUCIAN no envía por sí mismo.');
+  if (!isValidEmail(own)) errors.push('Configurá tu dirección propia en Marca para recibir una prueba.');
+  if (!products.length) errors.push('No cargaste lámparas reales.');
+  else {
+    const incomplete = products.filter((p) => !productReadiness(p).readyForProspecting);
+    if (incomplete.length) errors.push(incomplete.length + ' lámpara(s) no tienen foto y precio aptos para campaña.');
+  }
+  const approved = drafts.filter((d) => d.status === 'listo').length;
+  if (!approved) errors.push('No hay borradores aprobados.');
+  if (!email.autopilot) errors.push('El piloto de correos está apagado. No habrá envíos automáticos.');
+  const local = await probeLocalAI(settings);
+  return {
+    at: nowISO(),
+    email: { provider, configured: ready, from, selfTestAddress: own,
+      autopilot: Boolean(email.autopilot), domain,
+      lastTest: store.get('meta')?.emailSelfTest || null },
+    ai: { mainConfigured: isAIReady(settings), localAvailable: local.ok,
+      localModel: local.model || '', localError: local.ok ? '' : local.error },
+    telegram: notifier.telegramDiagnostics(),
+    metrics: {
+      products: products.length, realContacts: threads.length,
+      approved, toReview: drafts.filter((d) => d.status === 'revisar').length,
+      acceptedByProvider: messages.filter((m) => m.direction === 'out'
+        && m.status === 'enviado' && m.provider !== 'manual').length,
+      replies: messages.filter((m) => m.direction === 'in').length,
+      pending: outbox.items().filter((m) => m.status === 'pending').length,
+      errors: outbox.items().filter((m) => m.status === 'error').length,
+    },
+    blockers: errors,
+    nextAction: errors[0] || 'Hacer prueba de envío propia y revisar las respuestas.',
+  };
+}
+
+async function sendSelfTestEmail() {
+  const report = await commercialDiagnostic();
+  const e = report.email;
+  if (!e.configured) throw new HttpError(400, 'El proveedor no está configurado: ' + report.nextAction);
+  if (!isValidEmail(e.selfTestAddress)) throw new HttpError(400, 'Configurá tu correo propio en Marca.');
+  if (e.provider === 'resend' && !e.domain.verified)
+    throw new HttpError(400, 'Resend no verifica tu dominio de salida: ' + e.domain.status);
+  const recent = Date.parse(e.lastTest?.at || 0) || 0;
+  if (Date.now() - recent < 60_000) throw new HttpError(429, 'Máximo una prueba por minuto.');
+  const message = {
+    from: store.settings().email.from || (e.provider === 'gmail' ? store.settings().email.smtpUser : ''),
+    to: e.selfTestAddress,
+    subject: 'LUCIAN - prueba real de correo',
+    text: 'Prueba solicitada desde LUCIAN el ' + nowISO() + '. Si llega a tu casilla, el canal funcionó para esta dirección. No confirma entregas a otros compradores.',
+  };
+  await store.setMeta({ emailSelfTest: { at: nowISO(), status: 'trying', provider: e.provider } });
+  try {
+    const receipt = e.provider === 'resend' ? await sendWithResend(store.settings(), message)
+      : e.provider === 'gmail' ? await sendWithGmail(store.settings(), message)
+      : e.provider === 'webhook' ? await sendWithWebhook(store.settings(), message)
+      : null;
+    if (!receipt) throw new Error('No hay proveedor habilitado.');
+    const result = { at: nowISO(), status: 'accepted', provider: e.provider,
+      to: e.selfTestAddress, providerId: receipt.id || '' };
+    await store.setMeta({ emailSelfTest: result });
+    await store.activity('system', 'El proveedor aceptó una prueba de correo. Revisar bandeja de entrada y spam.');
+    return { ok: true, ...result, message: 'Proveedor aceptó la prueba. Verificá que llegó a tu casilla: aceptación no significa entrega.' };
+  } catch (err) {
+    await store.setMeta({ emailSelfTest: { at: nowISO(), status: 'failed', provider: e.provider,
+      error: String(err.message).slice(0,200) } });
+    throw new HttpError(502, 'No salió el correo: ' + String(err.message).slice(0,250));
+  }
+}
+
 async function runIntegrationTest(target) {
   const settings = store.settings();
   if (target === 'ai') {
@@ -1868,9 +1991,8 @@ async function runIntegrationTest(target) {
     return { email: account.email || '', plan: account.plan_name || account.plan || '', credito: account.credits ?? null };
   }
   if (target === 'email') {
-    const from = settings.email?.from || '';
-    if (!from) throw new Error('Falta configurar el remitente.');
-    return { remitente: from, proveedor: settings.email.provider, limite: dailyLimitInfo(settings, store.get('threads')) };
+    const diagnosis = await commercialDiagnostic();
+    return { tipo: 'solo diagnóstico, no envío', ...diagnosis.email, bloqueos: diagnosis.blockers };
   }
   throw new HttpError(400, 'Prueba desconocida.');
 }
@@ -1979,8 +2101,27 @@ async function handle(req, res) {
   // o túnel, todas las rutas /api/* (excepto webhooks y /login)
   // exigen la clave que se muestra al arrancar. Sin esto, cualquiera
   // con la URL podría leer secretos o borrar datos.
-  const isLocalHost = allowedHosts.has(hostName) || !hostName;
-  // Modo simple (como al mediodia): sin clave, entra directo.
+  const directLoopback = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(String(req.socket?.remoteAddress || ''));
+  const isLocalHost = allowedHosts.has(hostName) && directLoopback
+    && !req.headers['x-forwarded-for'] && !req.headers['cf-connecting-ip'];
+  // Acceso desde el teléfono: el enlace privado se intercambia UNA vez
+  // por cookie HttpOnly y la URL queda limpia tras el redirect.
+  if (!isLocalHost && !isWebhook && pathname === '/' && method === 'GET' && url.searchParams.has('access')) {
+    if (!webhookTokenMatches(url.searchParams.get('access'), ACCESS_TOKEN)) {
+      fail(res, 401, 'El enlace de acceso venció. Generá uno nuevo desde la PC.');
+      return;
+    }
+    const secure = isTunnelHost || String(req.headers['x-forwarded-proto']) === 'https' ? 'Secure; ' : '';
+    res.writeHead(302, {
+      location: '/',
+      'cache-control': 'no-store',
+      'referrer-policy': 'no-referrer',
+      'set-cookie': `lucian_access=${ACCESS_TOKEN}; HttpOnly; ${secure}SameSite=Lax; Path=/`,
+    });
+    res.end();
+    return;
+  }
+  // Modo simple (como al mediodia): sin clave, entrada directa desde el celular.
   const needsAuth = false && !isLocalHost && !isWebhook && pathname.startsWith('/api/') && pathname !== '/api/login';
   if (needsAuth) {
     const provided = req.headers['x-lucian-access']
@@ -1999,7 +2140,7 @@ async function handle(req, res) {
     if (webhookTokenMatches(provided, ACCESS_TOKEN)) {
       res.writeHead(200, {
         'content-type': 'application/json; charset=utf-8',
-        'set-cookie': `lucian_access=${ACCESS_TOKEN}; HttpOnly; SameSite=Lax; Path=/`,
+        'set-cookie': `lucian_access=${ACCESS_TOKEN}; HttpOnly; ${isTunnelHost || String(req.headers['x-forwarded-proto']) === 'https' ? 'Secure; ' : ''}SameSite=Lax; Path=/`,
       });
       res.end(JSON.stringify({ ok: true }));
     } else {
@@ -2057,6 +2198,7 @@ async function handle(req, res) {
       ai: isAIReady(store.settings()),
       demo: settingsFlags(store.settings()).demo,
       uptime: Math.round(process.uptime()),
+      telegram: notifier.telegramDiagnostics(),
     });
     return;
   }
@@ -2074,6 +2216,29 @@ async function handle(req, res) {
     }
     await pollGmailInbox();
     json(res, 200, { ok: true, message: 'Bandeja revisada.' });
+    return;
+  }
+
+  if (pathname === '/api/operations/diagnose' && method === 'GET') {
+    json(res, 200, await commercialDiagnostic());
+    return;
+  }
+  if (pathname === '/api/operations/telegram-webhook' && method === 'GET') {
+    json(res, 200, await telegramWebhookStatus(store.settings()));
+    return;
+  }
+  if (pathname === '/api/operations/telegram-repair' && method === 'POST') {
+    const result = await repairTelegramWebhook(store.settings());
+    if (result.changed) {
+      await store.activity('system', 'Webhook antiguo de Telegram desactivado sin descartar mensajes pendientes.');
+      notifier.refresh();
+    }
+    json(res, 200, result);
+    return;
+  }
+
+  if (pathname === '/api/operations/test-email' && method === 'POST') {
+    json(res, 200, await sendSelfTestEmail());
     return;
   }
 
@@ -2173,7 +2338,9 @@ async function handle(req, res) {
   if (pathname === '/api/settings/telegram/chats' && method === 'POST') {
     const body = await readJson(req);
     const token = asString(body.token).trim() || store.settings().notify?.telegram?.token;
-    const chats = await telegramChats(token);
+    const current = store.settings().notify?.telegram || {};
+    const knownChatId = token === current.token ? String(current.chatId || '') : '';
+    const chats = await telegramChats(token, knownChatId);
     json(res, 200, { chats });
     return;
   }
@@ -3106,7 +3273,9 @@ function readinessLines() {
         ? (email.webhookUrl ? 'webhook configurado' : 'webhook elegido pero sin URL')
         : `${email.provider}`;
   const tg = settings.notify?.telegram;
-  const telegramLabel = tg?.enabled && tg?.token && tg?.chatId ? `configurado (avisos día ${tg.digestHour ?? 9}:00)` : 'apagado (Ajustes → Notificaciones)';
+  const telegramLabel = tg?.enabled && tg?.token && tg?.chatId
+    ? (notifier.telegramDiagnostics().polling ? 'receptor iniciado (probar /diagnostico en Telegram)' : 'configurado pero receptor sin confirmar')
+    : 'apagado (Ajustes → Notificaciones)';
   const queued = (store.get('missions') || []).filter((m) => m.status === 'queued').length;
   const lines = [
     '  Listo para funcionar:',

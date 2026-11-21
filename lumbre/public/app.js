@@ -736,7 +736,12 @@ function renderPanel() {
   const active = arr(s.missions).find((m) => ['running', 'queued'].includes(m.status));
   const products = arr(s.products);
   const threads = arr(s.threads);
-  const hotThreads = [...threads].filter((t) => ['interesado', 'negociando', 'respondio'].includes(t.stage)).sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 4);
+  const realThreads = threads.filter((t) => !t.demo);
+  const realAwaiting = realThreads.filter((t) => t.awaitingReply).length;
+  const realReady = realThreads.reduce((count, t) => count + num(t.draftCount), 0);
+  const realReview = realThreads.reduce((count, t) => count + num(t.reviewCount), 0);
+  const realWon = realThreads.filter((t) => t.stage === 'ganado').length;
+  const hotThreads = [...realThreads].filter((t) => ['interesado', 'negociando', 'respondio'].includes(t.stage)).sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 4);
   const latestMissions = [...arr(s.missions)].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 3);
   const activeProduct = active ? products.find((p) => p.id === active.productId) : null;
   const hasProducts = products.length > 0;
@@ -746,7 +751,7 @@ function renderPanel() {
   const heroTitle = active
     ? `El equipo está trabajando en <em>${esc(activeProduct?.name || active.name)}</em>.`
     : hasProducts
-      ? `Tu lámpara ya tiene <em>comprador</em>. Falta encontrarlo.`
+      ? `Una lámpara necesita <em>compradores reales</em>, no solo ideas.`
       : `Tu próxima venta empieza con <em>una foto</em>.`;
   const heroSub = active
     ? `La misión avanza paso a paso. Podés entrar a la sala, leer lo que produce cada especialista y cancelar si algo no te cierra.`
@@ -776,6 +781,7 @@ function renderPanel() {
 
   return `
     ${onboardBanner}
+    ${panelCommercialHealthHTML()}
     <section class="hero">
       <div class="hero-copy">
         <span class="hero-kicker"><span class="dot"></span>${esc(brand.name || 'Lucian')} · ${esc(brand.city || 'atelier digital')}</span>
@@ -819,10 +825,10 @@ function renderPanel() {
     ${active ? activeMissionBanner(active) : ''}
 
     <section class="stat-grid">
-      ${statCard('Por aprobar', counts.draftsToReview || 0, 'mail', counts.draftsToReview ? 'borradores esperando tu OK' : 'nada pendiente', '#/bandeja?filtro=revisar', counts.draftsToReview ? 'warm' : '')}
-      ${statCard('Te escribieron', counts.awaitingReply || 0, 'message', counts.awaitingReply ? 'respuestas por leer' : 'sin novedades', '#/bandeja?filtro=responder', counts.awaitingReply ? 'warm' : '')}
-      ${statCard('Ventas cerradas', S.state.sales?.sold || 0, 'dollar', S.state.sales?.revenue ? `${money(S.state.sales.revenue, S.state.sales.currency)} ingresados` : 'todavía ninguna', '#/ventas', (S.state.sales?.sold || 0) ? 'warm' : '')}
-      ${statCard('Piezas de contenido', counts.content || 0, 'image', 'ideas, borradores y publicadas', '#/contenido')}
+      ${statCard('Por aprobar', realReview, 'mail', realReview ? 'borradores reales esperando tu OK' : 'nada pendiente', '#/bandeja?filtro=revisar', realReview ? 'warm' : '')}
+      ${statCard('Te escribieron', realAwaiting, 'message', realAwaiting ? 'respuestas reales por leer' : 'sin novedades', '#/bandeja?filtro=responder', realAwaiting ? 'warm' : '')}
+      ${statCard('Ventas registradas', realWon, 'dollar', 'estado Ganado, sin demostrar cobro', '#/ventas', realWon ? 'warm' : '')}
+      ${statCard('Borradores listos', realReady, 'send', 'mensajes reales aún sin enviar', '#/bandeja?filtro=listo', realReady ? 'warm' : '')}
     </section>
 
     ${panelSalesHTML()}
@@ -909,6 +915,217 @@ function renderPanel() {
         ${AGENTS.slice(0, 6).map(agentMiniCard).join('')}
       </div>
     </section>`;
+}
+
+
+function panelCommercialHealthHTML() {
+  const s = S.state || {};
+  const products = arr(s.products).filter((p) => !p.demo && p.status !== 'archivado');
+  const threads = arr(s.threads).filter((t) => !t.demo);
+  const actionableReplies = threads.filter((t) => t.awaitingReply && !['ganado', 'perdido'].includes(t.stage));
+  const warm = threads.filter((t) => ['interesado', 'negociando'].includes(t.stage));
+  const followups = threads.filter((t) => t.nextFollowUp && Date.parse(t.nextFollowUp) <= Date.now()
+    && !['ganado', 'perdido'].includes(t.stage));
+  const readyDrafts = threads.reduce((sum, t) => sum + num(t.draftCount), 0);
+  const reviewDrafts = threads.reduce((sum, t) => sum + num(t.reviewCount), 0);
+  const incomplete = products.filter((p) => !arr(p.photos).length || num(p.price) <= 0);
+  const realMissions = arr(s.missions).filter((m) => !m.demo);
+  const realContacts = threads.filter((t) => t.contact?.email && !t.unverified && !t.suppressed).length;
+  const telegram = s.telegram || {};
+  const canSend = Boolean(s.flags?.email);
+  const tasks = [];
+
+  if (actionableReplies.length) tasks.push({
+    title: `Responder a ${actionableReplies.length} cliente(s) que escribieron`,
+    note: 'La respuesta comercial tiene prioridad sobre producir contenido.',
+    href: '#/bandeja?filtro=responder', label: 'Abrir respuestas',
+  });
+  if (warm.length) tasks.push({
+    title: `Avanzar con ${warm.length} oportunidad(es) interesadas`,
+    note: 'Negociar, cotizar y definir el próximo paso para cerrar ventas.',
+    href: '#/bandeja', label: 'Ver negociaciones',
+  });
+  if (followups.length) tasks.push({
+    title: `Revisar ${followups.length} seguimiento(s) vencido(s)`,
+    note: 'Verificá el historial y respetá cualquier baja antes de contactar.',
+    href: '#/bandeja', label: 'Revisar seguimientos',
+  });
+  if (!products.length) tasks.push({
+    title: 'Cargar una lámpara real',
+    note: 'Sin foto y precio reales no corresponde simular una campaña.',
+    href: '#/productos', label: 'Abrir catálogo',
+  });
+  if (incomplete.length) tasks.push({
+    title: `Completar ${incomplete.length} ficha(s) de lámparas`,
+    note: 'Faltan fotos reales o un precio mayor a cero.',
+    href: '#/productos', label: 'Corregir fichas',
+  });
+  if (reviewDrafts || readyDrafts) tasks.push({
+    title: `Preparar salida: ${reviewDrafts} por revisar, ${readyDrafts} listos`,
+    note: 'Los borradores no son ventas ni mensajes efectivamente enviados.',
+    href: '#/bandeja', label: 'Abrir borradores',
+  });
+  if (!canSend) tasks.push({
+    title: 'Conectar y probar el correo de ventas',
+    note: 'Sin un proveedor de envío operativo, LUCIAN no puede contactar compradores por email.',
+    href: '#/ajustes', label: 'Configurar envío',
+  });
+  if (products.length && !incomplete.length && !realMissions.length) tasks.push({
+    title: 'Lanzar la primera misión REAL',
+    note: 'Buscar compradores verificables, preparar mensajes y revisar los resultados.',
+    href: '#/misiones/nueva', label: 'Crear misión',
+  });
+  if (!tasks.length) tasks.push({
+    title: 'Auditar resultados de la próxima misión',
+    note: 'Revisar destinatarios, mensajes efectivamente enviados y respuestas recibidas.',
+    href: '#/misiones', label: 'Ver misiones',
+  });
+
+  const tgLine = !telegram.configured
+    ? 'Telegram sin configurar'
+    : telegram.polling
+      ? `Telegram escuchando; última consulta: ${telegram.lastPollAt ? esc(dateTime(telegram.lastPollAt)) : 'sin confirmar'}`
+      : 'Telegram configurado pero receptor inactivo';
+  const warning = telegram.lastError
+    ? `<p class="small" style="color:var(--danger);margin-top:8px">Telegram: ${esc(telegram.lastError)}</p>` : '';
+
+  return `<section class="section" style="margin-bottom:22px">
+    <div class="card card-pad" style="border:1px solid var(--line);background:var(--surface)">
+      <div class="between" style="align-items:flex-start;gap:16px;flex-wrap:wrap">
+        <div>
+          <p class="eyebrow">Centro de operaciones comerciales · Datos reales, sin demo</p>
+          <h2 class="section-title" style="margin-top:8px">Qué falta hacer para vender</h2>
+          <p class="section-sub" style="margin-top:6px">El sistema prioriza conversaciones y contactos por encima de las piezas de contenido.</p>
+        </div>
+        <div class="cluster">
+          <button class="btn btn-primary btn-sm" type="button" data-action="operations-diagnose">${icon('refresh')} Diagnóstico real y envío de prueba</button>
+          <a class="btn btn-ghost btn-sm" href="#/bandeja">Abrir CRM</a>
+        </div>
+      </div>
+      <div class="cluster" style="margin:16px 0;gap:14px;flex-wrap:wrap">
+        <span><b>${realContacts}</b> contactos registrados con email</span>
+        <span><b>${actionableReplies.length}</b> respuestas sin contestar</span>
+        <span><b>${warm.length}</b> negociaciones/interesados</span>
+        <span><b>${readyDrafts}</b> borradores listos</span>
+      </div>
+      <div class="card" style="padding:12px 16px;background:var(--bg)">
+        <b class="small">Siguiente acción: ${esc(tasks[0].title)}</b>
+        <p class="small muted" style="margin:6px 0 10px">${esc(tasks[0].note)}</p>
+        <a href="${attr(tasks[0].href)}" class="btn btn-primary btn-sm">${esc(tasks[0].label)} ${icon('arrowRight')}</a>
+      </div>
+      ${tasks.length > 1 ? `<div class="small muted" style="margin-top:12px"><b>Después:</b> ${tasks.slice(1, 4).map((t) => `<a href="${attr(t.href)}">${esc(t.title)}</a>`).join(' · ')}</div>` : ''}
+      <p class="small muted" style="margin-top:12px">${icon('message')} ${tgLine}. El comando /diagnostico confirma si tu mensaje llega al bot.</p>
+      ${warning}
+    </div>
+  </section>`;
+}
+
+
+/* Consola comercial: diagnóstico de conectividad y prueba REAL, separada
+   de las misiones ficticias y de las métricas de contenido. */
+async function openOperationsModal() {
+  try {
+    const report = await api('/api/operations/diagnose', { silent: true });
+    const m = report.metrics || {};
+    const email = report.email || {};
+    const ai = report.ai || {};
+    const tg = report.telegram || {};
+    const blockers = arr(report.blockers);
+    const status = email.lastTest;
+    openModal({
+      title: 'Operaciones comerciales reales',
+      subtitle: 'Por qué no salen correos y qué necesita el equipo para operar.',
+      size: 'modal-lg',
+      body: `
+        <div class="card card-pad">
+          <p class="eyebrow">Embudo medido: sin datos ficticios</p>
+          <p class="small"><b>${num(m.products)}</b> lámparas reales ·
+            <b>${num(m.realContacts)}</b> contactos ·
+            <b>${num(m.approved)}</b> borradores aprobados ·
+            <b>${num(m.acceptedByProvider)}</b> envíos aceptados por proveedor ·
+            <b>${num(m.replies)}</b> respuestas registradas</p>
+          <p class="small muted" style="margin-top:8px">Un correo aceptado no equivale a entregado, leído o respondido.</p>
+        </div>
+        <div class="card card-pad mt-3">
+          <h3 class="card-title">Correo de salida</h3>
+          <p class="small">Proveedor: <b>${esc(email.provider || 'manual')}</b> ·
+            configuración: <b>${email.configured ? 'datos cargados' : 'incompleta'}</b> ·
+            automático: <b>${email.autopilot ? 'activado' : 'apagado'}</b></p>
+          <p class="small">Dominio: <b>${esc(email.domain?.status || 'sin verificación')}</b></p>
+          <p class="small">Destino de prueba: <b>${esc(email.selfTestAddress || 'definilo en Ajustes → Marca')}</b></p>
+          <p class="small">Última prueba: <b>${esc(status?.status || 'ninguna')}</b>
+            ${status?.at ? '· ' + esc(dateTime(status.at)) : ''}</p>
+          ${status?.error ? `<p class="small" style="color:var(--danger)">${esc(status.error)}</p>` : ''}
+          <div class="cluster mt-3">
+            <button type="button" class="btn btn-primary btn-sm" data-action="operations-send-test">
+              ${icon('mail')} Enviar prueba real a mi propia casilla</button>
+            <a class="btn btn-ghost btn-sm" href="#/ajustes?tab=correo">Configurar correo</a>
+          </div>
+        </div>
+        <div class="card card-pad mt-3">
+          <h3 class="card-title">Agentes y Telegram</h3>
+          <p class="small">IA principal: ${ai.mainConfigured ? 'configurada (saldo sin probar)' : 'sin configurar'}.
+            Ollama: <b>${ai.localAvailable ? 'activo con ' + esc(ai.localModel) : esc(ai.localError || 'no disponible')}</b>.</p>
+          <p class="small">Telegram: <b>${tg.polling ? 'receptor activo' : 'receptor no activo'}</b>
+            ${tg.lastError ? '· ' + esc(tg.lastError) : ''}</p>
+          <div class="cluster mt-2">
+            <button class="btn btn-ghost btn-sm" type="button" data-action="operations-telegram-repair">Diagnosticar recepción de Telegram</button>
+            <a href="#/ajustes?tab=ia" class="btn btn-ghost btn-sm">Configurar inteligencia artificial</a>
+          </div>
+        </div>
+        <div class="card card-pad mt-3">
+          <h3 class="card-title">Obstáculos comprobables</h3>
+          ${blockers.length
+            ? `<ol style="padding-left:20px;line-height:1.8">${blockers.map((b) => `<li class="small">${esc(b)}</li>`).join('')}</ol>`
+            : '<p class="small">Sin bloqueos de configuración detectados; hay que comprobar entregas y respuesta de clientes.</p>'}
+          <p class="small muted mt-2">Cola pendiente: ${num(m.pending)} · Errores de cola: ${num(m.errors)}.</p>
+        </div>
+      `,
+      footer: `<button class="btn btn-ghost" type="button" data-action="operations-diagnose">Actualizar diagnóstico</button>
+        <button class="btn btn-ghost" type="button" data-action="close-modal">Cerrar</button>`,
+    });
+  } catch (error) { toast('Diagnóstico falló: ' + error.message, 'error'); }
+}
+
+async function diagnoseTelegramWebhookUI() {
+  try {
+    const status = await api('/api/operations/telegram-webhook', { silent: true });
+    if (!status.active) {
+      toast(status.lastError
+        ? 'Webhook inactivo; error anterior: ' + status.lastError
+        : 'Sin webhook activo. Si Telegram no responde, puede existir otra app usando getUpdates con este bot.');
+      return;
+    }
+    const confirm = await confirmAction({
+      title: 'Reparar la recepción de Telegram',
+      message: 'Este bot tiene un webhook activo que impide recibir tus mensajes en LUCIAN. Se desactivará ese webhook anterior sin borrar mensajes pendientes. Si el webhook pertenece a otro servicio que todavía usás, dejará de recibir mensajes.',
+      confirmLabel: 'Desactivar webhook anterior',
+    });
+    if (!confirm) return;
+    const result = await api('/api/operations/telegram-repair', { method: 'POST' });
+    toast(result.message || 'Reparación enviada a Telegram.');
+    await openOperationsModal();
+  } catch (error) { toast('Telegram: ' + error.message, 'error'); }
+}
+
+async function runOperationsEmailTest() {
+  let report;
+  try { report = await api('/api/operations/diagnose', { silent: true }); }
+  catch (error) { toast(error.message, 'error'); return; }
+  const own = report.email?.selfTestAddress;
+  if (!own) { toast('Primero configurá tu correo propio en Ajustes → Marca.', 'error'); return; }
+  const accepted = await confirmAction({
+    title: 'Prueba de envío real',
+    message: 'LUCIAN intentará enviar UN correo de diagnóstico exclusivamente a tu dirección: ' + own
+      + '. Si el dominio no está verificado, el envío se bloqueará y explicará la causa.',
+    confirmLabel: 'Enviar prueba a mi casilla',
+  });
+  if (!accepted) return;
+  try {
+    const result = await api('/api/operations/test-email', { method: 'POST' });
+    toast(result.message || 'El proveedor aceptó la prueba: revisá tu casilla.');
+  } catch (error) { toast(error.message, 'error'); }
+  await openOperationsModal();
 }
 
 function statCard(label, value, iconName, foot, href, extra = '') {
@@ -5472,6 +5689,9 @@ async function handleAction(action, el) {
     }
     case 'toggle-mobile-nav': toggleMobileNav(); return;
     case 'reload-state': await loadState(); return;
+    case 'operations-diagnose': await openOperationsModal(); return;
+    case 'operations-send-test': await runOperationsEmailTest(); return;
+    case 'operations-telegram-repair': await diagnoseTelegramWebhookUI(); return;
     case 'new-product': openProductModal(); return;
     case 'import-products': $('#product-import-input')?.click(); return;
     case 'campaign-catalog': openCampaignModal(); return;

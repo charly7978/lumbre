@@ -4,14 +4,14 @@ import {
   sleep, sniffImage, truncate, uid, uniqueBy,
 } from './util.mjs';
 import { chat, generateJson, isAIReady, resolveAIConfig } from './ai.mjs';
-import { resolveAIWithFallback, recordAiFailure, recordAiSuccess } from './connections.mjs';
+import { resolveAIWithFallback, resolveUsableAI, recordAiFailure, recordAiSuccess } from './connections.mjs';
 import { searchMany } from './search.mjs';
 import { enrichProspect, GENERIC_NAME_TOKENS, normalizeText, verifyWebsite } from './hunter.mjs';
 import { candidatesForMarkets } from './directory.mjs';
 import { DEPTHS, STEPS, askPrompt, getAgent, replyPrompt, systemFor } from './prompts.mjs';
 import { demoAsk, demoReply, demoStep } from './demo.mjs';
 import {
-  emailDomain, isDemoEmail, isValidEmail, isSharedEmailDomain, isSuppressed, normalizeEmail,
+  emailDomain, isDemoEmail, isValidEmail, isSharedEmailDomain, isSuppressed, normalizeEmail, salesCopyIssues,
 } from './email.mjs';
 
 /* ─────────────────────────────────────────────────────────────
@@ -1204,6 +1204,7 @@ function draftPlanForBuyer({ mission, product, buyer, state, reviewDirectory = f
   const corrected = applyComplianceCorrections(source, state.corrections);
   const subject = String(corrected.asunto || '').trim();
   const body = String(corrected.cuerpo || '').trim();
+  const copyIssues = salesCopyIssues({ subject: subject || product.name, body, product });
   const mentionsBuyer = body ? messageMentionsBuyer({ asunto: subject, cuerpo: body }, buyer) : false;
   let status = 'listo';
   let reviewNote = '';
@@ -1214,6 +1215,10 @@ function draftPlanForBuyer({ mission, product, buyer, state, reviewDirectory = f
     status = 'revisar';
     reviewKind = 'sin-mensaje';
     reviewNote = 'No hay un mensaje 1:1 para este comprador. Escribilo a mano; no se reutiliza el de otra tienda.';
+  } else if (copyIssues.length) {
+    status = 'revisar';
+    reviewKind = 'calidad-comercial';
+    reviewNote = 'No enviar todavía: ' + copyIssues.join(' ');
   } else if (state.blocked) {
     status = 'bloqueado';
     reviewKind = 'cumplimiento';
@@ -1944,7 +1949,7 @@ async function runMissionNow(missionId, deps) {
   }
 
   const settings = store.settings();
-  const aiChoice = resolveAIWithFallback(settings);
+  const aiChoice = await resolveUsableAI(settings);
   const cfg = aiChoice.cfg;
   if (aiChoice.isFallback && mission.status !== 'queued') {
     const fallbackNote = `IA de respaldo activa: ${aiChoice.reason}`;
@@ -2002,9 +2007,9 @@ async function runMissionNow(missionId, deps) {
     ? 'Modo demo: el equipo va a simular la misión completa con datos de ejemplo.'
     : 'Misión iniciada. El equipo empieza por el brief y sigue en orden.');
 
-  if (!demo && !isAIReady(settings)) {
+  if (!demo && !isAIReady(settings) && !aiChoice.isFallback) {
     mission.status = 'error';
-    mission.error = 'Falta configurar una IA. Abrí Ajustes → Inteligencia artificial o lanzá la misión en modo demo.';
+    mission.error = 'No hay una IA operativa. Probá la conexión principal o iniciá Ollama con un modelo instalado.';
     mission.finishedAt = nowISO();
     await persist(store, mission);
     emitMission(broadcast, mission);
@@ -2027,7 +2032,7 @@ async function runMissionNow(missionId, deps) {
     artifacts: mission.artifacts || {},
     learnings: relevantLearnings,
     search: null,
-    fallback: settings.fallback?.ollama || null,
+    fallback: aiChoice.fallback,
   };
   mission.artifacts = ctx.artifacts;
   const usage = [];
@@ -2275,17 +2280,17 @@ export function missionQueueSize() {
 
 function askContext(store) {
   const settings = store.settings();
-  const products = store.get('products').slice(0, 8).map((p) => ({
+  const products = store.get('products').filter((p) => !p.demo).slice(0, 8).map((p) => ({
     nombre: p.name, codigo: p.code, precio: p.price, moneda: p.currency, costo: p.cost, estado: p.status,
   }));
-  const missions = store.get('missions').slice(0, 5).map((m) => ({
+  const missions = store.get('missions').filter((m) => !m.demo).slice(0, 5).map((m) => ({
     nombre: m.name, estado: m.status, mercados: m.markets, resumen: m.summary,
     decision: m.artifacts?.synthesis?.decision,
     riesgo: m.artifacts?.redteam?.sello,
     precios: m.artifacts?.pricing?.recomendacion,
     aduanas: m.artifacts?.customs?.resumen,
   }));
-  const threads = store.get('threads').slice(0, 10).map((t) => ({
+  const threads = store.get('threads').filter((t) => !t.demo).slice(0, 10).map((t) => ({
     empresa: t.contact?.company, pais: t.contact?.country, etapa: t.stage, score: t.score,
     siguiente: t.nextStep,
     ultimo: t.messages?.[t.messages.length - 1]?.body?.slice(0, 300),
@@ -2298,7 +2303,7 @@ function askContext(store) {
       estado: d.status, origen: d.source || '', asunto: d.subject || '', texto: String(d.body || '').slice(0, 400),
     })),
   }));
-  const learnings = store.get('learnings').slice(0, 10).map((l) => ({ insight: l.insight, etiqueta: l.tag, confianza: l.confidence }));
+  const learnings = store.get('learnings').filter((l) => !l.demo).slice(0, 10).map((l) => ({ insight: l.insight, etiqueta: l.tag, confianza: l.confidence }));
   return {
     marca: { nombre: settings.brand?.name, hacedor: settings.brand?.maker, ciudad: settings.brand?.city, web: settings.brand?.website },
     productos: products,
@@ -2337,39 +2342,74 @@ function dedupeText(text) {
 }
 
 function offlineStatusAnswer(store, question = '') {
-  const products = store.get('products') || [];
-  const missions = store.get('missions') || [];
-  const threads = store.get('threads') || [];
-  const content = store.get('content') || [];
-  const active = missions.filter((m) => ['running', 'queued'].includes(m.status));
-  const drafts = threads.flatMap((t) => t.drafts || []).filter((d) => d.status === 'listo');
-  const review = threads.flatMap((t) => t.drafts || []).filter((d) => d.status === 'revisar');
+  const q = String(question || '').toLowerCase();
+  const settings = store.settings();
+  const products = (store.get('products') || []).filter((p) => !p.demo && p.status !== 'archivado');
+  const missions = (store.get('missions') || []).filter((m) => !m.demo);
+  const threads = (store.get('threads') || []).filter((t) => !t.demo);
+  const outbox = (store.get('outbox') || []).filter((i) => i.status === 'pending' || i.status === 'error');
+  const sent = threads.flatMap((t) => t.messages || [])
+    .filter((m) => m.direction === 'out' && m.status === 'enviado' && m.provider !== 'manual').length;
+  const replies = threads.flatMap((t) => t.messages || []).filter((m) => m.direction === 'in').length;
+  const ready = threads.flatMap((t) => t.drafts || []).filter((d) => d.status === 'listo').length;
+  const review = threads.flatMap((t) => t.drafts || []).filter((d) => d.status === 'revisar').length;
   const hot = threads.filter((t) => ['interesado', 'negociando', 'respondio'].includes(t.stage));
-  const won = threads.filter((t) => t.stage === 'ganado');
-  const ideas = content.filter((c) => c.status === 'idea' || c.status === 'borrador');
-  const lines = [
-    `📊 *Lucian — estado real de hoy*`,
-    ``,
-    `Productos en catálogo: ${products.length}`,
-    `Misiones activas: ${active.length}${active.length ? ` (${active[0].name}${active[0].progress ? ` ${active[0].progress}%` : ''})` : ''}`,
-    `Leads calientes: ${hot.length}`,
-    `Ventas cerradas: ${won.length}`,
-    `Borradores listos para enviar: ${drafts.length}`,
-    `Borradores por aprobar: ${review.length}`,
-    `Piezas de contenido listas: ${ideas.length}`,
-  ];
-  if (active.length) lines.push(`\nEn curso: ${active.map((m) => `${m.name} (${m.progress || 0}%)`).join(', ')}`);
-  lines.push(`\n⚠️ La IA está sin saldo, así que este resumen sale directo de tus datos. Para volver a conversar con el equipo, cargá crédito en el proveedor o configurá un modelo local con memoria disponible.`);
-  return lines.join('\n');
+  const next = hot[0];
+  const email = settings.email || {};
+  const emailReady = email.provider === 'resend' ? Boolean(email.resendKey && email.from)
+    : email.provider === 'gmail' ? Boolean(email.smtpUser && email.smtpPassword)
+    : email.provider === 'webhook' ? Boolean(email.webhookUrl) : false;
+  const note = 'Estoy respondiendo con datos registrados, sin IA generativa. No voy a inventarte compradores, envíos ni ventas.';
+  if (/correo|mail|envi|respuesta|contactar|campañ/.test(q)) {
+    return [
+      'Estado de correos comerciales:',
+      `Proveedor seleccionado: ${email.provider || 'manual'} (${emailReady ? 'credenciales cargadas, entrega NO comprobada' : 'sin conexión de salida comprobada'}).`,
+      `Piloto de envíos: ${email.autopilot ? 'activado' : 'apagado'}.`,
+      `Correos enviados mediante un proveedor: ${sent}. Respuestas registradas: ${replies}.`,
+      `Borradores listos: ${ready}; por revisar: ${review}; en cola/error: ${outbox.length}.`,
+      !emailReady ? 'Prioridad: configurar el proveedor y enviar un correo de prueba a tu propia dirección.'
+        : !sent ? 'Prioridad: comprobar dominio/remitente y enviar una prueba real antes de prospectar.'
+        : 'Prioridad: revisar destinatarios y las respuestas recibidas.',
+      note,
+    ].join('\n');
+  }
+  if (/cliente|comprador|interesa|oportunidad|lead|negoci|cotiza/.test(q)) {
+    return [
+      `Contactos comerciales registrados: ${threads.length}; con respuesta o interés: ${hot.length}.`,
+      next
+        ? `Primera oportunidad: ${next.contact?.company || next.contact?.name || 'Contacto'}; etapa ${next.stage}; siguiente paso: ${next.nextStep || 'responder y calificar interés'}.`
+        : 'Todavía no hay respuestas o interés de compradores reales registrado.',
+      `Respuestas de clientes: ${replies}. Correos de proveedor: ${sent}.`,
+      note,
+    ].join('\n');
+  }
+  if (/l[aá]mpara|producto|cat[aá]logo|precio/.test(q)) {
+    return [
+      `Lámparas activas: ${products.length}.`,
+      ...products.slice(0, 5).map((p) => `${p.name || 'Sin nombre'}: ${p.price || 'sin precio'} ${p.currency || settings.brand?.currency || ''} ${Array.isArray(p.photos) && p.photos.length ? '(con fotos)' : '(falta foto)'}`),
+      products.length ? 'Acción: revisar fotos y precios reales de cada pieza antes de prospectar.'
+        : 'Acción: cargar la primera lámpara real con foto y precio.',
+      note,
+    ].join('\n');
+  }
+  const active = missions.filter((m) => ['running', 'queued'].includes(m.status));
+  return [
+    'Estado operativo de LUCIAN:',
+    `Lámparas reales: ${products.length}; misiones reales activas: ${active.length}.`,
+    `Compradores con respuesta/interés: ${hot.length}; mails enviados: ${sent}; respuestas: ${replies}.`,
+    `Borradores listos: ${ready}; por revisar: ${review}.`,
+    'Preguntame por correos, compradores, oportunidades, productos o prioridades. Estos datos funcionan aunque el proveedor de IA no tenga crédito.',
+    note,
+  ].join('\n');
 }
 
 export async function askTeam({ question, agentId = 'director', store, history = [], channel = 'web', images = [] }) {
   const settings = store.settings();
   const agent = getAgent(agentId);
-  if (!isAIReady(settings)) {
-    return { ...demoAsk(agentId, question), agent };
+  const aiChoice = await resolveUsableAI(settings);
+  if (!isAIReady(settings) && !aiChoice.isFallback) {
+    return { answer: offlineStatusAnswer(store, question), agent, demo: false, offline: true, usage: null, note: aiChoice.reason };
   }
-  const aiChoice = resolveAIWithFallback(settings);
   const cfg = aiChoice.cfg;
   if (aiChoice.isFallback) {
     await store.activity('system', `Agente ${agent.name} usando IA de respaldo: ${aiChoice.reason}`);
@@ -2377,7 +2417,7 @@ export async function askTeam({ question, agentId = 'director', store, history =
   const context = askContext(store);
   if (channel === 'telegram') {
     const q = String(question || '').toLowerCase();
-    const match = (store.get('threads') || []).find((t) => {
+    const match = (store.get('threads') || []).filter((t) => !t.demo).find((t) => {
       const company = String(t.contact?.company || '').trim().toLowerCase();
       return company && company.length >= 4 && q.includes(company);
     });
@@ -2401,15 +2441,22 @@ export async function askTeam({ question, agentId = 'director', store, history =
       temperature: channel === 'telegram' ? 0.5 : 0.55,
       maxTokens: channel === 'telegram' ? 1800 : 1300,
       images: Array.isArray(images) ? images : [],
-      fallback: settings.fallback?.ollama || null,
+      fallback: aiChoice.fallback,
+      fastFail: channel === 'telegram',
     }));
   } catch (error) {
+    recordAiFailure(error);
     // Si la IA (y su respaldo) fallan, responder con un resumen REAL de los
     // datos en vez de un error. El dueño nunca se queda sin respuesta.
     const summary = offlineStatusAnswer(store, question);
     await store.activity('system', `Agente respondió en modo sin IA: ${error.message.slice(0, 120)}`);
-    return { answer: summary, agent, demo: true, offline: true, usage: null, note: 'IA sin saldo: respuesta basada en datos reales de Lucian.' };
+    return { answer: summary, agent, demo: false, offline: true, usage: null,
+      note: 'IA generativa no disponible; respuesta calculada sobre datos reales de LUCIAN.' };
   }
+  // Si la principal agotó cuota y respondió Ollama, recordar la conmutación
+  // para no volver a esperar la misma petición fallida en cada mensaje.
+  if (result.fallbackUsed) recordAiFailure(new Error('Proveedor principal falló; respondió Ollama'));
+  else if (!aiChoice.isFallback) recordAiSuccess();
   await store.trackAgent(agent.id);
   return {
     answer: dedupeText(extractAnswerText(result.text)),
@@ -2426,10 +2473,12 @@ export async function analyzeThread({ thread, store, apply = true }) {
 
   if (thread.demo) {
     analysis = demoReply(thread, settings.brand);
-  } else if (!isAIReady(settings)) {
-    throw new Error('Para analizar respuestas reales necesitás configurar una IA en Ajustes → Inteligencia artificial.');
   } else {
-    const cfg = resolveAIConfig(settings);
+    const aiChoice = await resolveUsableAI(settings);
+    if (!isAIReady(settings) && !aiChoice.isFallback) {
+      throw new Error('No hay IA comprobada para analizar la respuesta: configurá el proveedor o iniciá Ollama local.');
+    }
+    const cfg = aiChoice.cfg;
     const result = await aiGate(() => generateJson(cfg, {
       system: systemFor('analista'),
       prompt: replyPrompt(thread, product, settings.brand),
@@ -2437,7 +2486,7 @@ export async function analyzeThread({ thread, store, apply = true }) {
       maxTokens: 1400,
       expects: 'object',
       attempts: 3,
-      fallback: settings.fallback?.ollama || null,
+      fallback: aiChoice.fallback,
     }));
     analysis = asObject(result.data);
     await store.trackAgent('analista');
@@ -2460,13 +2509,16 @@ export async function analyzeThread({ thread, store, apply = true }) {
       stored.lastAnalysis = { ...analysis, at: nowISO() };
       stored.updatedAt = nowISO();
       if (analysis.etapa) {
-        stored.stage = analysis.etapa;
-        // El reloj de postventa empieza en la venta: sin ancla, la
-        // fidelización (día 3/30/90) nunca se dispara.
-        if (analysis.etapa === 'ganado' && !stored.postSaleAt) stored.postSaleAt = nowISO();
+        // La IA no puede crear una venta ni activar postventa por interpretación.
+        // La confirmación del comprador la registra el dueño desde el CRM.
+        stored.stage = analysis.etapa === 'ganado' && !stored.demo ? 'negociando' : analysis.etapa;
+        if (analysis.etapa === 'ganado' && !stored.demo) {
+          stored.nextStep = 'Verificar aceptación y cobro; marcar Ganado manualmente cuando corresponda.';
+        }
       }
       if (analysis.siguiente_paso) stored.nextStep = asString(analysis.siguiente_paso);
       if (analysis.nota) stored.notes = [asString(stored.notes), asString(analysis.nota)].filter(Boolean).join('\n');
+      stored.drafts = Array.isArray(stored.drafts) ? stored.drafts : [];
       if (analysis.borrador.cuerpo && !stored.drafts.some((d) => d.body === analysis.borrador.cuerpo)) {
         stored.drafts.unshift({
           id: uid('drf'),
@@ -2474,7 +2526,7 @@ export async function analyzeThread({ thread, store, apply = true }) {
           language: 'es',
           subject: analysis.borrador.asunto || 'Respuesta',
           body: analysis.borrador.cuerpo,
-          status: 'listo',
+          status: 'revisar',
           source: 'ia',
           guardVersion: 2,
           createdAt: nowISO(),

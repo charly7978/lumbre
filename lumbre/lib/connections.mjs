@@ -78,6 +78,77 @@ export function resolveAIWithFallback(settings) {
   return { cfg: primary, isFallback: false, reason: '' };
 }
 
+/* Verificación REAL del respaldo local. Nunca consideramos "listo" un modelo
+   sólo porque su nombre figura en Ajustes: Ollama debe estar vivo y tenerlo
+   descargado. Cacheo corto para no agregar latencia a cada orden de Telegram. */
+let localProbeCache = { key: '', at: 0, result: null };
+export async function probeLocalAI(settings, { fresh = false } = {}) {
+  const local = settings?.fallback?.ollama || {};
+  const baseUrl = String(local.baseUrl || '').replace(/\/+$/, '');
+  const wanted = String(local.model || '').trim();
+  if (settings?.fallback?.enabled === false || !baseUrl) {
+    return { ok: false, error: 'Respaldo local desactivado o sin dirección.', model: '' };
+  }
+  let root;
+  try {
+    const url = new URL(baseUrl);
+    if (!['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) {
+      return { ok: false, error: 'Para seguridad, el respaldo automático debe apuntar a Ollama local.', model: '' };
+    }
+    root = url.origin;
+  } catch {
+    return { ok: false, error: 'Dirección de Ollama inválida.', model: '' };
+  }
+  const key = root + '|' + wanted;
+  if (!fresh && localProbeCache.key === key && Date.now() - localProbeCache.at < 20000) {
+    return localProbeCache.result;
+  }
+  let result;
+  try {
+    const response = await fetch(root + '/api/tags', { signal: AbortSignal.timeout(2500) });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const data = await response.json();
+    const names = (Array.isArray(data.models) ? data.models : []).map((m) => String(m.name || m.model || ''))
+      .filter(Boolean);
+    const selected = names.find((name) => name === wanted)
+      || names.find((name) => name.split(':')[0] === wanted.split(':')[0] && wanted)
+      || ['qwen2.5-coder:3b', 'qwen2.5:3b', 'llama3.2:3b'].find((name) => names.includes(name))
+      || names[0] || '';
+    result = selected
+      ? { ok: true, model: selected, available: names.length, configuredModel: wanted, substituted: selected !== wanted }
+      : { ok: false, model: '', error: 'Ollama responde, pero todavía no tiene ningún modelo descargado.' };
+  } catch (error) {
+    result = { ok: false, model: '', error: 'Ollama no responde en esta PC: ' + String(error?.message || error).slice(0,100) };
+  }
+  localProbeCache = { key, at: Date.now(), result };
+  return result;
+}
+
+export async function resolveUsableAI(settings) {
+  const primary = resolveAIConfig(settings);
+  const ready = isAIReady(settings);
+  const local = await probeLocalAI(settings);
+  const recent = Date.now() - aiState.lastFailureAt < 10 * 60 * 1000;
+  if (local.ok && (!ready || (recent && aiState.primaryFailures > 0))) {
+    return {
+      cfg: {
+        provider: 'ollama', baseUrl: settings.fallback.ollama.baseUrl,
+        model: local.model, apiKey: '', temperature: primary.temperature,
+        maxTokens: Math.min(4000, primary.maxTokens),
+      },
+      fallback: null, isFallback: true, local,
+      reason: ready ? 'El proveedor principal falló; usando modelo local comprobado.'
+        : 'La IA principal no está configurada; usando modelo local comprobado.',
+    };
+  }
+  return {
+    cfg: primary, fallback: local.ok
+      ? { baseUrl: settings.fallback.ollama.baseUrl, model: local.model } : null,
+    isFallback: false, local,
+    reason: ready ? '' : (local.error || 'No hay una IA utilizable.'),
+  };
+}
+
 /** Registra un fallo de IA (para activar el fallback). */
 export function recordAiFailure(error) {
   aiState.primaryFailures += 1;
@@ -142,12 +213,14 @@ export async function diagnoseConnections(settings, store) {
     detail: tg.enabled ? 'Configurado' : 'Apagado',
   });
 
-  const fallback = settings?.fallback || {};
+  const local = await probeLocalAI(settings);
   result.push({
     id: 'fallback',
     name: 'IA de respaldo (anti-cuota)',
-    ok: Boolean(fallback.enabled !== false && fallback.ollama?.baseUrl && fallback.ollama?.model),
-    detail: fallback.ollama?.model ? `${fallback.ollama.model} · ${fallback.ollama.baseUrl}` : 'Sin configurar (recomendado)',
+    ok: local.ok,
+    detail: local.ok
+      ? `Ollama operativo · modelo ${local.model}${local.substituted ? ' (alternativa instalada)' : ''}`
+      : local.error,
   });
 
   return {

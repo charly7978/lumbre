@@ -4,7 +4,7 @@
 # Si no responde, levanta un tunel nuevo y actualiza los archivos.
 
 $ErrorActionPreference = 'SilentlyContinue'
-$base = 'C:\Users\carlo.ROLITO\Downloads\Sistema-Ventas-Lamparas\lumbre'
+$base = $PSScriptRoot
 $urlFile = Join-Path $base 'url.txt'
 $logFile = Join-Path $base 'tunnel.log'
 $dirFile = Join-Path $base 'DIRECCION-LUCIAN.txt'
@@ -34,6 +34,7 @@ function Write-UrlFiles {
         $u,
         '',
         'Copia esa direccion y mandala por WhatsApp.',
+        'Al abrirla entra directo, sin clave.',
         'NO cierres la ventana negra ni apagues la PC.'
     ) | Set-Content -Path $dirFile -Encoding UTF8
 }
@@ -55,8 +56,7 @@ $url = Get-Content $urlFile -Raw -ErrorAction SilentlyContinue
 $url = if ($url) { $url.Trim() } else { $null }
 if (-not (Test-Url $url)) { Start-QuickTunnel }
 
-# Esperar a que aparezca la direccion y escribirla enseguida (para que el
-# lanzador la muestre rapido, sin esperar al primer ciclo de 20 s).
+# Esperar a que aparezca la direccion y escribirla enseguida.
 for ($i = 0; $i -lt 30; $i++) {
     $u = Get-PublicUrl
     if ($u) {
