@@ -2275,17 +2275,17 @@ export function missionQueueSize() {
 
 function askContext(store) {
   const settings = store.settings();
-  const products = store.get('products').slice(0, 8).map((p) => ({
+  const products = store.get('products').filter((p) => !p.demo).slice(0, 8).map((p) => ({
     nombre: p.name, codigo: p.code, precio: p.price, moneda: p.currency, costo: p.cost, estado: p.status,
   }));
-  const missions = store.get('missions').slice(0, 5).map((m) => ({
+  const missions = store.get('missions').filter((m) => !m.demo).slice(0, 5).map((m) => ({
     nombre: m.name, estado: m.status, mercados: m.markets, resumen: m.summary,
     decision: m.artifacts?.synthesis?.decision,
     riesgo: m.artifacts?.redteam?.sello,
     precios: m.artifacts?.pricing?.recomendacion,
     aduanas: m.artifacts?.customs?.resumen,
   }));
-  const threads = store.get('threads').slice(0, 10).map((t) => ({
+  const threads = store.get('threads').filter((t) => !t.demo).slice(0, 10).map((t) => ({
     empresa: t.contact?.company, pais: t.contact?.country, etapa: t.stage, score: t.score,
     siguiente: t.nextStep,
     ultimo: t.messages?.[t.messages.length - 1]?.body?.slice(0, 300),
@@ -2298,7 +2298,7 @@ function askContext(store) {
       estado: d.status, origen: d.source || '', asunto: d.subject || '', texto: String(d.body || '').slice(0, 400),
     })),
   }));
-  const learnings = store.get('learnings').slice(0, 10).map((l) => ({ insight: l.insight, etiqueta: l.tag, confianza: l.confidence }));
+  const learnings = store.get('learnings').filter((l) => !l.demo).slice(0, 10).map((l) => ({ insight: l.insight, etiqueta: l.tag, confianza: l.confidence }));
   return {
     marca: { nombre: settings.brand?.name, hacedor: settings.brand?.maker, ciudad: settings.brand?.city, web: settings.brand?.website },
     productos: products,
@@ -2412,7 +2412,7 @@ export async function askTeam({ question, agentId = 'director', store, history =
   const context = askContext(store);
   if (channel === 'telegram') {
     const q = String(question || '').toLowerCase();
-    const match = (store.get('threads') || []).find((t) => {
+    const match = (store.get('threads') || []).filter((t) => !t.demo).find((t) => {
       const company = String(t.contact?.company || '').trim().toLowerCase();
       return company && company.length >= 4 && q.includes(company);
     });
@@ -2476,7 +2476,7 @@ export async function analyzeThread({ thread, store, apply = true }) {
       maxTokens: 1400,
       expects: 'object',
       attempts: 3,
-      fallback: settings.fallback?.ollama || null,
+      fallback: aiChoice.fallback,
     }));
     analysis = asObject(result.data);
     await store.trackAgent('analista');
@@ -2499,13 +2499,16 @@ export async function analyzeThread({ thread, store, apply = true }) {
       stored.lastAnalysis = { ...analysis, at: nowISO() };
       stored.updatedAt = nowISO();
       if (analysis.etapa) {
-        stored.stage = analysis.etapa;
-        // El reloj de postventa empieza en la venta: sin ancla, la
-        // fidelización (día 3/30/90) nunca se dispara.
-        if (analysis.etapa === 'ganado' && !stored.postSaleAt) stored.postSaleAt = nowISO();
+        // La IA no puede crear una venta ni activar postventa por interpretación.
+        // La confirmación del comprador la registra el dueño desde el CRM.
+        stored.stage = analysis.etapa === 'ganado' && !stored.demo ? 'negociando' : analysis.etapa;
+        if (analysis.etapa === 'ganado' && !stored.demo) {
+          stored.nextStep = 'Verificar aceptación y cobro; marcar Ganado manualmente cuando corresponda.';
+        }
       }
       if (analysis.siguiente_paso) stored.nextStep = asString(analysis.siguiente_paso);
       if (analysis.nota) stored.notes = [asString(stored.notes), asString(analysis.nota)].filter(Boolean).join('\n');
+      stored.drafts = Array.isArray(stored.drafts) ? stored.drafts : [];
       if (analysis.borrador.cuerpo && !stored.drafts.some((d) => d.body === analysis.borrador.cuerpo)) {
         stored.drafts.unshift({
           id: uid('drf'),
@@ -2513,7 +2516,7 @@ export async function analyzeThread({ thread, store, apply = true }) {
           language: 'es',
           subject: analysis.borrador.asunto || 'Respuesta',
           body: analysis.borrador.cuerpo,
-          status: 'listo',
+          status: 'revisar',
           source: 'ia',
           guardVersion: 2,
           createdAt: nowISO(),
