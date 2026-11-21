@@ -963,6 +963,7 @@ async function createMission(body) {
     demo,
     mode: demo ? 'demo' : 'real',
     manualReviewOnly: !demo && body.manualReviewOnly === true,
+    commercialQualityReview: !demo,
     requestedMode,
     productId: product.id,
     name: asString(body.name).trim() || `${product.name} · ${finalMarkets[0] || 'Mercado global'}`,
