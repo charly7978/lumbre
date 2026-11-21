@@ -31,3 +31,9 @@ _lucian_start.cmd
 _lucian_tunnel.cmd
 lumbrecloudflared.exe
 lumbreurl.txt
+server-err.log
+server-out.log
+vigilar.log
+*.bak
+*.bak2
+*.bak3
