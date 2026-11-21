@@ -2082,3 +2082,15 @@ a { transition: color var(--dur-fast) var(--ease); }
 .conn-row:last-child { border-bottom: 0; }
 
 .product-pick-list { max-height: 220px; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
+
+/* Panel de respuestas reales - lo primero que se ve */
+.respuestas-box { border:1px solid var(--line); border-radius:14px; padding:18px 20px; background:var(--surface); }
+.respuestas-box .eyebrow { color:var(--accent); }
+.reply-list { margin-top:14px; display:grid; gap:8px; }
+.reply-row { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; color:inherit; text-decoration:none; }
+.reply-row:hover { border-color:var(--accent); }
+.reply-dot { width:9px; height:9px; border-radius:50%; background:var(--accent); flex:none; }
+.reply-text { display:block; color:var(--muted); font-size:.9em; margin-top:2px; }
+.reply-stage { margin-left:auto; font-size:.8em; color:var(--muted); white-space:nowrap; }
+.no-replies { margin-top:14px; padding:12px 14px; border-radius:10px; background:var(--bg); }
+.no-replies p { margin:0 0 8px; font-size:.92em; }

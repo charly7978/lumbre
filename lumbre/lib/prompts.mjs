@@ -490,20 +490,22 @@ ${verifiedBuyersBlock(ctx)}
 - Si PROSPECTING no trae compradores, devolvé "mensajes": [] y explicá en "estrategia" qué falta para tener la lista. No escribas mensajes para compradores que no existen.
 - Si no tenés un dato específico de una tienda, escribí un mensaje más breve y honesto, pero seguí siendo 1:1. Nunca uses el mensaje de otro comprador como relleno.
 - Asunto de máximo 60 caracteres, sin mayúsculas gritadas ni emojis.
-- Cuerpo de 65 a 110 palabras: presentación, encaje para este comprador y una oferta de valor comprobable. Un solo pedido concreto al final.
+- Cuerpo de 80 a 130 palabras: presentación, encaje para este comprador, PRECIO CONCRETO y un pedido claro.
+- VENDÉ. Este correo tiene un solo objetivo: que el comprador quiera comprar. Nunca escribas correos disculpándote ni explicando que no estás listo.
+- El PRECIO va en el correo, usando el campo "precio" y "moneda" del PRODUCTO. Ejemplo: "SORA, velador de autor impreso en 3D, 42.000 ARS". Si hay precio de lista, usalo. Nunca digas "todavía no cerré el precio", "estoy cotizando", "estoy validando números" ni "no te traigo oferta hoy": eso mata la venta y es texto prohibido.
+- Pedí la venta de forma directa y fácil: "¿Querés que te mande 2 unidades?" o "¿Te armó una cotización con envío included?". Pedí el pedido, no permiso para mandar información.
 - Nada de "espero que estés bien", "soy un apasionado", "revolucionario" ni listas de features.
 - Presentación limpia: 'Soy [nombre del responsable], de LUCIAN.' Nunca 'de LUCIAN (Caseros)' ni 'desde Caseros' por iniciativa del modelo; la ciudad postal, si es obligatoria, va sólo en el pie legal.
-- No traslades al comprador discusiones internas del equipo sobre falta de fotos, importación, flete, costos inciertos o autoría. Si faltan elementos para ofrecer la pieza, señalá el bloqueo en el plan interno en vez de redactar una disculpa comercial.
+- Nunca menciones al comprador problemas internos (fotos, flete, importación, costos, autoría, faltas). Si algo falta, ponelo en el plan interno, jamás en el correo.
 - Personalizá solamente con un hecho verificable y citá su URL en el campo personalizacion. Si la fuente no demuestra una marca o colección, hablá del tipo de negocio y no inventes afinidades.
 - IDIOMA OBLIGATORIO POR COMPRADOR: escribí cada mensaje EXACTAMENTE en el idioma indicado en el bloque de su país (ESPAÑOL / INGLÉS / PORTUGUÉS). España, Argentina, Chile, Uruguay, México y Colombia van en ESPAÑOL —aunque el comprador tenga un nombre o web en inglés, NO traduzcas el correo al inglés. Brasil va en PORTUGUÉS. Estados Unidos, Reino Unido y Alemania van en INGLÉS. Respetá también la variante local (vos/tú/usted) y el registro de cortesía de cada bloque.
-- La secuencia base tiene 3 pasos: apertura (día 0), seguimiento con valor (día 4) y cierre amable (día 10), pero cualquier rechazo o respuesta detiene el contacto automático.
-- CTA de interés, no reunión obligatoria: pedí permiso para mandar ficha real con medidas, materiales y opciones. No prometas adjuntos inexistentes.
-- Ajustá la oferta al segmento: estudio/interiorista → especificaciones y personalización; hotel → series y tiempos sólo si constan; tienda → catálogo y condiciones mayoristas verificadas; galería → historia del objeto y terminaciones.
-- Planteá en "estrategia" una hipótesis comercial comprobable por segmento (quién, beneficio concreto, objeción probable) y el resultado esperado medible en RESPUESTAS, no aperturas.
-- Para WhatsApp, un mensaje de 35 palabras como máximo, sin archivos.
-- Incluá 3 objeciones probables con respuestas honestas.
-- No prometas ventas, certificaciones ni plazos que no estén en los datos.
-- Respetá la recomendación de PRICING: si recomienda no abrir canal mayorista todavía, no ofrezcas precio mayorista ni pedido mínimo; presentá la pieza y pedí permiso para mandar la ficha.
+- La secuencia base tiene 3 pasos: apertura (día 0), seguimiento con valor (día 4) y cierre con oferta (día 10), pero cualquier rechazo o respuesta detiene el contacto automático.
+- CTA concreto: el día 0 pedí el pedido; el día 4 sumá un dato nuevo (medidas, material, plazo) y repetí el precio; el día 10 cerrá con "¿Te reservo unidades?". No pidas permiso para mandar fichas: mandá la oferta.
+- Ajustá la oferta al segmento: estudio/interiorista → especificaciones y personalización; hotel → series y tiempos; tienda → catálogo y condiciones mayoristas; galería → historia del objeto y terminaciones. Siempre con precio concreto.
+- Planteá en "estrategia" una hipótesis comercial comprobable por segmento (quién, beneficio concreto, objeción probable) y el resultado esperado medible en PEDIDOS y RESPUESTAS.
+- Para WhatsApp, un mensaje de 35 palabras como máximo, con precio y pedido directo, sin archivos.
+- Incluá 3 objeciones probables con respuestas que cierren la venta (precio, envío, plazo).
+- No prometas certificaciones ni plazos que no estén en los datos. El precio SÍ va: está en el producto.
 - No afirmes qué marcas vende el comprador salvo que aparezcan en las fuentes o en su ficha; si no, usá un detalle seguro (ciudad o tipo de tienda). No inventes certificaciones, stock, plazos, precios ni resultados.
 Devolvé este JSON:
 ${STEPS.outreach.schemaHint}`,

@@ -462,6 +462,10 @@ function confirmAction({ title, message, details = '', confirmLabel = 'Confirmar
 async function loadState({ render: shouldRender = true, silent = false } = {}) {
   try {
     S.state = await api('/api/state', { silent });
+    // Métricas reales para el panel de respuestas (el state no trae mensajes).
+    api('/api/operations/diagnose', { silent: true }).then((d) => {
+      if (S.state) { S.state.operations = d; if (shouldRender && location.hash.includes('panel')) render(); }
+    }).catch(() => {});
     updateShell();
     scheduleAutoRefresh();
     if (shouldRender) render();
@@ -780,6 +784,7 @@ function renderPanel() {
       : '';
 
   return `
+    ${panelRespuestasHTML()}
     ${onboardBanner}
     ${panelCommercialHealthHTML()}
     <section class="hero">
@@ -917,6 +922,54 @@ function renderPanel() {
     </section>`;
 }
 
+
+function panelRespuestasHTML() {
+  const threads = arr(S.state?.threads).filter((t) => !t.demo);
+  const replies = [];
+  for (const t of threads) {
+    const last = t.lastMessage;
+    if (last?.direction === 'in') {
+      replies.push({
+        company: t.contact?.company || 'Sin nombre',
+        stage: t.stage || '',
+        text: String(last.body || ''),
+        at: last.at || t.lastActivityAt,
+        id: t.id,
+      });
+    }
+  }
+  replies.sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
+  const metrics = S.state?.operations?.metrics || {};
+  const sent = num(metrics.acceptedByProvider) || threads.reduce((n, t) => n + (num(t.messageCount) - (t.lastMessage?.direction === 'in' ? 1 : 0)), 0);
+  const top = replies.slice(0, 3).map((r) => `
+    <a class="reply-row" href="#/bandeja/${encodeURIComponent(r.id)}">
+      <span class="reply-dot"></span>
+      <span><b>${esc(r.company)}</b><span class="reply-text">${esc(r.text)}</span></span>
+      <span class="reply-stage">${esc(r.stage)}</span>
+    </a>`).join('');
+
+  return `<section class="section respuestas-box" style="margin-bottom:18px">
+    <div class="between" style="align-items:flex-start;gap:12px;flex-wrap:wrap">
+      <div>
+        <p class="eyebrow">Lo importante de verdad</p>
+        <h2 class="section-title" style="margin-top:6px">¿Quién te respondió?</h2>
+        <p class="section-sub" style="margin-top:4px">
+          ${replies.length
+            ? `${replies.length} conversacion(es) con respuesta real.`
+            : `Todavía nadie respondió. Enviaste ${sent} correo(s) pero no hay respuestas todavía.`}
+        </p>
+      </div>
+      <a class="btn btn-primary btn-sm" href="#/bandeja">${icon('message')} Abrir conversaciones</a>
+    </div>
+    ${replies.length
+      ? `<div class="reply-list">${top}</div>`
+      : `<div class="no-replies">
+          <p>Los correos anteriores decían que no tenías precio ni envío listo. Eso espanta al comprador.</p>
+          <p>Ya cambié el tono: ahora los correos van con <b>precio concreto y pedido directo</b>. Probá con una nueva misión.</p>
+          <a class="btn btn-ghost btn-sm" href="#/misiones/nueva">${icon('spark')} Preparar una misión nueva</a>
+        </div>`}
+  </section>`;
+}
 
 function panelCommercialHealthHTML() {
   const s = S.state || {};
