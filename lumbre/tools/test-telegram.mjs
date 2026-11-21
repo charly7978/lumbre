@@ -6,6 +6,8 @@ import { Notifier } from '../lib/notify.mjs';
 import { parseAction, executeAction, ACTION_SPECS } from '../lib/telegram-actions.mjs';
 import { searchWebDetailed } from '../lib/search.mjs';
 import { askPrompt } from '../lib/prompts.mjs';
+import { probeLocalAI } from '../lib/connections.mjs';
+import { Outbox } from '../lib/outbox.mjs';
 
 // parseAction tests
 {
@@ -243,5 +245,51 @@ console.log('askPrompt OK');
   await fs.rm(dir, { recursive: true, force: true });
 }
 console.log('Comandos operativos y separación demo/real OK');
+
+/* IA local: reconocer un modelo descargado aun cuando el nombre sugerido
+   en Ajustes no exista. Se usa una respuesta simulada, nunca red real. */
+{
+  const original = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => ({
+      ok: true, json: async () => ({ models: [{ name: 'qwen2.5-coder:3b' }] }),
+    });
+    const local = await probeLocalAI({
+      fallback: { enabled: true, ollama: { baseUrl: 'http://127.0.0.1:11434/v1', model: 'qwen2.5:3b' } },
+    }, { fresh: true });
+    if (!local.ok || local.model !== 'qwen2.5-coder:3b' || !local.substituted) {
+      throw new Error('No se detectó el modelo Ollama instalado.');
+    }
+  } finally {
+    globalThis.fetch = original;
+  }
+}
+console.log('Fallback local comprobable OK');
+
+/* El piloto activo debe recuperar un borrador histórico aprobado UNA sola
+   vez, sin fabricar un envío ni contactar un correo de ejemplo. */
+{
+  const dir = path.join(os.tmpdir(), `lucian-outbox-test-${Date.now()}`);
+  const store = new Store(dir);
+  await store.init();
+  await store.saveSettings({ email: { autopilot: true, provider: 'resend', resendKey: 'test', from: 'ventas@lucian.com' } });
+  await store.set('threads', [{
+    id: 'hilo-1', demo: false, stage: 'nuevo',
+    contact: { company: 'Tienda comprobable', email: 'compras@tienda-real.test' },
+    drafts: [{ id: 'borrador-1', status: 'listo', channel: 'email', subject: 'Consulta', body: 'Correo preparado.' }],
+    messages: [],
+  }]);
+  const outbox = new Outbox({ store, deliver: async () => ({ ok: true }) });
+  const first = await outbox.enqueueAllReady();
+  const again = await outbox.enqueueAllReady();
+  if (first.queued !== 1 || again.queued !== 0 || outbox.items().length !== 1) {
+    throw new Error('Encolar duplicó un envío aprobado.');
+  }
+  await store.flush();
+  await fs.rm(dir, { recursive: true, force: true });
+}
+console.log('Recuperación de borradores y antiduplcado OK');
+
+
 
 console.log('\\n test-telegram OK');
