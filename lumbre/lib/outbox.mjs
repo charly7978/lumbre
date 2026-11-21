@@ -233,7 +233,9 @@ export class Outbox {
   }
 
   pendingFor(threadId, draftId = null) {
-    return this.items().some((item) => item.status === 'pending'
+    // Un error definitivo no puede disparar otro intento automático.
+    // El dueño debe revisarlo antes de reprogramar ese borrador.
+    return this.items().some((item) => ['pending', 'error'].includes(item.status)
       && item.threadId === threadId
       && (!draftId || item.draftId === draftId));
   }
