@@ -17,7 +17,7 @@ import { hunterAccount } from './lib/hunter.mjs';
 import {
   assertCanSend, buildEml, composeEmail, dailyLimitInfo, detectOptOut, emailDomain, emlFilename,
   isSharedEmailDomain, isSuppressed, isValidEmail, normalizeCompany, normalizeEmail,
-  parseEmailEvent, parseInbound, sendWithResend, sendWithWebhook, sendWithGmail, testResend,
+  parseEmailEvent, parseInbound, sendWithResend, sendWithWebhook, sendWithGmail, testResend, salesCopyIssues,
 } from './lib/email.mjs';
 import { Notifier, parseWhatsAppWebhook, sendWhatsApp, telegramChats, testTelegram, testWhatsApp, telegramWebhookStatus, repairTelegramWebhook } from './lib/notify.mjs';
 import {
@@ -1340,6 +1340,16 @@ async function sendThreadMessage(threadId, body) {
   const settings = store.settings();
   const channel = ['resend', 'webhook', 'gmail', 'manual'].includes(body.channel) ? body.channel : 'manual';
   const company = thread.contact?.company || '';
+  // Revalidar incluso borradores viejos o aprobados: el piloto nunca debe
+  // enviar una presentación con "LUCIAN (Caseros)" ni excusas de logística.
+  const isFirstContact = !(thread.messages || []).some((entry) => entry.direction === 'out');
+  if (channel !== 'manual' && isFirstContact && ['mision', 'ia'].includes(String(draft.source || ''))) {
+    const product = store.find('products', thread.productId);
+    const issues = salesCopyIssues({ subject: draft.subject, body: draft.body, product: product || null });
+    if (issues.length) {
+      throw new HttpError(400, 'Borrador comercial no apto para enviar. Editalo y aprobalo nuevamente: ' + issues.join(' '));
+    }
+  }
   let message;
   try {
     message = composeEmail(thread, draft, settings);
