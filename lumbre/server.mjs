@@ -2057,6 +2057,7 @@ async function handle(req, res) {
       ai: isAIReady(store.settings()),
       demo: settingsFlags(store.settings()).demo,
       uptime: Math.round(process.uptime()),
+      telegram: notifier.telegramDiagnostics(),
     });
     return;
   }
@@ -2173,7 +2174,9 @@ async function handle(req, res) {
   if (pathname === '/api/settings/telegram/chats' && method === 'POST') {
     const body = await readJson(req);
     const token = asString(body.token).trim() || store.settings().notify?.telegram?.token;
-    const chats = await telegramChats(token);
+    const current = store.settings().notify?.telegram || {};
+    const knownChatId = token === current.token ? String(current.chatId || '') : '';
+    const chats = await telegramChats(token, knownChatId);
     json(res, 200, { chats });
     return;
   }
@@ -3106,7 +3109,9 @@ function readinessLines() {
         ? (email.webhookUrl ? 'webhook configurado' : 'webhook elegido pero sin URL')
         : `${email.provider}`;
   const tg = settings.notify?.telegram;
-  const telegramLabel = tg?.enabled && tg?.token && tg?.chatId ? `configurado (avisos día ${tg.digestHour ?? 9}:00)` : 'apagado (Ajustes → Notificaciones)';
+  const telegramLabel = tg?.enabled && tg?.token && tg?.chatId
+    ? (notifier.telegramDiagnostics().polling ? 'receptor iniciado (probar /diagnostico en Telegram)' : 'configurado pero receptor sin confirmar')
+    : 'apagado (Ajustes → Notificaciones)';
   const queued = (store.get('missions') || []).filter((m) => m.status === 'queued').length;
   const lines = [
     '  Listo para funcionar:',
