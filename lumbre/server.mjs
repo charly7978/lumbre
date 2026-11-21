@@ -12,6 +12,7 @@ import {
   sniffImage, toCsv, truncate, uid,
 } from './lib/util.mjs';
 import { isAIReady, listModels, resolveAIConfig, testAI, PROVIDERS } from './lib/ai.mjs';
+import { buildCommercialStrategy } from './lib/commercial-strategy.mjs';
 import { searchProviderInfo, searchWebDetailed } from './lib/search.mjs';
 import { hunterAccount } from './lib/hunter.mjs';
 import {
@@ -962,6 +963,7 @@ async function createMission(body) {
     demo,
     mode: demo ? 'demo' : 'real',
     manualReviewOnly: !demo && body.manualReviewOnly === true,
+    commercialQualityReview: !demo,
     requestedMode,
     productId: product.id,
     name: asString(body.name).trim() || `${product.name} · ${finalMarkets[0] || 'Mercado global'}`,
@@ -2156,6 +2158,26 @@ async function handle(req, res) {
 
   if (pathname === '/api/state' && method === 'GET') {
     json(res, 200, statePayload());
+    return;
+  }
+
+  // Investigación y estrategia comercial bajo solicitud expresa del dueño.
+  // Solo lectura de catálogo y servicios de búsqueda/IA; nunca envía ni publica.
+  if (pathname === '/api/commercial/strategy' && method === 'POST') {
+    const body = await readJson(req);
+    if (body.confirmResearch !== true) throw new HttpError(400, 'Confirmá la investigación comercial; puede consumir créditos de IA y búsqueda.');
+    const product = store.find('products', asString(body.productId));
+    if (!product || product.status === 'archivado') throw new HttpError(400, 'Elegí una lámpara activa del catálogo.');
+    const settings = store.settings();
+    if (!isAIReady(settings)) throw new HttpError(409, 'Configurá y verificá primero una IA en Conexiones.');
+    const plan = await buildCommercialStrategy({
+      product, market: asString(body.market), audience: asString(body.audience, 'retail'),
+      brand: settings.brand || {}, settings,
+    }, {
+      search: searchWebDetailed,
+      generate: (options) => generateJson(resolveAIConfig(settings), options),
+    });
+    json(res, 200, { plan });
     return;
   }
 
