@@ -290,6 +290,7 @@ export async function chat(cfg, options = {}) {
     model = cfg.model,
     images = [],
     fallback = null,
+    fastFail = false,
   } = options;
 
   if (!cfg.baseUrl) throw new Error('Falta la dirección del proveedor de IA');
@@ -304,7 +305,7 @@ export async function chat(cfg, options = {}) {
   // lo enviamos a Anthropic y nos ahorramos reintentos innecesarios.
   const skipTemperature = cfg.provider === 'anthropic';
 
-  for (let attempt = 0; attempt < 5; attempt += 1) {
+  for (let attempt = 0; attempt < (fastFail ? 1 : 5); attempt += 1) {
     let body;
     if (cfg.provider === 'anthropic') {
       body = {
@@ -332,7 +333,7 @@ export async function chat(cfg, options = {}) {
     }
 
     try {
-      let data = await providerRequest(cfg, body);
+      let data = await providerRequest(cfg, body, fastFail ? 15000 : 180000);
       const text = cfg.provider === 'anthropic' ? contentFromAnthropic(data) : contentFromOpenAI(data);
       const finishReason = String(cfg.provider === 'anthropic'
         ? (data?.stop_reason || '')
@@ -375,6 +376,8 @@ export async function chat(cfg, options = {}) {
         }
       }
 
+      // Telegram no puede congelarse varios minutos cuando un proveedor se queda sin crédito.
+      if (fastFail && (isRateLimitError(error) || status === 401 || status === 403)) break;
       if (status === 429 || (status === 413 && /tokens per minute/i.test(message))) {
         if (attempt < 4) {
           await sleep(46000);
@@ -393,7 +396,7 @@ export async function chat(cfg, options = {}) {
 
   // Último recurso: si el proveedor principal falló (saldo/cuota) y hay
   // un fallback configurado, reintentamos UNA vez con él (Ollama local).
-  if (fallback && fallback.baseUrl && fallback.model && isRateLimitError(lastError)) {
+  if (fallback && fallback.baseUrl && fallback.model && (isRateLimitError(lastError) || fastFail)) {
     try {
       const fbCfg = {
         provider: 'ollama',
@@ -403,7 +406,8 @@ export async function chat(cfg, options = {}) {
         temperature: 0.5,
         maxTokens: Math.min(4000, maxTokens),
       };
-      const fb = await chat(fbCfg, { system, prompt, history, json, temperature, maxTokens: fbCfg.maxTokens, model: fallback.model });
+      const fb = await chat(fbCfg, { system, prompt, history, json, temperature,
+        maxTokens: fbCfg.maxTokens, model: fallback.model, fastFail: true });
       return { ...fb, provider: 'ollama-fallback', fallbackUsed: true };
     } catch (fbError) {
       lastError = fbError;
