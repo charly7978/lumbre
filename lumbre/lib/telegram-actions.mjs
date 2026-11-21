@@ -283,8 +283,12 @@ export async function executeAction({ action, store, actions = {}, chatId, searc
     }
     if (action.tipo === 'lanzar_mision') {
       if (!actions.createMission) return { ok: false, message: 'No puedo lanzar misiones desde aquí.' };
-      const res = await actions.createMission({ productId: args.productId, markets: args.markets, depth: args.depth, name: args.name });
-      return { ok: true, message: `Misión lanzada: ${res?.name || res?.id || 'ok'}.` };
+      const res = await actions.createMission({
+        productId: args.productId, markets: args.markets, depth: args.depth, name: args.name,
+        mode: 'real',
+      });
+      if (res?.demo) return { ok: false, message: 'La misión terminó en modo demo: no la contabilizo como campaña real.' };
+      return { ok: true, message: `Misión comercial REAL creada: ${res?.name || res?.id || 'ok'}. Revisá después los compradores encontrados y los correos efectivamente enviados.` };
     }
     if (action.tipo === 'actualizar_producto') {
       const product = store.find('products', args.productId);
