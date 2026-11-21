@@ -119,7 +119,7 @@ export async function runAutopilot(store, notifier, logger = () => {}, deps = {}
           autopilotContentIndex: idx + 1,
         });
         actions.push(`Misión de contenido creada: ${mission?.name || product.name}`);
-        await notify(notifier, `🎨 *Lucian generó contenido automáticamente*\n\nNo había piezas listas para publicar, así que el piloto lanzó una misión rápida para ${product.name}. En unos minutos vas a ver nuevas publicaciones en Contenido.`);
+        // La generación rutinaria queda en el panel y en el log; Telegram se reserva para acciones o fallas.
         state.recoveryAttempts += 1;
       }
     } catch (error) {
