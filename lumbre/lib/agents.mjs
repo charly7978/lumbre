@@ -4,7 +4,7 @@ import {
   sleep, sniffImage, truncate, uid, uniqueBy,
 } from './util.mjs';
 import { chat, generateJson, isAIReady, resolveAIConfig } from './ai.mjs';
-import { resolveAIWithFallback, recordAiFailure, recordAiSuccess } from './connections.mjs';
+import { resolveAIWithFallback, resolveUsableAI, recordAiFailure, recordAiSuccess } from './connections.mjs';
 import { searchMany } from './search.mjs';
 import { enrichProspect, GENERIC_NAME_TOKENS, normalizeText, verifyWebsite } from './hunter.mjs';
 import { candidatesForMarkets } from './directory.mjs';
@@ -2337,39 +2337,74 @@ function dedupeText(text) {
 }
 
 function offlineStatusAnswer(store, question = '') {
-  const products = store.get('products') || [];
-  const missions = store.get('missions') || [];
-  const threads = store.get('threads') || [];
-  const content = store.get('content') || [];
-  const active = missions.filter((m) => ['running', 'queued'].includes(m.status));
-  const drafts = threads.flatMap((t) => t.drafts || []).filter((d) => d.status === 'listo');
-  const review = threads.flatMap((t) => t.drafts || []).filter((d) => d.status === 'revisar');
+  const q = String(question || '').toLowerCase();
+  const settings = store.settings();
+  const products = (store.get('products') || []).filter((p) => !p.demo && p.status !== 'archivado');
+  const missions = (store.get('missions') || []).filter((m) => !m.demo);
+  const threads = (store.get('threads') || []).filter((t) => !t.demo);
+  const outbox = (store.get('outbox') || []).filter((i) => i.status === 'pending' || i.status === 'error');
+  const sent = threads.flatMap((t) => t.messages || [])
+    .filter((m) => m.direction === 'out' && m.status === 'enviado' && m.provider !== 'manual').length;
+  const replies = threads.flatMap((t) => t.messages || []).filter((m) => m.direction === 'in').length;
+  const ready = threads.flatMap((t) => t.drafts || []).filter((d) => d.status === 'listo').length;
+  const review = threads.flatMap((t) => t.drafts || []).filter((d) => d.status === 'revisar').length;
   const hot = threads.filter((t) => ['interesado', 'negociando', 'respondio'].includes(t.stage));
-  const won = threads.filter((t) => t.stage === 'ganado');
-  const ideas = content.filter((c) => c.status === 'idea' || c.status === 'borrador');
-  const lines = [
-    `📊 *Lucian — estado real de hoy*`,
-    ``,
-    `Productos en catálogo: ${products.length}`,
-    `Misiones activas: ${active.length}${active.length ? ` (${active[0].name}${active[0].progress ? ` ${active[0].progress}%` : ''})` : ''}`,
-    `Leads calientes: ${hot.length}`,
-    `Ventas cerradas: ${won.length}`,
-    `Borradores listos para enviar: ${drafts.length}`,
-    `Borradores por aprobar: ${review.length}`,
-    `Piezas de contenido listas: ${ideas.length}`,
-  ];
-  if (active.length) lines.push(`\nEn curso: ${active.map((m) => `${m.name} (${m.progress || 0}%)`).join(', ')}`);
-  lines.push(`\n⚠️ La IA está sin saldo, así que este resumen sale directo de tus datos. Para volver a conversar con el equipo, cargá crédito en el proveedor o configurá un modelo local con memoria disponible.`);
-  return lines.join('\n');
+  const next = hot[0];
+  const email = settings.email || {};
+  const emailReady = email.provider === 'resend' ? Boolean(email.resendKey && email.from)
+    : email.provider === 'gmail' ? Boolean(email.smtpUser && email.smtpPassword)
+    : email.provider === 'webhook' ? Boolean(email.webhookUrl) : false;
+  const note = 'Estoy respondiendo con datos registrados, sin IA generativa. No voy a inventarte compradores, envíos ni ventas.';
+  if (/correo|mail|envi|respuesta|contactar|campañ/.test(q)) {
+    return [
+      'Estado de correos comerciales:',
+      `Proveedor seleccionado: ${email.provider || 'manual'} (${emailReady ? 'credenciales cargadas, entrega NO comprobada' : 'sin conexión de salida comprobada'}).`,
+      `Piloto de envíos: ${email.autopilot ? 'activado' : 'apagado'}.`,
+      `Correos enviados mediante un proveedor: ${sent}. Respuestas registradas: ${replies}.`,
+      `Borradores listos: ${ready}; por revisar: ${review}; en cola/error: ${outbox.length}.`,
+      !emailReady ? 'Prioridad: configurar el proveedor y enviar un correo de prueba a tu propia dirección.'
+        : !sent ? 'Prioridad: comprobar dominio/remitente y enviar una prueba real antes de prospectar.'
+        : 'Prioridad: revisar destinatarios y las respuestas recibidas.',
+      note,
+    ].join('\n');
+  }
+  if (/cliente|comprador|interesa|oportunidad|lead|negoci|cotiza/.test(q)) {
+    return [
+      `Contactos comerciales registrados: ${threads.length}; con respuesta o interés: ${hot.length}.`,
+      next
+        ? `Primera oportunidad: ${next.contact?.company || next.contact?.name || 'Contacto'}; etapa ${next.stage}; siguiente paso: ${next.nextStep || 'responder y calificar interés'}.`
+        : 'Todavía no hay respuestas o interés de compradores reales registrado.',
+      `Respuestas de clientes: ${replies}. Correos de proveedor: ${sent}.`,
+      note,
+    ].join('\n');
+  }
+  if (/l[aá]mpara|producto|cat[aá]logo|precio/.test(q)) {
+    return [
+      `Lámparas activas: ${products.length}.`,
+      ...products.slice(0, 5).map((p) => `${p.name || 'Sin nombre'}: ${p.price || 'sin precio'} ${p.currency || settings.brand?.currency || ''} ${Array.isArray(p.photos) && p.photos.length ? '(con fotos)' : '(falta foto)'}`),
+      products.length ? 'Acción: revisar fotos y precios reales de cada pieza antes de prospectar.'
+        : 'Acción: cargar la primera lámpara real con foto y precio.',
+      note,
+    ].join('\n');
+  }
+  const active = missions.filter((m) => ['running', 'queued'].includes(m.status));
+  return [
+    'Estado operativo de LUCIAN:',
+    `Lámparas reales: ${products.length}; misiones reales activas: ${active.length}.`,
+    `Compradores con respuesta/interés: ${hot.length}; mails enviados: ${sent}; respuestas: ${replies}.`,
+    `Borradores listos: ${ready}; por revisar: ${review}.`,
+    'Preguntame por correos, compradores, oportunidades, productos o prioridades. Estos datos funcionan aunque el proveedor de IA no tenga crédito.',
+    note,
+  ].join('\n');
 }
 
 export async function askTeam({ question, agentId = 'director', store, history = [], channel = 'web', images = [] }) {
   const settings = store.settings();
   const agent = getAgent(agentId);
-  if (!isAIReady(settings)) {
-    return { ...demoAsk(agentId, question), agent };
+  const aiChoice = await resolveUsableAI(settings);
+  if (!isAIReady(settings) && !aiChoice.isFallback) {
+    return { answer: offlineStatusAnswer(store, question), agent, demo: false, offline: true, usage: null, note: aiChoice.reason };
   }
-  const aiChoice = resolveAIWithFallback(settings);
   const cfg = aiChoice.cfg;
   if (aiChoice.isFallback) {
     await store.activity('system', `Agente ${agent.name} usando IA de respaldo: ${aiChoice.reason}`);
@@ -2401,14 +2436,16 @@ export async function askTeam({ question, agentId = 'director', store, history =
       temperature: channel === 'telegram' ? 0.5 : 0.55,
       maxTokens: channel === 'telegram' ? 1800 : 1300,
       images: Array.isArray(images) ? images : [],
-      fallback: settings.fallback?.ollama || null,
+      fallback: aiChoice.fallback,
+      fastFail: channel === 'telegram',
     }));
   } catch (error) {
     // Si la IA (y su respaldo) fallan, responder con un resumen REAL de los
     // datos en vez de un error. El dueño nunca se queda sin respuesta.
     const summary = offlineStatusAnswer(store, question);
     await store.activity('system', `Agente respondió en modo sin IA: ${error.message.slice(0, 120)}`);
-    return { answer: summary, agent, demo: true, offline: true, usage: null, note: 'IA sin saldo: respuesta basada en datos reales de Lucian.' };
+    return { answer: summary, agent, demo: false, offline: true, usage: null,
+      note: 'IA generativa no disponible; respuesta calculada sobre datos reales de LUCIAN.' };
   }
   await store.trackAgent(agent.id);
   return {
@@ -2426,10 +2463,12 @@ export async function analyzeThread({ thread, store, apply = true }) {
 
   if (thread.demo) {
     analysis = demoReply(thread, settings.brand);
-  } else if (!isAIReady(settings)) {
-    throw new Error('Para analizar respuestas reales necesitás configurar una IA en Ajustes → Inteligencia artificial.');
   } else {
-    const cfg = resolveAIConfig(settings);
+    const aiChoice = await resolveUsableAI(settings);
+    if (!isAIReady(settings) && !aiChoice.isFallback) {
+      throw new Error('No hay IA comprobada para analizar la respuesta: configurá el proveedor o iniciá Ollama local.');
+    }
+    const cfg = aiChoice.cfg;
     const result = await aiGate(() => generateJson(cfg, {
       system: systemFor('analista'),
       prompt: replyPrompt(thread, product, settings.brand),
