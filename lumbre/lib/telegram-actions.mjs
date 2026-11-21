@@ -260,8 +260,26 @@ export async function executeAction({ action, store, actions = {}, chatId, searc
     }
     if (action.tipo === 'enviar_borrador') {
       if (!actions.sendThreadMessage) return { ok: false, message: 'No puedo enviar borradores desde aquí.' };
-      const res = await actions.sendThreadMessage(args.threadId, { draftId: args.draftId, channel: 'email', confirm: true });
-      return { ok: true, message: res?.message || 'Borrador enviado.' };
+      const provider = String(store.settings()?.email?.provider || 'manual');
+      if (!['resend', 'gmail', 'webhook'].includes(provider)) {
+        return {
+          ok: false,
+          message: 'No envié el correo. El proveedor está en modo manual o sin configurar. Elegí y probá Resend, Gmail o webhook en Ajustes. No lo marcaré como enviado.',
+        };
+      }
+      const res = await actions.sendThreadMessage(args.threadId, {
+        draftId: args.draftId,
+        channel: provider,
+        confirm: true,
+      });
+      const sent = res?.message;
+      if (!sent || sent.status !== 'enviado' || sent.channel !== provider) {
+        return { ok: false, message: 'El proveedor no confirmó el envío. Revisá la bandeja; no asumiré que salió.' };
+      }
+      return {
+        ok: true,
+        message: `Correo realmente enviado mediante ${provider} a ${res?.thread?.contact?.company || 'el destinatario'} (registro: ${sent.id || 'sin ID'}).`,
+      };
     }
     if (action.tipo === 'lanzar_mision') {
       if (!actions.createMission) return { ok: false, message: 'No puedo lanzar misiones desde aquí.' };
