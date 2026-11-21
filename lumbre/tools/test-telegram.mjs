@@ -69,16 +69,36 @@ console.log('executeAction buscar OK');
   const dir = path.join(os.tmpdir(), `lucian-tg-${Date.now()}`);
   const store = new Store(dir);
   await store.init();
+  await store.saveSettings({ email: { provider: 'resend', resendKey: 'test-only', from: 'ventas@example.com' } });
   let called = null;
-  const actions = { sendThreadMessage: async (tid, body) => { called = { tid, body }; return { message: 'enviado' }; } };
+  const actions = { sendThreadMessage: async (tid, body) => {
+    called = { tid, body };
+    return { thread: { contact: { company: 'Tienda prueba' } }, message: { id: 'msg-test', status: 'enviado', channel: 'resend' } };
+  } };
   const res = await executeAction({
     action: { tipo: 'enviar_borrador', args: { threadId: 't1', draftId: 'd1' }, resumen: '', requiere_accion: true },
     store, actions, chatId: '1',
   });
-  if (!res.ok) throw new Error('enviar failed: ' + res.message);
-  if (!called || called.body.confirm !== true) throw new Error('confirm not passed');
+  if (!res.ok || !/realmente enviado/.test(res.message)) throw new Error('enviar failed: ' + res.message);
+  if (!called || called.body.confirm !== true || called.body.channel !== 'resend') throw new Error('proveedor real no utilizado');
   await fs.rm(dir, { recursive: true, force: true });
 }
+// No atribuirse envíos si el proveedor es manual.
+{
+  const dir = path.join(os.tmpdir(), `lucian-tg-manual-${Date.now()}`);
+  const store = new Store(dir);
+  await store.init();
+  let called = false;
+  const res = await executeAction({
+    action: { tipo: 'enviar_borrador', args: { threadId: 't1', draftId: 'd1' }, requiere_accion: true },
+    store,
+    actions: { sendThreadMessage: async () => { called = true; return {}; } },
+    chatId: '1',
+  });
+  if (res.ok || called || !/no envié|No envié/.test(res.message)) throw new Error('El modo manual simula un envío.');
+  await fs.rm(dir, { recursive: true, force: true });
+}
+
 console.log('enviar_borrador OK');
 
 // lanzar_mision calls createMission
