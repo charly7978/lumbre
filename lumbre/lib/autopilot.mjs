@@ -112,7 +112,6 @@ export async function runAutopilot(store, notifier, logger = () => {}, deps = {}
           name: `Contenido automático · ${product.name}`,
           markets: (settings.mission?.markets || ['España']).slice(0, 2),
           depth: 'rapida',
-          mode: 'auto',
           maxProspects: 4,
           notes: 'Misión creada automáticamente por el piloto para reponer contenido listo para publicar en redes.',
           autoContent: true,
