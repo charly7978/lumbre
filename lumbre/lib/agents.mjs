@@ -11,7 +11,7 @@ import { candidatesForMarkets } from './directory.mjs';
 import { DEPTHS, STEPS, askPrompt, getAgent, replyPrompt, systemFor } from './prompts.mjs';
 import { demoAsk, demoReply, demoStep } from './demo.mjs';
 import {
-  emailDomain, isDemoEmail, isValidEmail, isSharedEmailDomain, isSuppressed, normalizeEmail,
+  emailDomain, isDemoEmail, isValidEmail, isSharedEmailDomain, isSuppressed, normalizeEmail, salesCopyIssues,
 } from './email.mjs';
 
 /* ─────────────────────────────────────────────────────────────
@@ -1204,6 +1204,7 @@ function draftPlanForBuyer({ mission, product, buyer, state, reviewDirectory = f
   const corrected = applyComplianceCorrections(source, state.corrections);
   const subject = String(corrected.asunto || '').trim();
   const body = String(corrected.cuerpo || '').trim();
+  const copyIssues = salesCopyIssues({ subject: subject || product.name, body, product });
   const mentionsBuyer = body ? messageMentionsBuyer({ asunto: subject, cuerpo: body }, buyer) : false;
   let status = 'listo';
   let reviewNote = '';
@@ -1214,6 +1215,10 @@ function draftPlanForBuyer({ mission, product, buyer, state, reviewDirectory = f
     status = 'revisar';
     reviewKind = 'sin-mensaje';
     reviewNote = 'No hay un mensaje 1:1 para este comprador. Escribilo a mano; no se reutiliza el de otra tienda.';
+  } else if (copyIssues.length) {
+    status = 'revisar';
+    reviewKind = 'calidad-comercial';
+    reviewNote = 'No enviar todavía: ' + copyIssues.join(' ');
   } else if (state.blocked) {
     status = 'bloqueado';
     reviewKind = 'cumplimiento';
