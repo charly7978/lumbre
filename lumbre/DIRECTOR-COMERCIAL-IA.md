@@ -9,7 +9,10 @@ Desde **Productos → Estrategia IA** o **Ventas → Director comercial IA**, se
 - Borrador de correo B2B **sin enviar**, alertas y datos técnicos pendientes.
 - ID y URL de las fuentes encontradas. Las referencias inventadas por el modelo se descartan.
 
-El resultado no se publica, no modifica productos, no crea misiones ni registra ventas. Para conservarlo, usar «Copiar informe completo». Las búsquedas y el modelo pueden consumir créditos y requieren configuración operativa.
+El resultado no se publica, no modifica productos, no crea misiones ni registra ventas.
+
+## Control automático de borradores nuevos
+Las misiones reales creadas tras instalar esta rama activan `commercialQualityReview`. Un borrador que admita no tener propuesta, que solo pida permiso para enseñar una ficha o que presente afirmaciones ambientales no verificadas queda marcado `revisar` antes de cualquier aprobación. El auditor no reemplaza la revisión humana ni verifica consentimiento de contacto. Para conservarlo, usar «Copiar informe completo». Las búsquedas y el modelo pueden consumir créditos y requieren configuración operativa.
 
 ## Condiciones de comercialización
 
@@ -34,6 +37,7 @@ No se simula que existan estas conexiones. Esta etapa investiga y genera planes;
 cd lumbre
 npm run check
 npm run test:commercial
+npm run test:commercial-quality
 npm run test:commercial-http
 npm test
 ```
