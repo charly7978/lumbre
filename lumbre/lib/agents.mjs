@@ -1944,7 +1944,7 @@ async function runMissionNow(missionId, deps) {
   }
 
   const settings = store.settings();
-  const aiChoice = resolveAIWithFallback(settings);
+  const aiChoice = await resolveUsableAI(settings);
   const cfg = aiChoice.cfg;
   if (aiChoice.isFallback && mission.status !== 'queued') {
     const fallbackNote = `IA de respaldo activa: ${aiChoice.reason}`;
@@ -2002,9 +2002,9 @@ async function runMissionNow(missionId, deps) {
     ? 'Modo demo: el equipo va a simular la misión completa con datos de ejemplo.'
     : 'Misión iniciada. El equipo empieza por el brief y sigue en orden.');
 
-  if (!demo && !isAIReady(settings)) {
+  if (!demo && !isAIReady(settings) && !aiChoice.isFallback) {
     mission.status = 'error';
-    mission.error = 'Falta configurar una IA. Abrí Ajustes → Inteligencia artificial o lanzá la misión en modo demo.';
+    mission.error = 'No hay una IA operativa. Probá la conexión principal o iniciá Ollama con un modelo instalado.';
     mission.finishedAt = nowISO();
     await persist(store, mission);
     emitMission(broadcast, mission);
@@ -2027,7 +2027,7 @@ async function runMissionNow(missionId, deps) {
     artifacts: mission.artifacts || {},
     learnings: relevantLearnings,
     search: null,
-    fallback: settings.fallback?.ollama || null,
+    fallback: aiChoice.fallback,
   };
   mission.artifacts = ctx.artifacts;
   const usage = [];
