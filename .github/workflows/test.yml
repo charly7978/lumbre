@@ -1,8 +1,7 @@
-name: Lumbre tests
+name: Verificación de Lucian (opcional, manual)
 
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   test:
@@ -11,8 +10,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - name: Install
-        run: cd lumbre && npm ci --ignore-scripts 2>/dev/null || true
-      - name: Check & tests
-        run: cd lumbre && npm run check && npm run test:search && npm run test:core && npm run test:guards && npm run test:flow
+          node-version: '22'
+      - name: Validar aplicación y pruebas
+        working-directory: lumbre
+        run: npm test
