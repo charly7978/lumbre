@@ -185,4 +185,43 @@ console.log('reiniciar OK');
 }
 console.log('askPrompt OK');
 
+
+/* Regresión: el operador debe poder consultar datos reales sin consumir IA
+   y el estado de Telegram debe explicitar si existe recepción activa. */
+{
+  const dir = path.join(os.tmpdir(), `lucian-ops-test-${Date.now()}`);
+  const store = new Store(dir);
+  await store.init();
+  await store.saveSettings({ notify: { telegram: { enabled: true, token: 'test-token', chatId: '42' } } });
+  await store.set('products', [{
+    id: 'prod-real', name: 'Lámpara prueba real', status: 'activo',
+    price: 100, photos: [], description: 'Pieza artesanal de prueba con pantalla de impresión 3D.',
+  }]);
+  await store.set('threads', [{
+    id: 'thread-real', demo: false, stage: 'interesado',
+    contact: { company: 'Estudio de Interiorismo', email: 'contacto@example.com' },
+    nextStep: 'Enviar ficha y cotización',
+    drafts: [{ id: 'd1', status: 'revisar' }],
+    messages: [{ direction: 'in', body: 'Quisiera una cotización', at: new Date().toISOString() }],
+  }, {
+    id: 'thread-demo', demo: true, stage: 'interesado',
+    contact: { company: 'Cliente inventado', email: 'demo@example.com' },
+    drafts: [], messages: [],
+  }]);
+  const notifier = new Notifier({ store, ask: async () => { throw new Error('No debe usarse IA'); } });
+  const diagnostic = await notifier.handleOwnerText('/diagnostico', 'telegram', '42');
+  if (!/Escuchando: no/.test(diagnostic)) throw new Error('El diagnóstico no revela la falta de polling');
+  const agenda = await notifier.handleOwnerText('/prioridades', 'telegram', '42');
+  if (!/Lámpara prueba real/.test(agenda) || !/Estudio de Interiorismo/.test(agenda)) {
+    throw new Error('No se muestran las prioridades comerciales verificables');
+  }
+  const opportunities = await notifier.handleOwnerText('/oportunidades', 'telegram', '42');
+  if (!/Estudio de Interiorismo/.test(opportunities) || /Cliente inventado/.test(opportunities)) {
+    throw new Error('Las oportunidades no excluyen datos demo');
+  }
+  await store.flush();
+  await fs.rm(dir, { recursive: true, force: true });
+}
+console.log('Comandos operativos y separación demo/real OK');
+
 console.log('\\n test-telegram OK');
