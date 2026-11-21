@@ -2440,6 +2440,7 @@ export async function askTeam({ question, agentId = 'director', store, history =
       fastFail: channel === 'telegram',
     }));
   } catch (error) {
+    recordAiFailure(error);
     // Si la IA (y su respaldo) fallan, responder con un resumen REAL de los
     // datos en vez de un error. El dueño nunca se queda sin respuesta.
     const summary = offlineStatusAnswer(store, question);
@@ -2447,6 +2448,10 @@ export async function askTeam({ question, agentId = 'director', store, history =
     return { answer: summary, agent, demo: false, offline: true, usage: null,
       note: 'IA generativa no disponible; respuesta calculada sobre datos reales de LUCIAN.' };
   }
+  // Si la principal agotó cuota y respondió Ollama, recordar la conmutación
+  // para no volver a esperar la misma petición fallida en cada mensaje.
+  if (result.fallbackUsed) recordAiFailure(new Error('Proveedor principal falló; respondió Ollama'));
+  else if (!aiChoice.isFallback) recordAiSuccess();
   await store.trackAgent(agent.id);
   return {
     answer: dedupeText(extractAnswerText(result.text)),
