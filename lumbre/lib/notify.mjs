@@ -753,6 +753,40 @@ export async function telegramChats(token, knownChatId = '') {
   return [...new Map(chats.map((c) => [c.id, c])).values()];
 }
 
+/** Verifica si un webhook anterior le impide a este proceso recibir mensajes.
+    No lee ni altera la cola de mensajes y nunca expone el token del bot. */
+export async function telegramWebhookStatus(settings) {
+  const token = settings.notify?.telegram?.token;
+  if (!token) throw new Error('Telegram: falta configurar el token.');
+  const { ok, data } = await fetchJson(`https://api.telegram.org/bot${token}/getWebhookInfo`, { timeoutMs: 15000 });
+  if (!ok || !data?.ok) throw new Error('No se pudo consultar el estado del webhook de Telegram: ' + String(data?.description || 'Error de conexión').slice(0, 150));
+  const info = data.result || {};
+  return {
+    active: Boolean(info.url), pendingUpdateCount: Number(info.pending_update_count) || 0,
+    lastError: String(info.last_error_message || '').slice(0, 220),
+  };
+}
+
+/** Reparación deliberada, nunca automática: desactiva un webhook viejo
+    manteniendo todos los updates pendientes. Los procesos de polling ajenos
+    se deben apagar por separado. */
+export async function repairTelegramWebhook(settings) {
+  const existing = await telegramWebhookStatus(settings);
+  if (!existing.active) return {
+    ok: true, changed: false,
+    message: 'No hay webhook activo. Si sigue apareciendo conflicto 409, cerrá otros programas que usen el mismo token del bot.',
+    ...existing,
+  };
+  const token = settings.notify?.telegram?.token;
+  const { ok, data } = await fetchJson(`https://api.telegram.org/bot${token}/deleteWebhook`, {
+    method: 'POST', body: { drop_pending_updates: false }, timeoutMs: 15000,
+  });
+  if (!ok || !data?.ok) throw new Error('Telegram no permitió desactivar el webhook: ' + String(data?.description || 'Error inesperado').slice(0, 150));
+  return {
+    ok: true, changed: true, message: 'Webhook anterior desactivado sin borrar mensajes pendientes. LUCIAN puede retomar la recepción local.',
+  };
+}
+
 export async function testTelegram(settings) {
   const token = settings.notify?.telegram?.token;
   if (!token) throw new Error('Falta el token del bot de Telegram');
@@ -764,12 +798,11 @@ export async function testTelegram(settings) {
     await sendTelegram(settings, `Lucian conectado. Este es un mensaje de prueba para ${settings.brand?.name || 'tu marca'}.`);
     sent = true;
   }
-  const hook = await fetchJson(`https://api.telegram.org/bot${token}/getWebhookInfo`, { timeoutMs: 15000 });
-  const webhook = hook.ok && hook.data?.ok ? hook.data.result?.url || '' : '';
+  const hook = await telegramWebhookStatus(settings);
   return {
     bot: me.data.result?.username || '', name: me.data.result?.first_name || '',
-    sent, inboundVerified: false, webhookActive: Boolean(webhook),
-    warning: webhook ? 'Hay un webhook activo: el polling local no recibirá mensajes.' : '',
+    sent, inboundVerified: false, webhookActive: hook.active,
+    warning: hook.active ? 'Hay un webhook activo: el polling local no recibirá mensajes.' : '',
   };
 }
 
