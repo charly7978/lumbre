@@ -997,7 +997,10 @@ function panelCommercialHealthHTML() {
           <h2 class="section-title" style="margin-top:8px">Qué falta hacer para vender</h2>
           <p class="section-sub" style="margin-top:6px">El sistema prioriza conversaciones y contactos por encima de las piezas de contenido.</p>
         </div>
-        <a class="btn btn-ghost btn-sm" href="#/bandeja">Abrir CRM</a>
+        <div class="cluster">
+          <button class="btn btn-primary btn-sm" type="button" data-action="operations-diagnose">${icon('refresh')} Diagnóstico real y envío de prueba</button>
+          <a class="btn btn-ghost btn-sm" href="#/bandeja">Abrir CRM</a>
+        </div>
       </div>
       <div class="cluster" style="margin:16px 0;gap:14px;flex-wrap:wrap">
         <span><b>${realContacts}</b> contactos registrados con email</span>
@@ -1015,6 +1018,90 @@ function panelCommercialHealthHTML() {
       ${warning}
     </div>
   </section>`;
+}
+
+
+/* Consola comercial: diagnóstico de conectividad y prueba REAL, separada
+   de las misiones ficticias y de las métricas de contenido. */
+async function openOperationsModal() {
+  try {
+    const report = await api('/api/operations/diagnose', { silent: true });
+    const m = report.metrics || {};
+    const email = report.email || {};
+    const ai = report.ai || {};
+    const tg = report.telegram || {};
+    const blockers = arr(report.blockers);
+    const status = email.lastTest;
+    openModal({
+      title: 'Operaciones comerciales reales',
+      subtitle: 'Por qué no salen correos y qué necesita el equipo para operar.',
+      size: 'modal-lg',
+      body: `
+        <div class="card card-pad">
+          <p class="eyebrow">Embudo medido: sin datos ficticios</p>
+          <p class="small"><b>${num(m.products)}</b> lámparas reales ·
+            <b>${num(m.realContacts)}</b> contactos ·
+            <b>${num(m.approved)}</b> borradores aprobados ·
+            <b>${num(m.acceptedByProvider)}</b> envíos aceptados por proveedor ·
+            <b>${num(m.replies)}</b> respuestas registradas</p>
+          <p class="small muted" style="margin-top:8px">Un correo aceptado no equivale a entregado, leído o respondido.</p>
+        </div>
+        <div class="card card-pad mt-3">
+          <h3 class="card-title">Correo de salida</h3>
+          <p class="small">Proveedor: <b>${esc(email.provider || 'manual')}</b> ·
+            configuración: <b>${email.configured ? 'datos cargados' : 'incompleta'}</b> ·
+            automático: <b>${email.autopilot ? 'activado' : 'apagado'}</b></p>
+          <p class="small">Dominio: <b>${esc(email.domain?.status || 'sin verificación')}</b></p>
+          <p class="small">Destino de prueba: <b>${esc(email.selfTestAddress || 'definilo en Ajustes → Marca')}</b></p>
+          <p class="small">Última prueba: <b>${esc(status?.status || 'ninguna')}</b>
+            ${status?.at ? '· ' + esc(dateTime(status.at)) : ''}</p>
+          ${status?.error ? `<p class="small" style="color:var(--danger)">${esc(status.error)}</p>` : ''}
+          <div class="cluster mt-3">
+            <button type="button" class="btn btn-primary btn-sm" data-action="operations-send-test">
+              ${icon('mail')} Enviar prueba real a mi propia casilla</button>
+            <a class="btn btn-ghost btn-sm" href="#/ajustes?tab=correo">Configurar correo</a>
+          </div>
+        </div>
+        <div class="card card-pad mt-3">
+          <h3 class="card-title">Agentes y Telegram</h3>
+          <p class="small">IA principal: ${ai.mainConfigured ? 'configurada (saldo sin probar)' : 'sin configurar'}.
+            Ollama: <b>${ai.localAvailable ? 'activo con ' + esc(ai.localModel) : esc(ai.localError || 'no disponible')}</b>.</p>
+          <p class="small">Telegram: <b>${tg.polling ? 'receptor activo' : 'receptor no activo'}</b>
+            ${tg.lastError ? '· ' + esc(tg.lastError) : ''}</p>
+          <a href="#/ajustes?tab=ia" class="btn btn-ghost btn-sm mt-2">Configurar inteligencia artificial</a>
+        </div>
+        <div class="card card-pad mt-3">
+          <h3 class="card-title">Obstáculos comprobables</h3>
+          ${blockers.length
+            ? `<ol style="padding-left:20px;line-height:1.8">${blockers.map((b) => `<li class="small">${esc(b)}</li>`).join('')}</ol>`
+            : '<p class="small">Sin bloqueos de configuración detectados; hay que comprobar entregas y respuesta de clientes.</p>'}
+          <p class="small muted mt-2">Cola pendiente: ${num(m.pending)} · Errores de cola: ${num(m.errors)}.</p>
+        </div>
+      `,
+      footer: `<button class="btn btn-ghost" type="button" data-action="operations-diagnose">Actualizar diagnóstico</button>
+        <button class="btn btn-ghost" type="button" data-action="close-modal">Cerrar</button>`,
+    });
+  } catch (error) { toast('Diagnóstico falló: ' + error.message, 'error'); }
+}
+
+async function runOperationsEmailTest() {
+  let report;
+  try { report = await api('/api/operations/diagnose', { silent: true }); }
+  catch (error) { toast(error.message, 'error'); return; }
+  const own = report.email?.selfTestAddress;
+  if (!own) { toast('Primero configurá tu correo propio en Ajustes → Marca.', 'error'); return; }
+  const accepted = await confirmAction({
+    title: 'Prueba de envío real',
+    message: 'LUCIAN intentará enviar UN correo de diagnóstico exclusivamente a tu dirección: ' + own
+      + '. Si el dominio no está verificado, el envío se bloqueará y explicará la causa.',
+    confirmLabel: 'Enviar prueba a mi casilla',
+  });
+  if (!accepted) return;
+  try {
+    const result = await api('/api/operations/test-email', { method: 'POST' });
+    toast(result.message || 'El proveedor aceptó la prueba: revisá tu casilla.');
+  } catch (error) { toast(error.message, 'error'); }
+  await openOperationsModal();
 }
 
 function statCard(label, value, iconName, foot, href, extra = '') {
@@ -5578,6 +5665,8 @@ async function handleAction(action, el) {
     }
     case 'toggle-mobile-nav': toggleMobileNav(); return;
     case 'reload-state': await loadState(); return;
+    case 'operations-diagnose': await openOperationsModal(); return;
+    case 'operations-send-test': await runOperationsEmailTest(); return;
     case 'new-product': openProductModal(); return;
     case 'import-products': $('#product-import-input')?.click(); return;
     case 'campaign-catalog': openCampaignModal(); return;
